@@ -356,7 +356,7 @@ export const getExtensionFromMime = (mimeType: string): string => {
 };
 
 /**
- * Upload media file to a service and return MediaFile object
+ * Upload media file to a Nostr NIP-94 compatible service and return MediaFile object
  * @param fileData Base64 data URL of the file
  * @param fileName Original file name
  * @param mimeType MIME type of the file
@@ -366,15 +366,11 @@ export const uploadMedia = async (
   fileName: string,
   mimeType: string
 ): Promise<MediaFile> => {
-  // For now, we'll just return mock URLs since we'd need to integrate
-  // with a real decentralized storage service
-  // In a real implementation, this would upload to IPFS or other decentralized storage
-  
   try {
     // Extract the base64 data without the prefix
     const base64Data = fileData.split(',')[1] || fileData;
     
-    // Calculate approximate size (base64 is ~4/3 the size of binary)
+    // Calculate size 
     const sizeInBytes = Math.round((base64Data.length * 3) / 4);
     
     // Get media type based on MIME
@@ -383,16 +379,40 @@ export const uploadMedia = async (
     // Get file extension
     const extension = getExtensionFromMime(mimeType);
     
-    // This is where we would make an API call to upload the file
-    // For now, just simulate a delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Convert base64 to binary data
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
     
-    // Generate a unique ID for the file
-    const fileId = Math.random().toString(36).substring(2, 15);
+    // Create a Blob from the binary data
+    const blob = new Blob([bytes], { type: mimeType });
     
-    // Mock response with a sample URL - in production this would be from a real service
+    // We'll use nostr.build for NIP-94 compatible file storage
+    // Create a FormData object to send the file
+    const formData = new FormData();
+    const file = new File([blob], fileName, { type: mimeType });
+    formData.append('file', file);
+    
+    // Upload to nostr.build
+    const response = await fetch('https://nostr.build/upload.php', {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Upload failed with status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (!result.success || !result.url) {
+      throw new Error('Upload did not return a valid URL');
+    }
+    
     return {
-      url: `https://nostr-media.example/${fileId}.${extension}`,
+      url: result.url, // Use the actual URL returned by the service
       type: mediaType,
       mimeType: mimeType,
       name: fileName,
