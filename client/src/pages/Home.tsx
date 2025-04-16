@@ -2,16 +2,25 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "wouter";
 import { Header } from "@/components/Header";
 import { BoardSidebar } from "@/components/BoardSidebar";
-import { ThreadList } from "@/components/ThreadList";
 import { useNostr } from "@/hooks/useNostr";
 import { useBoards } from "@/hooks/useBoards";
 import { Button } from "@/components/ui/button";
+
+// Fake memecoin data for our retro UI
+const memeCoins = [
+  { id: "doge", name: "DogeCoin", symbol: "DOGE", price: "$0.12", change: "+5.3%" },
+  { id: "shib", name: "Shiba Inu", symbol: "SHIB", price: "$0.000016", change: "-2.1%" },
+  { id: "pepe", name: "Pepe", symbol: "PEPE", price: "$0.000003", change: "+12.7%" },
+  { id: "wojak", name: "Wojak", symbol: "WOJAK", price: "$0.42", change: "-8.3%" },
+  { id: "bonk", name: "Bonk", symbol: "BONK", price: "$0.000002", change: "+1.4%" },
+];
 
 const Home: React.FC = () => {
   const { id: boardId } = useParams<{ id?: string }>();
   const { boards, loading: loadingBoards } = useBoards();
   const { connect, connectedRelays } = useNostr();
   const [connecting, setConnecting] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Find the current board details
   const currentBoard = boardId 
@@ -29,63 +38,51 @@ const Home: React.FC = () => {
   }, [connectedRelays, connect]);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      
-      <div className="flex-1 flex flex-col md:flex-row">
-        <BoardSidebar />
+    <div className="min-h-screen bg-background">
+      <div className="max-w-4xl mx-auto">
+        <Header />
         
-        <div className="flex-1 overflow-hidden flex flex-col">
-          {connectedRelays === 0 ? (
-            <div className="flex-1 flex items-center justify-center p-4">
-              <div className="bg-white p-8 rounded shadow-sm text-center max-w-md">
-                <i className="fas fa-plug text-4xl text-primary mb-4"></i>
-                <h2 className="text-xl font-bold mb-2">Not Connected to Relays</h2>
-                <p className="text-gray-600 mb-4">
-                  Connect to Nostr relays to view and participate in threads.
-                </p>
-                <Button 
-                  onClick={() => connect()} 
-                  className="bg-primary"
-                  disabled={connecting}
-                >
-                  {connecting ? (
-                    <>
-                      <i className="fas fa-spinner fa-spin mr-2"></i>
-                      Connecting...
-                    </>
-                  ) : (
-                    "Connect Now"
-                  )}
-                </Button>
-              </div>
+        <main className="container mx-auto px-4">
+          {/* Main content area - matches the screenshot */}
+          <div className="mb-4">
+            <div className="bg-primary text-white p-2 font-bold">
+              meme coins
             </div>
-          ) : !currentBoard && loadingBoards ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <i className="fas fa-spinner fa-spin text-2xl text-primary mb-2"></i>
-                <p>Loading boards...</p>
-              </div>
+            <div className="bg-white border border-black border-t-0 p-3">
+              {memeCoins.length > 0 ? (
+                <table className="w-full border-collapse border border-black text-left">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border border-black p-2">Name</th>
+                      <th className="border border-black p-2">Symbol</th>
+                      <th className="border border-black p-2">Price</th>
+                      <th className="border border-black p-2">24h Change</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {memeCoins.map(coin => (
+                      <tr key={coin.id} className="hover:bg-gray-50">
+                        <td className="border border-black p-2">{coin.name}</td>
+                        <td className="border border-black p-2 font-mono">{coin.symbol}</td>
+                        <td className="border border-black p-2">{coin.price}</td>
+                        <td className={`border border-black p-2 ${coin.change.startsWith('+') ? 'text-green-700' : 'text-red-700'}`}>
+                          {coin.change}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p>loading...</p>
+              )}
             </div>
-          ) : !currentBoard ? (
-            <div className="flex-1 flex items-center justify-center p-4">
-              <div className="bg-white p-8 rounded shadow-sm text-center max-w-md">
-                <i className="fas fa-clipboard-list text-4xl text-primary mb-4"></i>
-                <h2 className="text-xl font-bold mb-2">No Board Selected</h2>
-                <p className="text-gray-600 mb-4">
-                  Select a board from the sidebar or create a new one to get started.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <ThreadList 
-              boardId={currentBoard.id}
-              boardName={currentBoard.name}
-              boardShortName={currentBoard.shortName}
-              boardDescription={currentBoard.description}
-            />
-          )}
-        </div>
+          </div>
+
+          {/* For functionality and access to modals */}
+          <div className="hidden">
+            <BoardSidebar />
+          </div>
+        </main>
       </div>
     </div>
   );
