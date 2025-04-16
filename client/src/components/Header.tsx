@@ -103,10 +103,8 @@ export const Header: React.FC = () => {
                   className="text-xs py-0.5 px-2 h-auto" 
                 />
               )}
-              {/* Only show notification bell when logged in */}
-              {currentUser && (
-                <NotificationBell />
-              )}
+              {/* Always show notification bell */}
+              <NotificationBell />
               <Link href="/profile">
                 <span className="text-xs bg-white border border-black px-2 py-0.5 hover:bg-secondary inline-block cursor-pointer text-primary">My Profile</span>
               </Link>
@@ -122,10 +120,18 @@ export const Header: React.FC = () => {
         
         {/* Top navigation tabs - inside header and sitting on bottom border */}
         <div className="flex -mb-px ml-1">
-          <a href="#" className="bg-primary border-white text-white px-3 py-0.5 text-sm font-bold border border-black border-b-0 mr-1 relative -mb-[1px]">Home</a>
-          <a href="#" className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px]">Rules</a>
-          <a href="#" className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px]">FAQ</a>
-          <a href="#" className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px]">About</a>
+          <Link href="/">
+            <span className="bg-primary border-white text-white px-3 py-0.5 text-sm font-bold border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Home</span>
+          </Link>
+          <Link href="/board/test">
+            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Test Board</span>
+          </Link>
+          <Link href="/design">
+            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Design</span>
+          </Link>
+          <Link href="/profile">
+            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Profile</span>
+          </Link>
         </div>
       </div>
       
