@@ -244,15 +244,58 @@ export const formatPubkey = (pubkey: string): string => {
 // Format date for display
 export const formatDate = (timestamp: number): string => {
   const date = new Date(timestamp * 1000);
+  
+  // For a more classic 90s style format
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  
+  if (isToday) {
+    // Format as time only for today
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+  
+  // Include date for older posts in classic 90s style
   return date.toLocaleString("en-US", {
     month: "2-digit",
     day: "2-digit",
     year: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit",
     hour12: false,
   });
+};
+
+// Format time ago in a classic style (e.g., "5 mins ago", "2 hrs ago")
+export const timeAgo = (timestamp: number): string => {
+  const now = Date.now() / 1000;
+  const seconds = Math.floor(now - timestamp);
+  
+  if (seconds < 60) {
+    return `${seconds} sec${seconds !== 1 ? 's' : ''} ago`;
+  }
+  
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) {
+    return `${minutes} min${minutes !== 1 ? 's' : ''} ago`;
+  }
+  
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return `${hours} hr${hours !== 1 ? 's' : ''} ago`;
+  }
+  
+  const days = Math.floor(hours / 24);
+  if (days < 30) {
+    return `${days} day${days !== 1 ? 's' : ''} ago`;
+  }
+  
+  const months = Math.floor(days / 30);
+  if (months < 12) {
+    return `${months} month${months !== 1 ? 's' : ''} ago`;
+  }
+  
+  const years = Math.floor(months / 12);
+  return `${years} year${years !== 1 ? 's' : ''} ago`;
 };
 
 // Media types we support
@@ -444,3 +487,5 @@ export const markNotificationAsRead = async (
   
   return await createEvent(KIND.METADATA, content, tags, identity);
 };
+
+
