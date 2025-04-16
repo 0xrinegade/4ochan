@@ -370,6 +370,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // ===== AI AUTHENTICATION ROUTES =====
   
+  // OpenAI OAuth redirect endpoint
+  app.get("/api/auth/openai-redirect", (req, res) => {
+    // In a real implementation, this would redirect to OpenAI's OAuth endpoint
+    // with your client ID, redirect URI, and requested scopes
+    
+    // For demonstration purposes, we're just returning a mock response
+    const redirectUrl = "https://auth.openai.com/authorize?client_id=YOUR_CLIENT_ID&response_type=code&redirect_uri=YOUR_REDIRECT_URI&scope=openid%20profile%20email";
+    
+    return res.json({ 
+      success: true, 
+      redirectUrl 
+    });
+  });
+  
+  // OpenAI OAuth callback endpoint
+  app.get("/api/auth/openai-callback", async (req, res) => {
+    try {
+      // In a real implementation, this endpoint would:
+      // 1. Get the authorization code from the query parameters
+      // 2. Exchange the code for access and refresh tokens
+      // 3. Use the tokens to get the user's profile info
+      // 4. Create or retrieve the user in your database
+      // 5. Set up a session for the user
+      
+      const mockUsername = "openai_user_" + Math.floor(Math.random() * 1000);
+      
+      // Create a new user or get existing user
+      let user = await storage.getUserByUsername(mockUsername);
+      
+      if (!user) {
+        // Create a new user
+        user = await storage.createUser({
+          username: mockUsername,
+          password: "oauth-" + Math.random().toString(36).substring(2, 15),
+          nostrPubkey: "",
+          displayName: mockUsername,
+          avatar: null,
+        });
+      } else {
+        // Update last seen
+        await storage.updateLastSeen(user.id);
+      }
+      
+      // In a real implementation, redirect to the frontend with a session token
+      return res.redirect("/?login_success=true&username=" + mockUsername);
+    } catch (error) {
+      console.error("Error in OpenAI OAuth callback:", error);
+      return res.redirect("/?login_error=true");
+    }
+  });
+  
   // AI-powered login endpoint
   app.post("/api/auth/ai-login", async (req, res) => {
     try {

@@ -2,14 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useNostr } from "@/hooks/useNostr";
 import { Button } from "@/components/ui/button";
 import { RelayConnectionModal } from "@/components/RelayConnectionModal";
-import { AILoginModal } from "@/components/AILoginModal";
+import { OpenAILoginButton } from "@/components/OpenAILoginButton";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
 export const Header: React.FC = () => {
   const { connectedRelays, relays } = useNostr();
   const [showConnectionModal, setShowConnectionModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -29,10 +28,6 @@ export const Header: React.FC = () => {
 
   const toggleConnectionModal = () => {
     setShowConnectionModal(!showConnectionModal);
-  };
-  
-  const handleLogin = () => {
-    setShowLoginModal(true);
   };
   
   const handleLogout = () => {
@@ -101,12 +96,10 @@ export const Header: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <button 
-                onClick={handleLogin}
-                className="text-xs bg-white text-primary px-2 py-0.5 border border-white"
-              >
-                AI Login
-              </button>
+              <OpenAILoginButton 
+                onLoginSuccess={handleLoginSuccess}
+                className="text-xs py-0.5 px-2 h-auto border border-white" 
+              />
             )}
             <Link href="/profile">
               <span className="text-xs underline cursor-pointer">My Profile</span>
@@ -133,13 +126,6 @@ export const Header: React.FC = () => {
         isOpen={showConnectionModal}
         onClose={() => setShowConnectionModal(false)}
         relays={relays}
-      />
-
-      {/* AI Login Modal */}
-      <AILoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        onLoginSuccess={handleLoginSuccess}
       />
     </header>
   );
