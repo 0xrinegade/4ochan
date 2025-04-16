@@ -10,11 +10,12 @@ import { NostrEvent, NostrIdentity, Relay, NostrProfile } from "../types";
 
 // Default relays to connect to
 export const DEFAULT_RELAYS = [
-  "wss://relay.damus.io",
+  "wss://relay.primal.net",
+  "wss://nos.lol",
   "wss://relay.nostr.band",
-  "wss://nostr.fmt.wiz.biz",
   "wss://relay.snort.social",
-  "wss://nostr.bitcoiner.social",
+  "wss://relay.current.fyi",
+  "wss://purplepag.es",
 ];
 
 // Kind numbers for our custom event types
@@ -367,6 +368,8 @@ export const uploadMedia = async (
   mimeType: string
 ): Promise<MediaFile> => {
   try {
+    console.log(`Starting upload to nostr.build: ${fileName} (${mimeType})`);
+    
     // Extract the base64 data without the prefix
     const base64Data = fileData.split(',')[1] || fileData;
     
@@ -395,32 +398,54 @@ export const uploadMedia = async (
     const file = new File([blob], fileName, { type: mimeType });
     formData.append('file', file);
     
+    // Add NIP-94 metadata fields - these fields are specific to nostr.build
+    formData.append('nip94', '1'); // Indicate this is a NIP-94 upload
+    formData.append('nip94_mimetype', mimeType);
+    
+    console.log(`Sending ${sizeInBytes} bytes to nostr.build...`);
+    
     // Upload to nostr.build
-    const response = await fetch('https://nostr.build/upload.php', {
+    const response = await fetch('https://nostr.build/api/upload/1', {
       method: 'POST',
       body: formData,
     });
     
     if (!response.ok) {
+      console.error(`Upload failed with status: ${response.status}`);
+      const errorText = await response.text();
+      console.error(`Error response: ${errorText}`);
       throw new Error(`Upload failed with status: ${response.status}`);
     }
     
     const result = await response.json();
+    console.log('Upload response:', result);
     
-    if (!result.success || !result.url) {
+    if (!result.success) {
+      throw new Error(result.message || 'Upload did not return a valid URL');
+    }
+    
+    // nostr.build returns data in different formats depending on version
+    // Extract the URL from the response based on available fields
+    const fileUrl = result.url || 
+                   (result.data && result.data.url) || 
+                   (result.data && result.data.uploadUrl);
+    
+    if (!fileUrl) {
       throw new Error('Upload did not return a valid URL');
     }
     
+    console.log(`Successfully uploaded to: ${fileUrl}`);
+    
     return {
-      url: result.url, // Use the actual URL returned by the service
+      url: fileUrl,
       type: mediaType,
       mimeType: mimeType,
       name: fileName,
       size: sizeInBytes
     };
   } catch (error) {
-    console.error("Error uploading media:", error);
-    throw new Error("Failed to upload media file");
+    console.error("Error uploading media to nostr.build:", error);
+    throw new Error(`Failed to upload media file: ${error.message}`);
   }
 };
 

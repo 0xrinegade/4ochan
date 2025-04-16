@@ -101,10 +101,15 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
     
     setIsUploading(true);
     
+    toast({
+      title: "Uploading to Nostr",
+      description: `Uploading ${filesToUpload.length} file(s) to nostr.build...`,
+    });
+    
     try {
       const uploadPromises = filesToUpload.map(async (upload) => {
         try {
-          // Upload the file
+          // Upload the file to nostr.build (NIP-94 compatible service)
           const result = await uploadMedia(
             upload.data,
             upload.file.name,
@@ -119,8 +124,8 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
           return upload;
         } catch (error) {
           upload.loading = false;
-          upload.error = "Upload failed";
-          console.error("Failed to upload file:", error);
+          upload.error = "Nostr upload failed";
+          console.error("Failed to upload file to Nostr:", error);
           return upload;
         }
       });
@@ -139,14 +144,14 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
         onMediaUploaded(successfulUploads);
         
         toast({
-          title: "Upload Complete",
-          description: `Successfully uploaded ${successfulUploads.length} file(s)`,
+          title: "Nostr Upload Complete",
+          description: `Successfully uploaded ${successfulUploads.length} file(s) to Nostr`,
         });
       }
     } catch (error) {
       toast({
-        title: "Upload Error",
-        description: "Failed to upload one or more files",
+        title: "Nostr Upload Error",
+        description: "Failed to upload one or more files to nostr.build",
         variant: "destructive",
       });
     } finally {
