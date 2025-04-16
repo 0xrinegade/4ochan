@@ -90,7 +90,7 @@ export const Header: React.FC = () => {
                 <span className="text-xs">Logged in as <b>{currentUser}</b></span>
                 <button 
                   onClick={handleLogout}
-                  className="text-xs underline"
+                  className="text-xs bg-white border border-black px-2 py-0.5 hover:bg-secondary text-primary"
                 >
                   Log Out
                 </button>
@@ -102,14 +102,14 @@ export const Header: React.FC = () => {
               />
             )}
             <Link href="/profile">
-              <span className="text-xs bg-white border border-black px-2 py-0.5 hover:bg-secondary inline-block cursor-pointer">My Profile</span>
+              <span className="text-xs bg-white border border-black px-2 py-0.5 hover:bg-secondary inline-block cursor-pointer text-primary">My Profile</span>
             </Link>
             <Link href="/design">
-              <span className="text-xs bg-white border border-black px-2 py-0.5 hover:bg-secondary inline-block cursor-pointer">Design System</span>
+              <span className="text-xs bg-white border border-black px-2 py-0.5 hover:bg-secondary inline-block cursor-pointer text-primary">Design System</span>
             </Link>
             <button 
               onClick={toggleConnectionModal}
-              className="text-xs bg-white border border-black px-2 py-0.5 hover:bg-secondary"
+              className="text-xs bg-white border border-black px-2 py-0.5 hover:bg-secondary text-primary"
             >
               Manage Relays
             </button>
