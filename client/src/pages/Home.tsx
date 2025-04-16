@@ -44,11 +44,6 @@ const Home: React.FC = () => {
         <Header />
         
         <main className="container mx-auto px-4">
-          {/* Subtitle only - h1 and marquee removed */}
-          <div className="text-center mb-2">
-            <p className="text-xs italic border-b border-primary pb-1">The premier nostric imageboard since 2025</p>
-          </div>
-          
           {/* Top navigation - classic 90s tab-style */}
           <div className="flex border-b border-black mb-3">
             <a href="#" className="bg-primary text-white px-3 py-0.5 text-sm font-bold border border-black border-b-0 mr-1">Home</a>
