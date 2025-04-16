@@ -11,6 +11,8 @@ import {
 // Since we're using the Nostr protocol for content,
 // these backend routes handle user profiles and reputation systems
 
+import { authenticateWithAI, generateAIResponse } from "./openai";
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
   app.get("/api/health", (_req, res) => {
@@ -329,6 +331,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create an HTTP server
   const httpServer = createServer(app);
   
+  // ===== AI AUTHENTICATION ROUTES =====
+  
+  // AI-powered login endpoint
+  app.post("/api/auth/ai-login", async (req, res) => {
+    try {
+      const { loginText } = req.body;
+      
+      if (!loginText || typeof loginText !== 'string' || loginText.trim().length < 25) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Please provide thoughtful text of at least 25 characters." 
+        });
+      }
+      
+      const authResult = await authenticateWithAI(loginText);
+      
+      if (authResult.success && authResult.username) {
+        // Check if user exists, otherwise create them
+        let user = await storage.getUserByUsername(authResult.username);
+        
+        if (!user) {
+          // Create a new user with the AI-generated username
+          user = await storage.createUser({
+            username: authResult.username,
+            password: "ai-auth-" + Math.random().toString(36).substring(2, 15), // Generate a random password
+            nostrPubkey: "", // Empty for AI-generated users
+            displayName: authResult.username,
+            avatar: null,
+            isAdmin: false,
+            isModerator: false,
+            isVerified: false,
+          });
+        } else {
+          // Update last seen
+          await storage.updateLastSeen(user.id);
+        }
+        
+        // Set up a simple session (in production, use proper session management)
+        // req.session.userId = user.id;
+        
+        return res.status(200).json({
+          success: true,
+          message: authResult.message,
+          username: user.username,
+          userId: user.id
+        });
+      }
+      
+      return res.status(401).json({
+        success: false,
+        message: authResult.message || "Authentication failed."
+      });
+    } catch (error) {
+      console.error("Error in AI login:", error);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Internal server error during login."
+      });
+    }
+  });
+  
+  // AI login hint endpoint
+  app.post("/api/auth/login-hint", async (req, res) => {
+    try {
+      const { loginText } = req.body;
+      
+      if (!loginText || typeof loginText !== 'string') {
+        return res.status(400).json({ hint: "Please provide some text to get a hint." });
+      }
+      
+      const hint = await generateAIResponse(
+        `The user tried to log in with this text but was rejected: "${loginText.substring(0, 100)}...". 
+        Give them a hint about why they might have been rejected and what to write instead. 
+        Keep it brief and helpful.`
+      );
+      
+      return res.json({ hint });
+    } catch (error) {
+      console.error("Error generating login hint:", error);
+      return res.status(500).json({ hint: "Error generating hint. Please try different input." });
+    }
+  });
+
   // Setup WebSocket server for real-time notifications
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   
