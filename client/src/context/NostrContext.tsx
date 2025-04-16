@@ -195,79 +195,15 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [pool, relays]);
 
-  // Load boards from relays and add default boards
+  // Load boards from relays or create initial ones if needed
   const loadBoards = useCallback(async () => {
-    // Define real Nostr boards for April 2025
-    const defaultBoards: Board[] = [
-      {
-        id: 'nostr-random-' + Math.floor(Date.now() / 1000).toString(),
-        shortName: 'b',
-        name: 'Random',
-        description: '[REAL NOSTR] Random discussions and topics',
-        threadCount: 12,
-        postCount: 145,
-        createdAt: Math.floor(Date.now() / 1000) - 86400 * 30,
-        pubkey: identity.pubkey
-      },
-      {
-        id: 'nostr-ai-' + Math.floor(Date.now() / 1000).toString(),
-        shortName: 'ai',
-        name: 'AI',
-        description: '[REAL NOSTR] Advanced AI models and applications',
-        threadCount: 18,
-        postCount: 203,
-        createdAt: Math.floor(Date.now() / 1000) - 86400 * 25,
-        pubkey: identity.pubkey
-      },
-      {
-        id: 'nostr-psyche-' + Math.floor(Date.now() / 1000).toString(),
-        shortName: 'p',
-        name: 'Psyche',
-        description: '[REAL NOSTR] Mental health discussions',
-        threadCount: 8,
-        postCount: 96,
-        createdAt: Math.floor(Date.now() / 1000) - 86400 * 20,
-        pubkey: identity.pubkey
-      },
-      {
-        id: 'nostr-games-' + Math.floor(Date.now() / 1000).toString(),
-        shortName: 'gg',
-        name: 'Games',
-        description: '[REAL NOSTR] All about games, from game theory to CoD in VR',
-        threadCount: 15,
-        postCount: 178,
-        createdAt: Math.floor(Date.now() / 1000) - 86400 * 15,
-        pubkey: identity.pubkey
-      },
-      {
-        id: 'nostr-news-' + Math.floor(Date.now() / 1000).toString(),
-        shortName: 'news',
-        name: 'News',
-        description: '[REAL NOSTR] Latest news and current events',
-        threadCount: 22,
-        postCount: 267,
-        createdAt: Math.floor(Date.now() / 1000) - 86400 * 10,
-        pubkey: identity.pubkey
-      },
-      {
-        id: 'nostr-crypto-' + Math.floor(Date.now() / 1000).toString(),
-        shortName: 'crypto',
-        name: 'Crypto',
-        description: '[REAL NOSTR] Cryptocurrency and blockchain discussions',
-        threadCount: 10,
-        postCount: 124,
-        createdAt: Math.floor(Date.now() / 1000) - 86400 * 5,
-        pubkey: identity.pubkey
-      }
-    ];
-    
-    // Add default boards to local cache
-    defaultBoards.forEach(board => localCache.addBoard(board));
+    // Initialize with empty boards array
+    const initialBoards: Board[] = [];
     
     if (!pool) {
-      // Return default boards if not connected to pool
-      setBoards(defaultBoards);
-      return defaultBoards;
+      // Return empty boards if not connected to pool
+      setBoards(initialBoards);
+      return initialBoards;
     }
     
     // Get all board definition events - using updated API for nostr-tools v2.x
@@ -279,11 +215,8 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const relayUrls = relays.filter(r => r.status === 'connected' && r.read).map(r => r.url);
     
     // Store loaded boards and track unique boards
-    const loadedBoards: Board[] = [...defaultBoards]; // Start with default boards
+    const loadedBoards: Board[] = [];
     const uniqueBoards = new Map<string, Board>();
-    
-    // Add default boards to uniqueBoards map to avoid duplicates
-    defaultBoards.forEach(board => uniqueBoards.set(board.shortName, board));
     
     try {
       const events = await pool.querySync(relayUrls, filter);
@@ -777,11 +710,11 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, []);
   
-  // Set initial default boards if empty
+  // Create initial boards if empty when connected
   useEffect(() => {
     if (boards.length === 0 && pool && connectedRelays > 0) {
-      // Create some default boards if there are none yet
-      const defaultBoards = [
+      // Automatically create standard boards if needed
+      const initialBoards = [
         { shortName: "b", name: "Random", description: "Random discussions and topics" },
         { shortName: "tech", name: "Technology", description: "Technology, programming, hardware and software discussions" },
         { shortName: "art", name: "Artwork", description: "Share and discuss art, drawings, and creative works" },
@@ -792,7 +725,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const existingBoards = await loadBoards();
         
         if (existingBoards.length === 0) {
-          for (const board of defaultBoards) {
+          for (const board of initialBoards) {
             try {
               await createBoard(board.shortName, board.name, board.description);
             } catch (error) {
