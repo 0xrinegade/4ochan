@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { SimplePool } from "nostr-tools";
+import { SimplePool, type Filter } from "nostr-tools";
 import { 
   NostrEvent, 
   NostrIdentity, 
@@ -188,15 +188,14 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       throw new Error("Not connected to any relays");
     }
     
-    // Get all board definition events
-    const events = await pool.list(
-      relays.filter(r => r.status === 'connected' && r.read).map(r => r.url),
-      [
-        {
-          kinds: [KIND.BOARD_DEFINITION],
-        }
-      ]
-    );
+    // Get all board definition events - using updated API for nostr-tools v2.x
+    const filter: Filter = {
+      kinds: [KIND.BOARD_DEFINITION]
+    };
+    
+    // Use list events pattern compatible with nostr-tools v2.x
+    const relayUrls = relays.filter(r => r.status === 'connected' && r.read).map(r => r.url);
+    const events = await pool.querySync(relayUrls, filter);
     
     // Parse and store boards
     const loadedBoards: Board[] = [];
@@ -274,16 +273,14 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return cachedThreads;
     }
     
-    // Fetch thread events from relays
-    const events = await pool.list(
-      relays.filter(r => r.status === 'connected' && r.read).map(r => r.url),
-      [
-        {
-          kinds: [KIND.THREAD],
-          '#board': [boardId]
-        }
-      ]
-    );
+    // Fetch thread events from relays - updated for nostr-tools v2.x
+    const filter: Filter = {
+      kinds: [KIND.THREAD],
+      '#board': [boardId]
+    };
+    
+    const relayUrls = relays.filter(r => r.status === 'connected' && r.read).map(r => r.url);
+    const events = await pool.querySync(relayUrls, filter);
     
     // Parse thread events
     const threads: Thread[] = [];
@@ -339,16 +336,14 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       throw new Error("Not connected to any relays");
     }
     
-    // Fetch thread event
-    const events = await pool.list(
-      relays.filter(r => r.status === 'connected' && r.read).map(r => r.url),
-      [
-        {
-          kinds: [KIND.THREAD],
-          ids: [threadId]
-        }
-      ]
-    );
+    // Fetch thread event - updated for nostr-tools v2.x
+    const filter = {
+      kinds: [KIND.THREAD],
+      ids: [threadId]
+    };
+    
+    const relayUrls = relays.filter(r => r.status === 'connected' && r.read).map(r => r.url);
+    const events = await pool.querySync(relayUrls, [filter]);
     
     if (events.length === 0) {
       return undefined;
@@ -401,16 +396,14 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       throw new Error("Not connected to any relays");
     }
     
-    // Fetch post events
-    const events = await pool.list(
-      relays.filter(r => r.status === 'connected' && r.read).map(r => r.url),
-      [
-        {
-          kinds: [KIND.POST],
-          '#e': [threadId]
-        }
-      ]
-    );
+    // Fetch post events - updated for nostr-tools v2.x
+    const filter = {
+      kinds: [KIND.POST],
+      '#e': [threadId]
+    };
+    
+    const relayUrls = relays.filter(r => r.status === 'connected' && r.read).map(r => r.url);
+    const events = await pool.querySync(relayUrls, [filter]);
     
     // Parse post events
     const posts: Post[] = [];
