@@ -112,12 +112,12 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
       {/* Bell Icon with Badge */}
       <button 
         onClick={handleBellClick}
-        className="relative p-2 focus:outline-none"
+        className="relative text-xs bg-white border border-black px-2 py-0.5 hover:bg-[#d0d0d0] text-primary"
       >
-        <div className="text-xl font-bold">
+        <div className="font-bold flex items-center">
           ✉
           {unreadCount > 0 && (
-            <span className="absolute top-0 right-0 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+            <span className="ml-1 bg-primary text-white text-xs px-1 border border-black">
               {unreadCount}
             </span>
           )}
@@ -127,16 +127,15 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
       {/* Dropdown Content */}
       {isOpen && (
         <div className="absolute right-0 mt-1 w-80 max-h-96 overflow-y-auto z-50
-                      bg-[#e0e0e0] border-2 border-[#000000]
+                      bg-[#f0e6d2] border-2 border-black
                       shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-          <div className="flex justify-between items-center p-2 bg-[#800000] text-white border-b-2 border-[#000000]">
+          <div className="flex justify-between items-center p-2 bg-primary text-white border-b-2 border-black">
             <h3 className="font-bold uppercase">Notifications</h3>
             {unreadCount > 0 && (
               <button 
                 onClick={handleMarkAllRead}
-                className="text-xs bg-[#c0c0c0] text-black px-2 py-1 
-                         border-t-[1px] border-l-[1px] border-[#ffffff] 
-                         border-b-[1px] border-r-[1px] border-[#808080]"
+                className="text-xs bg-[#c0c0c0] hover:bg-[#d0d0d0] text-black px-2 py-0.5 
+                         border border-black"
               >
                 MARK ALL READ
               </button>
@@ -158,20 +157,20 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
                   className={`
-                    p-2 border-b border-[#808080] cursor-pointer
-                    hover:bg-[#d0d0d0]
-                    ${notification.read ? 'bg-[#e0e0e0]' : 'bg-[#f0f0f0]'}
+                    p-2 border-b border-black cursor-pointer
+                    hover:bg-[#dbd1c0]
+                    ${notification.read ? 'bg-[#f0e6d2]' : 'bg-[#fffdf7]'}
                   `}
                 >
                   <div className="flex justify-between">
                     <h4 className="font-bold">{notification.title}</h4>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-700">
                       {timeAgo(notification.createdAt)}
                     </span>
                   </div>
                   <p className="text-sm mt-1">{notification.message}</p>
                   {!notification.read && (
-                    <div className="w-2 h-2 bg-red-600 rounded-full absolute top-2 right-2"></div>
+                    <div className="w-2 h-2 bg-primary absolute top-2 right-2"></div>
                   )}
                 </div>
               ))}
