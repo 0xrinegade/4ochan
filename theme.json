@@ -2,5 +2,18 @@
   "variant": "tint",
   "primary": "hsl(0, 59%, 30%)",
   "appearance": "light",
-  "radius": 0
+  "radius": 0,
+  "colors": {
+    "secondary": "#F5F5DC",
+    "background": "#F5F5DC",
+    "accent": "#000000",
+    "text": "#000000",
+    "link": "hsl(0, 59%, 35%)",
+    "borderColor": "#000000"
+  },
+  "typography": {
+    "fontFamily": "Libertarian, monospace",
+    "headingFont": "Libertarian, monospace",
+    "bodyFont": "Libertarian, monospace"
+  }
 }
