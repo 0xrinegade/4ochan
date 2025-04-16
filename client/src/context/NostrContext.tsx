@@ -33,7 +33,7 @@ interface NostrContextType {
   updateRelay: (relay: Relay) => void;
   saveRelaySettings: (autoConnect: boolean, autoReconnect: boolean) => void;
   publishEvent: (event: NostrEvent) => Promise<void>;
-  loadBoards: () => Promise<void>;
+  loadBoards: () => Promise<Board[]>;
   createBoard: (shortName: string, name: string, description: string) => Promise<Board>;
   getThreadsByBoard: (boardId: string) => Promise<Thread[]>;
   getThread: (threadId: string) => Promise<Thread | undefined>;
@@ -99,7 +99,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Disconnect from all relays
   const disconnect = useCallback(() => {
     if (pool) {
-      pool.close();
+      pool.close(["user-disconnect"]); // Provide a reason for closing as required by v2.x API
       setPool(null);
       
       // Update relay statuses
@@ -337,13 +337,13 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     
     // Fetch thread event - updated for nostr-tools v2.x
-    const filter = {
+    const filter: Filter = {
       kinds: [KIND.THREAD],
       ids: [threadId]
     };
     
     const relayUrls = relays.filter(r => r.status === 'connected' && r.read).map(r => r.url);
-    const events = await pool.querySync(relayUrls, [filter]);
+    const events = await pool.querySync(relayUrls, filter);
     
     if (events.length === 0) {
       return undefined;
@@ -397,13 +397,13 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     
     // Fetch post events - updated for nostr-tools v2.x
-    const filter = {
+    const filter: Filter = {
       kinds: [KIND.POST],
       '#e': [threadId]
     };
     
     const relayUrls = relays.filter(r => r.status === 'connected' && r.read).map(r => r.url);
-    const events = await pool.querySync(relayUrls, [filter]);
+    const events = await pool.querySync(relayUrls, filter);
     
     // Parse post events
     const posts: Post[] = [];
@@ -534,7 +534,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     return () => {
       if (pool) {
-        pool.close();
+        pool.close(["cleanup"]); // Provide a reason for closing as required by v2.x API
       }
     };
   }, []);

@@ -18,7 +18,7 @@ export const useBoards = () => {
     if (connectedRelays > 0 && boards.length === 0 && !loading) {
       setLoading(true);
       loadBoards()
-        .then(() => {
+        .then((boards) => {
           setLoading(false);
           setError(null);
         })
