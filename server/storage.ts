@@ -1,10 +1,13 @@
-import { eq } from "drizzle-orm";
+import { eq, and, desc, count } from "drizzle-orm";
 import { db } from "./db";
 import { 
-  users, badges, userBadges, reputationLogs, followers,
+  users, badges, userBadges, reputationLogs, followers, 
+  threadSubscriptions, notifications,
   type User, type InsertUser, type Badge, type InsertBadge,
   type UserBadge, type InsertUserBadge, type ReputationLog, 
-  type InsertReputationLog, type Follower, type InsertFollower
+  type InsertReputationLog, type Follower, type InsertFollower,
+  type ThreadSubscription, type InsertThreadSubscription,
+  type Notification, type InsertNotification
 } from "@shared/schema";
 
 // Enhanced storage interface for user profiles and reputation systems
@@ -37,6 +40,21 @@ export interface IStorage {
   unfollowUser(followerId: number, followingId: number): Promise<void>;
   getFollowers(userId: number): Promise<User[]>;
   getFollowing(userId: number): Promise<User[]>;
+  
+  // Thread subscription management
+  subscribeToThread(subscription: InsertThreadSubscription): Promise<ThreadSubscription>;
+  unsubscribeFromThread(userId: number, threadId: string): Promise<void>;
+  getUserSubscriptions(userId: number): Promise<ThreadSubscription[]>;
+  isUserSubscribed(userId: number, threadId: string): Promise<boolean>;
+  updateThreadSubscription(userId: number, threadId: string, updates: Partial<InsertThreadSubscription>): Promise<ThreadSubscription | undefined>;
+  
+  // Notification management
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  getUserNotifications(userId: number, limit?: number, includeRead?: boolean): Promise<Notification[]>;
+  markNotificationAsRead(notificationId: number): Promise<void>;
+  markAllNotificationsAsRead(userId: number): Promise<void>;
+  countUnreadNotifications(userId: number): Promise<number>;
+  deleteNotification(notificationId: number): Promise<void>;
 }
 
 // Database storage implementation
@@ -212,6 +230,142 @@ export class DatabaseStorage implements IStorage {
     }
     
     return followingUsers;
+  }
+  
+  // Thread subscription methods
+  async subscribeToThread(subscriptionData: InsertThreadSubscription): Promise<ThreadSubscription> {
+    // Check if already subscribed
+    const existing = await db.select()
+      .from(threadSubscriptions)
+      .where(
+        and(
+          eq(threadSubscriptions.userId, subscriptionData.userId),
+          eq(threadSubscriptions.threadId, subscriptionData.threadId)
+        )
+      );
+      
+    if (existing.length > 0) {
+      return existing[0];
+    }
+    
+    const result = await db.insert(threadSubscriptions)
+      .values({
+        ...subscriptionData,
+        createdAt: new Date(),
+        lastNotified: new Date()
+      })
+      .returning();
+      
+    return result[0];
+  }
+  
+  async unsubscribeFromThread(userId: number, threadId: string): Promise<void> {
+    await db.delete(threadSubscriptions)
+      .where(
+        and(
+          eq(threadSubscriptions.userId, userId),
+          eq(threadSubscriptions.threadId, threadId)
+        )
+      );
+  }
+  
+  async getUserSubscriptions(userId: number): Promise<ThreadSubscription[]> {
+    return db.select()
+      .from(threadSubscriptions)
+      .where(eq(threadSubscriptions.userId, userId))
+      .orderBy(desc(threadSubscriptions.createdAt));
+  }
+  
+  async isUserSubscribed(userId: number, threadId: string): Promise<boolean> {
+    const result = await db.select({ count: count() })
+      .from(threadSubscriptions)
+      .where(
+        and(
+          eq(threadSubscriptions.userId, userId),
+          eq(threadSubscriptions.threadId, threadId)
+        )
+      );
+      
+    return result[0].count > 0;
+  }
+  
+  async updateThreadSubscription(
+    userId: number, 
+    threadId: string, 
+    updates: Partial<InsertThreadSubscription>
+  ): Promise<ThreadSubscription | undefined> {
+    const result = await db.update(threadSubscriptions)
+      .set(updates)
+      .where(
+        and(
+          eq(threadSubscriptions.userId, userId),
+          eq(threadSubscriptions.threadId, threadId)
+        )
+      )
+      .returning();
+      
+    return result[0];
+  }
+  
+  // Notification methods
+  async createNotification(notificationData: InsertNotification): Promise<Notification> {
+    const result = await db.insert(notifications)
+      .values({
+        ...notificationData,
+        read: false,
+        createdAt: new Date()
+      })
+      .returning();
+      
+    return result[0];
+  }
+  
+  async getUserNotifications(
+    userId: number, 
+    limit: number = 50, 
+    includeRead: boolean = false
+  ): Promise<Notification[]> {
+    let query = db.select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId));
+      
+    if (!includeRead) {
+      query = query.where(eq(notifications.read, false));
+    }
+    
+    return query
+      .orderBy(desc(notifications.createdAt))
+      .limit(limit);
+  }
+  
+  async markNotificationAsRead(notificationId: number): Promise<void> {
+    await db.update(notifications)
+      .set({ read: true })
+      .where(eq(notifications.id, notificationId));
+  }
+  
+  async markAllNotificationsAsRead(userId: number): Promise<void> {
+    await db.update(notifications)
+      .set({ read: true })
+      .where(eq(notifications.userId, userId));
+  }
+  
+  async countUnreadNotifications(userId: number): Promise<number> {
+    const result = await db.select({ count: count() })
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.userId, userId),
+          eq(notifications.read, false)
+        )
+      );
+      
+    return result[0].count;
+  }
+  
+  async deleteNotification(notificationId: number): Promise<void> {
+    await db.delete(notifications)
+      .where(eq(notifications.id, notificationId));
   }
 }
 
