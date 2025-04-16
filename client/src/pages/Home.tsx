@@ -213,7 +213,8 @@ const Home: React.FC = () => {
                   </div>
                   <button 
                     onClick={() => setShowCreateModal(true)}
-                    className="bg-primary text-white font-bold py-1 px-3 border border-black shadow"
+                    className="bg-gray-200 text-black font-bold py-1 px-3 border-2 border-black"
+                    style={{ boxShadow: "2px 2px 0 #000" }}
                   >
                     Create Thread
                   </button>
