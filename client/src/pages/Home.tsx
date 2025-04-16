@@ -44,14 +44,6 @@ const Home: React.FC = () => {
         <Header />
         
         <main className="container mx-auto px-4">
-          {/* Top navigation - classic 90s tab-style */}
-          <div className="flex border-b border-black mb-3">
-            <a href="#" className="bg-primary text-white px-3 py-0.5 text-sm font-bold border border-black border-b-0 mr-1">Home</a>
-            <a href="#" className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1">Rules</a>
-            <a href="#" className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1">FAQ</a>
-            <a href="#" className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1">About</a>
-          </div>
-          
           {/* Main content area - 90s style */}
           <div className="flex flex-col md:flex-row gap-2">
             {/* Left sidebar with quick links */}

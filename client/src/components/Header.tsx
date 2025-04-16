@@ -114,6 +114,14 @@ export const Header: React.FC = () => {
         </div>
       </div>
       
+      {/* Top navigation - classic 90s tab-style, moved from Home component */}
+      <div className="flex border-b border-black mb-1">
+        <a href="#" className="bg-primary text-white px-3 py-0.5 text-sm font-bold border border-black border-b-0 mr-1">Home</a>
+        <a href="#" className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1">Rules</a>
+        <a href="#" className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1">FAQ</a>
+        <a href="#" className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1">About</a>
+      </div>
+      
       {/* Relay Connection Modal */}
       <RelayConnectionModal
         isOpen={showConnectionModal}
