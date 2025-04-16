@@ -55,7 +55,7 @@ interface NostrContextType {
   getUnreadNotificationCount: () => Promise<number>;
 }
 
-const NostrContext = createContext<NostrContextType | undefined>(undefined);
+export const NostrContext = createContext<NostrContextType | undefined>(undefined);
 
 export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [pool, setPool] = useState<SimplePool | null>(null);
