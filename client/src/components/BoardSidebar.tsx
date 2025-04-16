@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatPubkey } from "@/lib/nostr";
+import { PlusCircleIcon, KeyIcon, UserIcon } from "lucide-react";
 
 export const BoardSidebar: React.FC = () => {
   const [location] = useLocation();

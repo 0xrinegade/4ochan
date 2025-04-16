@@ -11,26 +11,26 @@
 
 @layer base {
   :root {
-    --background: 192 15% 94%;
+    --background: 40 30% 96%;
     --foreground: 220 15% 25%;
     --card: 0 0% 100%;
     --card-foreground: 220 15% 25%;
     --popover: 0 0% 100%;
     --popover-foreground: 220 15% 25%;
-    --primary: 210 33% 24%;
+    --primary: 197 30% 43%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 184 6% 62%;
+    --secondary: 200 8% 76%;
     --secondary-foreground: 220 15% 25%;
-    --muted: 210 33% 96%;
+    --muted: 197 10% 94%;
     --muted-foreground: 220 15% 45%;
-    --accent: 6 78% 57%;
+    --accent: 9 80% 65%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 192 15% 89%;
-    --input: 192 15% 89%;
-    --ring: 210 33% 24%;
-    --radius: 0.5rem;
+    --border: 197 30% 90%;
+    --input: 197 30% 90%;
+    --ring: 197 30% 43%;
+    --radius: 0.25rem;
   }
 
   * {
@@ -40,6 +40,25 @@
   body {
     font-family: 'Libertarian', sans-serif;
     @apply antialiased bg-background text-foreground;
+    background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23d1d5db' fill-opacity='0.2' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3Ccircle cx='13' cy='13' r='1'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  
+  /* Scrollbar Styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/70 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary;
   }
 
   .monaco {
@@ -47,7 +66,7 @@
   }
 
   .post-num {
-    @apply monaco text-xs text-primary;
+    @apply monaco text-xs text-primary font-bold;
   }
 
   .timestamp {
@@ -57,18 +76,42 @@
   .post-image {
     max-height: 250px;
     max-width: 250px;
-    @apply rounded;
+    @apply rounded border border-border shadow-sm cursor-pointer transition-transform hover:scale-[1.02];
   }
 
   .thread-container {
-    @apply bg-white rounded shadow-sm;
+    @apply bg-white rounded-sm shadow-sm border border-border overflow-hidden;
+  }
+
+  .board-title {
+    @apply bg-primary text-primary-foreground px-3 py-1.5 text-sm font-bold uppercase tracking-wide;
+  }
+  
+  .thread-title {
+    @apply font-bold text-primary text-lg;
   }
 
   .post {
-    @apply border-t border-gray-200;
+    @apply border-t border-border p-3;
   }
 
   .post:first-child {
     @apply border-t-0;
+  }
+  
+  .post-info {
+    @apply flex gap-2 items-center mb-1.5;
+  }
+  
+  .post-content {
+    @apply leading-relaxed text-sm my-2;
+  }
+  
+  .reply-link {
+    @apply text-accent hover:underline cursor-pointer font-bold;
+  }
+  
+  .quote-text {
+    @apply text-green-700 italic;
   }
 }
