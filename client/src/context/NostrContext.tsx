@@ -447,7 +447,8 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     boardId: string, 
     title: string, 
     content: string, 
-    imageUrls: string[]
+    imageUrls: string[],
+    media?: MediaContent[]
   ): Promise<Thread> => {
     if (!pool) {
       throw new Error("Not connected to any relays");
@@ -455,7 +456,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     // Create and publish thread event
     const event = await import("../lib/nostr").then(({ createThreadEvent }) => 
-      createThreadEvent(boardId, title, content, imageUrls, identity)
+      createThreadEvent(boardId, title, content, imageUrls, identity, media as any)
     );
     
     await publishEvent(event);
@@ -467,6 +468,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       title,
       content,
       images: imageUrls,
+      media: media,
       authorPubkey: identity.pubkey,
       createdAt: event.created_at,
       replyCount: 0,
@@ -496,7 +498,8 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     threadId: string, 
     content: string, 
     replyToIds: string[] = [], 
-    imageUrls: string[] = []
+    imageUrls: string[] = [],
+    media?: MediaContent[]
   ): Promise<Post> => {
     if (!pool) {
       throw new Error("Not connected to any relays");
@@ -504,7 +507,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     // Create and publish post event
     const event = await import("../lib/nostr").then(({ createPostEvent }) => 
-      createPostEvent(threadId, content, replyToIds, imageUrls, identity)
+      createPostEvent(threadId, content, replyToIds, imageUrls, identity, media as any)
     );
     
     await publishEvent(event);
@@ -515,6 +518,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       threadId,
       content,
       images: imageUrls,
+      media: media,
       authorPubkey: identity.pubkey,
       createdAt: event.created_at,
       references: replyToIds

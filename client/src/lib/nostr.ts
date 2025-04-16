@@ -160,12 +160,14 @@ export const createThreadEvent = async (
   title: string,
   content: string,
   imageUrls: string[] = [],
-  identity: NostrIdentity
+  identity: NostrIdentity,
+  media?: MediaFile[]
 ): Promise<NostrEvent> => {
   const threadContent = JSON.stringify({
     title,
     content,
     images: imageUrls,
+    media: media || [],
   });
   
   const tags = [
@@ -173,9 +175,17 @@ export const createThreadEvent = async (
     ["board", boardId],
   ];
   
+  // Add image tags for backward compatibility
   imageUrls.forEach(url => {
     tags.push(["image", url]);
   });
+  
+  // Add media tags for more detailed media info
+  if (media && media.length > 0) {
+    media.forEach(item => {
+      tags.push(["media", item.url, item.type, item.mimeType]);
+    });
+  }
   
   return await createEvent(KIND.THREAD, threadContent, tags, identity);
 };
@@ -186,11 +196,13 @@ export const createPostEvent = async (
   content: string,
   replyToIds: string[] = [],
   imageUrls: string[] = [],
-  identity: NostrIdentity
+  identity: NostrIdentity,
+  media?: MediaFile[]
 ): Promise<NostrEvent> => {
   const postContent = JSON.stringify({
     content,
     images: imageUrls,
+    media: media || [],
   });
   
   const tags = [
@@ -202,10 +214,17 @@ export const createPostEvent = async (
     tags.push(["e", id, "", "reply"]);
   });
   
-  // Add image tags
+  // Add image tags for backward compatibility
   imageUrls.forEach(url => {
     tags.push(["image", url]);
   });
+  
+  // Add media tags for more detailed media info
+  if (media && media.length > 0) {
+    media.forEach(item => {
+      tags.push(["media", item.url, item.type, item.mimeType]);
+    });
+  }
   
   return await createEvent(KIND.POST, postContent, tags, identity);
 };

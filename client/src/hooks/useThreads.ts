@@ -177,7 +177,7 @@ export const useThread = (threadId?: string) => {
     }
     
     try {
-      const newPost = await createPost(threadId, content, replyToIds, imageUrls, media);
+      const newPost = await createPost(threadId, content, replyToIds, imageUrls, media as any);
       setPosts(prev => [...prev, newPost]);
       
       // Update thread's reply count
