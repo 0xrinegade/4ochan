@@ -234,21 +234,113 @@ export const formatDate = (timestamp: number): string => {
   });
 };
 
-// Upload image to a service and return URL
-export const uploadImage = async (imageData: string): Promise<string> => {
-  // For now, we'll just return a mock URL since we'd need to integrate
+// Media types we support
+export enum MediaType {
+  Image = 'image',
+  Video = 'video',
+  Audio = 'audio',
+  Document = 'document',
+}
+
+export interface MediaFile {
+  url: string;
+  type: MediaType;
+  mimeType: string;
+  name: string;
+  size?: number;
+}
+
+/**
+ * Get media type based on file MIME type
+ */
+export const getMediaTypeFromMime = (mimeType: string): MediaType => {
+  if (mimeType.startsWith('image/')) {
+    return MediaType.Image;
+  } else if (mimeType.startsWith('video/')) {
+    return MediaType.Video;
+  } else if (mimeType.startsWith('audio/')) {
+    return MediaType.Audio;
+  } else {
+    return MediaType.Document;
+  }
+};
+
+/**
+ * Get file extension from MIME type
+ */
+export const getExtensionFromMime = (mimeType: string): string => {
+  const mapping: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
+    'image/svg+xml': 'svg',
+    'video/mp4': 'mp4',
+    'video/webm': 'webm',
+    'video/ogg': 'ogv',
+    'audio/mpeg': 'mp3',
+    'audio/ogg': 'ogg',
+    'audio/wav': 'wav',
+    'application/pdf': 'pdf',
+    'application/msword': 'doc',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+    'text/plain': 'txt',
+  };
+  
+  return mapping[mimeType] || 'bin';
+};
+
+/**
+ * Upload media file to a service and return MediaFile object
+ * @param fileData Base64 data URL of the file
+ * @param fileName Original file name
+ * @param mimeType MIME type of the file
+ */
+export const uploadMedia = async (
+  fileData: string, 
+  fileName: string,
+  mimeType: string
+): Promise<MediaFile> => {
+  // For now, we'll just return mock URLs since we'd need to integrate
   // with a real decentralized storage service
   // In a real implementation, this would upload to IPFS or other decentralized storage
   
   try {
-    // This is where we would make an API call to upload the image
+    // Extract the base64 data without the prefix
+    const base64Data = fileData.split(',')[1] || fileData;
+    
+    // Calculate approximate size (base64 is ~4/3 the size of binary)
+    const sizeInBytes = Math.round((base64Data.length * 3) / 4);
+    
+    // Get media type based on MIME
+    const mediaType = getMediaTypeFromMime(mimeType);
+    
+    // Get file extension
+    const extension = getExtensionFromMime(mimeType);
+    
+    // This is where we would make an API call to upload the file
     // For now, just simulate a delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
+    // Generate a unique ID for the file
+    const fileId = Math.random().toString(36).substring(2, 15);
+    
     // Mock response with a sample URL - in production this would be from a real service
-    return `https://nostr-images.example/${Math.random().toString(36).substring(2, 15)}.jpg`;
+    return {
+      url: `https://nostr-media.example/${fileId}.${extension}`,
+      type: mediaType,
+      mimeType: mimeType,
+      name: fileName,
+      size: sizeInBytes
+    };
   } catch (error) {
-    console.error("Failed to upload image", error);
-    throw new Error("Image upload failed");
+    console.error("Error uploading media:", error);
+    throw new Error("Failed to upload media file");
   }
+};
+
+// For backward compatibility
+export const uploadImage = async (imageData: string): Promise<string> => {
+  const mediaFile = await uploadMedia(imageData, "image.jpg", "image/jpeg");
+  return mediaFile.url;
 };

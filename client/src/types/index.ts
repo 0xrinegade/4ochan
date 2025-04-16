@@ -38,12 +38,21 @@ export interface Board {
   threadCount: number;
 }
 
+export interface MediaContent {
+  url: string;
+  type: 'image' | 'video' | 'audio' | 'document';
+  mimeType: string;
+  name: string;
+  size?: number;
+}
+
 export interface Thread {
   id: string;
   boardId: string;
   title?: string;
   content: string;
-  images?: string[];
+  media?: MediaContent[];
+  images?: string[]; // Legacy support
   authorPubkey: string;
   createdAt: number;
   replyCount: number;
@@ -54,10 +63,20 @@ export interface Post {
   id: string;
   threadId: string;
   content: string;
-  images?: string[];
+  media?: MediaContent[];
+  images?: string[]; // Legacy support
   authorPubkey: string;
   createdAt: number;
   references?: string[]; // Array of post IDs this post is replying to
+}
+
+export interface MediaUpload {
+  file: File;
+  data: string;
+  url?: string;
+  mediaContent?: MediaContent;
+  loading: boolean;
+  error?: string;
 }
 
 export interface ImageUpload {
