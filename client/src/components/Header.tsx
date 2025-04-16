@@ -49,12 +49,17 @@ export const Header: React.FC = () => {
               ? `Connected to ${connectedRelays} relay${connectedRelays !== 1 ? 's' : ''}`
               : 'Offline - Click to Connect'}
           </p>
-          <button 
-            onClick={toggleConnectionModal}
-            className="text-xs underline"
-          >
-            Manage Relays
-          </button>
+          <div className="flex gap-2">
+            <Link href="/profile">
+              <span className="text-xs underline cursor-pointer">My Profile</span>
+            </Link>
+            <button 
+              onClick={toggleConnectionModal}
+              className="text-xs underline"
+            >
+              Manage Relays
+            </button>
+          </div>
         </div>
       </div>
       

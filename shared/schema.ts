@@ -1,10 +1,6 @@
 import { pgTable, text, serial, integer, boolean, jsonb, timestamp, varchar, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { relations } from "drizzle-orm";
-
-// Although most content data is stored on Nostr relays,
-// we're enhancing our schema to support user profiles and reputation systems
 
 // Core Users table with enhanced profile fields
 export const users = pgTable("users", {
@@ -71,28 +67,6 @@ export const followers = pgTable("followers", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => ({
   unq: unique().on(t.followerId, t.followingId),
-}));
-
-// Define relationships
-export const usersRelations = relations(users, ({ many }) => ({
-  badges: many(userBadges),
-  reputationLogs: many(reputationLogs),
-  followedBy: many(followers, { relationName: "followedByRelation" }),
-  following: many(followers, { relationName: "followingRelation" }),
-}));
-
-export const badgesRelations = relations(badges, ({ many }) => ({
-  userBadges: many(userBadges),
-}));
-
-export const userBadgesRelations = relations(userBadges, ({ one }) => ({
-  user: one(users),
-  badge: one(badges),
-}));
-
-export const followersRelations = relations(followers, ({ one }) => ({
-  follower: one(users, { relationName: "followingRelation" }),
-  following: one(users, { relationName: "followedByRelation" }),
 }));
 
 // Create insert schemas
