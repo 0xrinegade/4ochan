@@ -435,11 +435,16 @@ export const removeSubscriptionEvent = async (
   subscriptionId: string,
   identity: NostrIdentity
 ): Promise<NostrEvent> => {
+  const content = JSON.stringify({
+    action: "unsubscribe",
+    timestamp: Math.floor(Date.now() / 1000)
+  });
+  
   const tags = [
-    ["e", subscriptionId]
+    ["e", subscriptionId, "", "subscription"] // Reference to the subscription being removed
   ];
   
-  return await createEvent(KIND.METADATA, "", tags, identity);
+  return await createEvent(KIND.METADATA, content, tags, identity);
 };
 
 // Create a notification event
@@ -488,4 +493,26 @@ export const markNotificationAsRead = async (
   return await createEvent(KIND.METADATA, content, tags, identity);
 };
 
+// Update a thread subscription (change notification settings)
+export const updateSubscriptionEvent = async (
+  subscriptionId: string,
+  threadId: string,
+  notifyOnReplies: boolean,
+  notifyOnMentions: boolean,
+  identity: NostrIdentity
+): Promise<NostrEvent> => {
+  const subscriptionContent = JSON.stringify({
+    notifyOnReplies,
+    notifyOnMentions,
+    updatedAt: Math.floor(Date.now() / 1000)
+  });
+  
+  const tags = [
+    ["e", subscriptionId, "", "subscription"], // Reference to the subscription being updated
+    ["e", threadId, "", "thread"], // Thread reference
+    ["subscription", "thread"] // Subscription type
+  ];
+  
+  return await createEvent(KIND.METADATA, subscriptionContent, tags, identity);
+};
 

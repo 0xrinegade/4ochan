@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNostr } from '../context/NostrContext';
 import { Notification } from '../types';
-import { formatDate } from '../lib/nostr';
+import { formatDate, timeAgo } from '../lib/nostr';
 
 interface NotificationBellProps {
   className?: string;
@@ -159,7 +159,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                   <div className="flex justify-between">
                     <h4 className="font-bold">{notification.title}</h4>
                     <span className="text-xs text-gray-500">
-                      {formatDate(notification.createdAt)}
+                      {timeAgo(notification.createdAt)}
                     </span>
                   </div>
                   <p className="text-sm mt-1">{notification.message}</p>
