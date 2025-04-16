@@ -47,14 +47,14 @@ const Home: React.FC = () => {
           {/* Marquee - essential 90s element */}
           <div className="overflow-hidden bg-black text-yellow-400 border border-primary mb-4">
             <div className="inline-block whitespace-nowrap py-1 animate-marquee">
-              ★★★ WELCOME TO NOSTRCHAN - THE PREMIER NOSTRIC IMAGEBOARD! NO CRYPTO TALK ALLOWED! ENJOY YOUR STAY AND REMEMBER TO BE EXCELLENT TO EACH OTHER! ★★★ WELCOME TO NOSTRCHAN - THE PREMIER NOSTRIC IMAGEBOARD! NO CRYPTO TALK ALLOWED! ENJOY YOUR STAY AND REMEMBER TO BE EXCELLENT TO EACH OTHER! ★★★
+              ★★★ WELCOME TO 4OCHAN.ORG - THE PREMIER NOSTRIC IMAGEBOARD! NO CRYPTO TALK ALLOWED! ENJOY YOUR STAY AND REMEMBER TO BE EXCELLENT TO EACH OTHER! ★★★ WELCOME TO 4OCHAN.ORG - THE PREMIER NOSTRIC IMAGEBOARD! NO CRYPTO TALK ALLOWED! ENJOY YOUR STAY AND REMEMBER TO BE EXCELLENT TO EACH OTHER! ★★★
             </div>
           </div>
 
           {/* 90s-style title with decorative elements */}
           <div className="text-center mb-4">
             <h1 className="text-4xl font-bold text-primary tracking-wide uppercase">
-              <span className="text-black">━━━</span> NostrChan <span className="text-black">━━━</span>
+              <span className="text-black">━━━</span> 4ochan.org <span className="text-black">━━━</span>
             </h1>
             <p className="text-sm italic mt-1 border-b border-primary pb-2">The premier nostric imageboard since 2025</p>
           </div>
@@ -79,10 +79,19 @@ const Home: React.FC = () => {
                   <ul className="list-disc pl-5">
                     <li className="mb-1"><a href="#" className="text-primary underline">Random</a></li>
                     <li className="mb-1"><a href="#" className="text-primary underline">Technology</a></li>
-                    <li className="mb-1"><a href="#" className="text-primary underline">Anime</a></li>
+                    <li className="mb-1">
+                      <div className="flex items-center">
+                        <a href="#" className="text-primary underline">Anime</a>
+                        <div className="ml-1 text-[10px] font-bold bg-red-500 text-white px-1 animate-pulse">NEW!</div>
+                      </div>
+                    </li>
                     <li className="mb-1"><a href="#" className="text-primary underline">Politics</a></li>
                     <li className="mb-1"><a href="#" className="text-primary underline">Video Games</a></li>
                   </ul>
+                  <div className="mt-3 p-1 border border-blue-500 bg-blue-100 text-center text-xs">
+                    <div className="font-bold text-blue-700">HOT TIP:</div>
+                    <p>Press Ctrl+F5 to refresh your cache if pages don't load correctly!</p>
+                  </div>
                 </div>
               </div>
               
@@ -91,9 +100,13 @@ const Home: React.FC = () => {
                   <span className="mr-1">■</span> STATS
                 </div>
                 <div className="bg-white border border-black border-t-0 p-2 text-sm">
-                  <p>Online: 420</p>
+                  <div className="flex items-center mb-1">
+                    <span className="animate-blink text-green-600 mr-1">●</span>
+                    <p>Visitors: <span className="font-mono bg-black text-green-400 px-1">0042069</span></p>
+                  </div>
                   <p>Threads: 1,337</p>
                   <p>Posts today: 8,008</p>
+                  <p className="text-xs mt-2 text-center italic border-t border-dotted border-gray-400 pt-1">You are visitor #<span className="font-bold">42,069</span></p>
                 </div>
               </div>
             </div>
@@ -246,7 +259,7 @@ const Home: React.FC = () => {
             <div className="border-t border-black pt-2">
               <p className="flex items-center justify-center">
                 <span className="text-primary mx-1">◆</span> 
-                NostrChan © 2025 
+                4ochan.org © 2025 
                 <span className="text-primary mx-1">◆</span> 
                 <a href="#" className="text-primary underline">About</a> 
                 <span className="text-primary mx-1">◆</span> 
@@ -256,6 +269,19 @@ const Home: React.FC = () => {
                 <span className="text-primary mx-1">◆</span>
               </p>
               <p className="text-xs mt-1 italic">Best viewed with Netscape Navigator</p>
+              
+              {/* Classic 90s web badges */}
+              <div className="flex items-center justify-center mt-3 space-x-2">
+                <div className="border border-black bg-gray-200 px-1 text-[10px] font-mono">HTML 1.0</div>
+                <div className="border border-black bg-gray-200 px-1 text-[10px] font-mono">800x600</div>
+                <div className="border border-black bg-blue-700 text-white px-1 text-[10px] animate-pulse font-mono">JAVASCRIPT ON</div>
+                <div className="border border-gray-500 bg-white text-[10px] font-mono px-1 italic">
+                  <span className="text-red-600 font-bold">W</span>
+                  <span className="text-blue-600 font-bold">e</span>
+                  <span className="text-green-600 font-bold">b</span>
+                  <span className="text-yellow-600 font-bold">1.0</span>
+                </div>
+              </div>
             </div>
           </div>
 
