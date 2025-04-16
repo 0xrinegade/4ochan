@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Thread from "@/pages/Thread";
 import UserProfilePage from "@/pages/UserProfilePage";
+import DesignSystem from "@/pages/DesignSystem";
 import { NostrProvider } from "./context/NostrContext";
 
 function Router() {
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/thread/:id" component={Thread} />
       <Route path="/profile" component={UserProfilePage} />
       <Route path="/profile/:id" component={UserProfilePage} />
+      <Route path="/design" component={DesignSystem} />
       <Route component={NotFound} />
     </Switch>
   );
