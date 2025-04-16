@@ -354,7 +354,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const threadData = JSON.parse(event.content);
       
       // Find the board ID from the tags
-      const boardTag = event.tags.find(tag => tag[0] === 'board');
+      const boardTag = event.tags.find((tag: string[]) => tag[0] === 'board');
       const boardId = boardTag ? boardTag[1] : "";
       
       const thread: Thread = {
@@ -414,13 +414,13 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         // Extract references to other posts
         const references = event.tags
-          .filter(tag => tag[0] === 'e' && tag[3] === 'reply')
-          .map(tag => tag[1]);
+          .filter((tag: string[]) => tag[0] === 'e' && tag[3] === 'reply')
+          .map((tag: string[]) => tag[1]);
         
         // Extract image URLs
         const images = event.tags
-          .filter(tag => tag[0] === 'image')
-          .map(tag => tag[1]);
+          .filter((tag: string[]) => tag[0] === 'image')
+          .map((tag: string[]) => tag[1]);
         
         const post: Post = {
           id: event.id,
