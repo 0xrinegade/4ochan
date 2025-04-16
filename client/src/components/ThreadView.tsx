@@ -4,6 +4,8 @@ import { useThread } from "@/hooks/useThreads";
 import { formatDate, formatPubkey } from "@/lib/nostr";
 import { Button } from "@/components/ui/button";
 import { PostReplyForm } from "@/components/PostReplyForm";
+import { MediaGallery } from "@/components/MediaDisplay";
+import { MediaContent } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ThreadViewProps {
@@ -22,9 +24,24 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
     document.getElementById('reply-form')?.scrollIntoView({ behavior: 'smooth' });
   };
   
-  const handleSubmitReply = async (content: string, imageUrls: string[] = []) => {
+  const handleSubmitReply = async (
+    content: string, 
+    imageUrls: string[] = [], 
+    media?: MediaContent[]
+  ) => {
     const replyToIds = selectedPostId ? [threadId, selectedPostId] : [threadId];
-    await createPost(content, replyToIds, imageUrls);
+    
+    // For backward compatibility, extract URLs from media objects if provided
+    const allImageUrls = [...imageUrls];
+    if (media && media.length > 0) {
+      // Add any image URLs from the media objects
+      const mediaUrls = media
+        .filter(m => m.type === 'image')
+        .map(m => m.url);
+      allImageUrls.push(...mediaUrls);
+    }
+    
+    await createPost(content, replyToIds, allImageUrls, media);
     setSelectedPostId(null);
   };
   
@@ -86,7 +103,12 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
             // Original Post
             <div className="p-4">
               <div className="flex items-start">
-                {thread.images && thread.images.length > 0 && (
+                {/* Display thread media */}
+                {thread.media && thread.media.length > 0 ? (
+                  <div className="flex-shrink-0 mr-4">
+                    <MediaGallery mediaList={thread.media} size="medium" />
+                  </div>
+                ) : thread.images && thread.images.length > 0 && (
                   <div className="flex-shrink-0 mr-4">
                     <img 
                       src={thread.images[0]} 
@@ -152,7 +174,12 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
               posts.map(post => (
                 <div className="post p-4" key={post.id}>
                   <div className="flex items-start">
-                    {post.images && post.images.length > 0 && (
+                    {/* Display post media */}
+                    {post.media && post.media.length > 0 ? (
+                      <div className="flex-shrink-0 mr-4">
+                        <MediaGallery mediaList={post.media} size="small" />
+                      </div>
+                    ) : post.images && post.images.length > 0 && (
                       <div className="flex-shrink-0 mr-4">
                         <img 
                           src={post.images[0]} 

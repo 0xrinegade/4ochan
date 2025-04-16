@@ -4,9 +4,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { uploadImage } from "@/lib/nostr";
 import { apiRequest } from "@/lib/queryClient";
+import { MediaUploader } from "@/components/MediaUploader";
+import { MediaContent } from "@/types";
 
 interface PostReplyFormProps {
-  onSubmitReply: (content: string, imageUrls: string[]) => Promise<void>;
+  onSubmitReply: (content: string, imageUrls: string[], media?: MediaContent[]) => Promise<void>;
   threadId?: string;
 }
 
@@ -23,16 +25,23 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
   const [replyText, setReplyText] = useState("");
   const [processedText, setProcessedText] = useState("");
   const [isProcessed, setIsProcessed] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); // For legacy support
+  const [uploadedMedia, setUploadedMedia] = useState<MediaContent[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [showMediaUploader, setShowMediaUploader] = useState(false);
   const { toast } = useToast();
 
+  // Legacy file upload handler (for backward compatibility)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedFile(e.target.files[0]);
     }
+  };
+  
+  const handleMediaUploaded = (media: MediaContent[]) => {
+    setUploadedMedia(media);
   };
 
   const processWithGPT = async (userInput: string) => {
@@ -141,14 +150,16 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
         }
       }
       
-      // Submit the processed reply
-      await onSubmitReply(processedText, imageUrls);
+      // Submit the processed reply with both legacy image URLs and new media
+      await onSubmitReply(processedText, imageUrls, uploadedMedia);
       
       // Reset form
       setReplyText("");
       setProcessedText("");
       setIsProcessed(false);
       setSelectedFile(null);
+      setUploadedMedia([]);
+      setShowMediaUploader(false);
       
       toast({
         title: "Reply Posted",
@@ -215,16 +226,43 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
         </div>
       )}
       
-      <div className="flex items-center justify-between">
+      {/* Media Uploader Toggle */}
+      <div className="mb-2">
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full border-black text-black hover:bg-gray-100 rounded-none text-xs"
+          onClick={() => setShowMediaUploader(!showMediaUploader)}
+          disabled={isSubmitting}
+        >
+          {showMediaUploader ? "Hide Media Uploader" : `Add Media (Images, Video, Audio, Files)`}
+        </Button>
+      </div>
+
+      {/* Media Uploader */}
+      {showMediaUploader && (
+        <div className="mb-4 p-2 border border-black bg-white">
+          <div className="text-xs font-bold mb-2">Upload Media Files</div>
+          <MediaUploader 
+            onMediaUploaded={handleMediaUploaded}
+            maxFiles={4}
+            acceptedTypes="image/*,video/*,audio/*,application/pdf,text/plain"
+          />
+        </div>
+      )}
+      
+      {/* Legacy Image Uploader (for backward compatibility) */}
+      <div className="flex items-center justify-between mb-2 mt-4">
         <div className="flex items-center">
           <Button
             type="button"
             variant="outline"
-            className="flex items-center text-black hover:text-primary mr-2 border border-black rounded-none"
+            size="sm"
+            className="flex items-center text-black hover:text-primary border-black rounded-none text-xs"
             onClick={() => document.getElementById("reply-image-upload")?.click()}
             disabled={isSubmitting}
           >
-            <span className="text-xs">Add Image</span>
+            <span className="text-xs">Add Single Image</span>
           </Button>
           <input
             id="reply-image-upload"
@@ -234,7 +272,7 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
             onChange={handleFileChange}
             disabled={isSubmitting}
           />
-          <span className="text-xs text-gray-700">
+          <span className="text-xs text-gray-700 ml-2">
             {selectedFile ? selectedFile.name : ""}
           </span>
         </div>

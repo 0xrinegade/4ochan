@@ -169,14 +169,15 @@ export const useThread = (threadId?: string) => {
   const handleCreatePost = async (
     content: string,
     replyToIds: string[] = [],
-    imageUrls: string[] = []
+    imageUrls: string[] = [],
+    media?: any[]
   ): Promise<Post> => {
     if (!threadId) {
       throw new Error("Thread ID is required to create a post");
     }
     
     try {
-      const newPost = await createPost(threadId, content, replyToIds, imageUrls);
+      const newPost = await createPost(threadId, content, replyToIds, imageUrls, media);
       setPosts(prev => [...prev, newPost]);
       
       // Update thread's reply count
