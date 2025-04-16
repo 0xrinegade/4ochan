@@ -6,7 +6,8 @@ import {
   Relay, 
   Board, 
   Thread, 
-  Post 
+  Post,
+  MediaContent
 } from "../types";
 import { 
   createPool, 
@@ -38,8 +39,8 @@ interface NostrContextType {
   getThreadsByBoard: (boardId: string) => Promise<Thread[]>;
   getThread: (threadId: string) => Promise<Thread | undefined>;
   getPostsByThread: (threadId: string) => Promise<Post[]>;
-  createThread: (boardId: string, title: string, content: string, imageUrls: string[]) => Promise<Thread>;
-  createPost: (threadId: string, content: string, replyToIds: string[], imageUrls: string[]) => Promise<Post>;
+  createThread: (boardId: string, title: string, content: string, imageUrls: string[], media?: MediaContent[]) => Promise<Thread>;
+  createPost: (threadId: string, content: string, replyToIds: string[], imageUrls: string[], media?: MediaContent[]) => Promise<Post>;
 }
 
 const NostrContext = createContext<NostrContextType | undefined>(undefined);
@@ -295,6 +296,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           title: threadData.title,
           content: threadData.content,
           images: threadData.images || [],
+          media: threadData.media || [],
           authorPubkey: event.pubkey,
           createdAt: event.created_at,
           replyCount: 0,
@@ -363,6 +365,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         title: threadData.title,
         content: threadData.content,
         images: threadData.images || [],
+        media: threadData.media || [],
         authorPubkey: event.pubkey,
         createdAt: event.created_at,
         replyCount: 0,
@@ -427,6 +430,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           threadId,
           content: postData.content,
           images: images.length > 0 ? images : postData.images || [],
+          media: postData.media || [],
           authorPubkey: event.pubkey,
           createdAt: event.created_at,
           references
