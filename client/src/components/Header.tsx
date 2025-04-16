@@ -124,11 +124,20 @@ export const Header: React.FC = () => {
           <Link href="/board/b">
             <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Random</span>
           </Link>
-          <Link href="/board/tech">
-            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Technology</span>
+          <Link href="/board/ai">
+            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">AI</span>
           </Link>
-          <Link href="/board/art">
-            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Artwork</span>
+          <Link href="/board/p">
+            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Psyche</span>
+          </Link>
+          <Link href="/board/gg">
+            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Games</span>
+          </Link>
+          <Link href="/board/news">
+            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">News</span>
+          </Link>
+          <Link href="/board/crypto">
+            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Crypto</span>
           </Link>
         </div>
       </div>

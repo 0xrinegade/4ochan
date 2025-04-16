@@ -195,10 +195,61 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [pool, relays]);
 
-  // Load boards from relays
+  // Load boards from relays and add default boards
   const loadBoards = useCallback(async () => {
+    // Define default boards for April 2025
+    const defaultBoards: Board[] = [
+      {
+        id: 'b-' + Math.random().toString(36).substring(2, 15),
+        shortName: 'b',
+        name: 'Random',
+        description: 'Random discussions and topics',
+        threadCount: 0
+      },
+      {
+        id: 'ai-' + Math.random().toString(36).substring(2, 15),
+        shortName: 'ai',
+        name: 'AI',
+        description: 'Advanced AI models and applications',
+        threadCount: 0
+      },
+      {
+        id: 'p-' + Math.random().toString(36).substring(2, 15),
+        shortName: 'p',
+        name: 'Psyche',
+        description: 'Mental health discussions',
+        threadCount: 0
+      },
+      {
+        id: 'gg-' + Math.random().toString(36).substring(2, 15),
+        shortName: 'gg',
+        name: 'Games',
+        description: 'All about games, from game theory to CoD in VR',
+        threadCount: 0
+      },
+      {
+        id: 'news-' + Math.random().toString(36).substring(2, 15),
+        shortName: 'news',
+        name: 'News',
+        description: 'Latest news and current events',
+        threadCount: 0
+      },
+      {
+        id: 'crypto-' + Math.random().toString(36).substring(2, 15),
+        shortName: 'crypto',
+        name: 'Crypto',
+        description: 'Cryptocurrency and blockchain discussions',
+        threadCount: 0
+      }
+    ];
+    
+    // Add default boards to local cache
+    defaultBoards.forEach(board => localCache.addBoard(board));
+    
     if (!pool) {
-      throw new Error("Not connected to any relays");
+      // Return default boards if not connected to pool
+      setBoards(defaultBoards);
+      return defaultBoards;
     }
     
     // Get all board definition events - using updated API for nostr-tools v2.x
@@ -208,33 +259,42 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     // Use list events pattern compatible with nostr-tools v2.x
     const relayUrls = relays.filter(r => r.status === 'connected' && r.read).map(r => r.url);
-    const events = await pool.querySync(relayUrls, filter);
     
-    // Parse and store boards
-    const loadedBoards: Board[] = [];
+    // Store loaded boards and track unique boards
+    const loadedBoards: Board[] = [...defaultBoards]; // Start with default boards
     const uniqueBoards = new Map<string, Board>();
     
-    for (const event of events) {
-      try {
-        const boardData = JSON.parse(event.content);
-        
-        const board: Board = {
-          id: event.id,
-          shortName: boardData.shortName,
-          name: boardData.name,
-          description: boardData.description,
-          threadCount: 0
-        };
-        
-        // Deduplicate boards by shortName
-        if (!uniqueBoards.has(board.shortName)) {
-          uniqueBoards.set(board.shortName, board);
-          loadedBoards.push(board);
-          localCache.addBoard(board);
+    // Add default boards to uniqueBoards map to avoid duplicates
+    defaultBoards.forEach(board => uniqueBoards.set(board.shortName, board));
+    
+    try {
+      const events = await pool.querySync(relayUrls, filter);
+      
+      // Process relay boards
+      for (const event of events) {
+        try {
+          const boardData = JSON.parse(event.content);
+          
+          const board: Board = {
+            id: event.id,
+            shortName: boardData.shortName,
+            name: boardData.name,
+            description: boardData.description,
+            threadCount: 0
+          };
+          
+          // Deduplicate boards by shortName
+          if (!uniqueBoards.has(board.shortName)) {
+            uniqueBoards.set(board.shortName, board);
+            loadedBoards.push(board);
+            localCache.addBoard(board);
+          }
+        } catch (error) {
+          console.error("Failed to parse board event", event, error);
         }
-      } catch (error) {
-        console.error("Failed to parse board event", event, error);
       }
+    } catch (error) {
+      console.error("Failed to fetch boards from relays:", error);
     }
     
     setBoards(loadedBoards);
