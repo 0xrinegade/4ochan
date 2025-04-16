@@ -105,9 +105,7 @@ export const Header: React.FC = () => {
               )}
               {/* Always show notification bell */}
               <NotificationBell />
-              <Link href="/profile">
-                <span className="text-xs bg-white border border-black px-2 py-0.5 hover:bg-secondary inline-block cursor-pointer text-primary">My Profile</span>
-              </Link>
+
               <button 
                 onClick={toggleConnectionModal}
                 className="text-xs bg-white border border-black px-2 py-0.5 hover:bg-secondary text-primary"
@@ -123,14 +121,14 @@ export const Header: React.FC = () => {
           <Link href="/">
             <span className="bg-primary border-white text-white px-3 py-0.5 text-sm font-bold border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Home</span>
           </Link>
-          <Link href="/board/test">
-            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Test Board</span>
+          <Link href="/board/b">
+            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Random</span>
           </Link>
-          <Link href="/design">
-            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Design</span>
+          <Link href="/board/tech">
+            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Technology</span>
           </Link>
-          <Link href="/profile">
-            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Profile</span>
+          <Link href="/board/art">
+            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Artwork</span>
           </Link>
         </div>
       </div>
