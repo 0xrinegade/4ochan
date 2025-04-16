@@ -114,13 +114,6 @@ export const Header: React.FC = () => {
         </div>
       </div>
       
-      {/* Small visitor counter in 90s style */}
-      <div className="text-center text-xs mb-4">
-        <span className="bg-white border border-black inline-block px-3 py-1">
-          Visitors: 133,742 | Active users: 420
-        </span>
-      </div>
-      
       {/* Relay Connection Modal */}
       <RelayConnectionModal
         isOpen={showConnectionModal}

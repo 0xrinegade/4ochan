@@ -263,8 +263,15 @@ const Home: React.FC = () => {
               </p>
               <p className="text-[10px] mt-0.5 italic">Best viewed with Netscape Navigator</p>
               
+              {/* Visitor counter moved from header */}
+              <div className="my-1.5">
+                <span className="bg-white border border-black inline-block px-2 py-0.5 text-[10px]">
+                  Visitors: 133,742 | Active users: 420
+                </span>
+              </div>
+              
               {/* Classic 90s web badges */}
-              <div className="flex items-center justify-center mt-2 space-x-1">
+              <div className="flex items-center justify-center mt-1.5 space-x-1">
                 <div className="border border-black bg-gray-200 px-1 text-[8px] font-mono">HTML 1.0</div>
                 <div className="border border-black bg-gray-200 px-1 text-[8px] font-mono">800x600</div>
                 <div className="border border-black bg-blue-700 text-white px-1 text-[8px] animate-pulse font-mono">JAVASCRIPT ON</div>
