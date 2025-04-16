@@ -44,6 +44,21 @@ const Home: React.FC = () => {
         <Header />
         
         <main className="container mx-auto px-4">
+          {/* Marquee - essential 90s element */}
+          <div className="overflow-hidden bg-black text-yellow-400 border border-primary mb-4">
+            <div className="inline-block whitespace-nowrap py-1 animate-marquee">
+              ★★★ WELCOME TO NOSTRCHAN - THE PREMIER NOSTRIC IMAGEBOARD! NO CRYPTO TALK ALLOWED! ENJOY YOUR STAY AND REMEMBER TO BE EXCELLENT TO EACH OTHER! ★★★ WELCOME TO NOSTRCHAN - THE PREMIER NOSTRIC IMAGEBOARD! NO CRYPTO TALK ALLOWED! ENJOY YOUR STAY AND REMEMBER TO BE EXCELLENT TO EACH OTHER! ★★★
+            </div>
+          </div>
+
+          {/* 90s-style title with decorative elements */}
+          <div className="text-center mb-4">
+            <h1 className="text-4xl font-bold text-primary tracking-wide uppercase">
+              <span className="text-black">━━━</span> NostrChan <span className="text-black">━━━</span>
+            </h1>
+            <p className="text-sm italic mt-1 border-b border-primary pb-2">The premier nostric imageboard since 2025</p>
+          </div>
+          
           {/* Top navigation - classic 90s tab-style */}
           <div className="flex border-b border-black mb-4">
             <a href="#" className="bg-primary text-white px-4 py-1 font-bold border border-black border-b-0 mr-1">Home</a>
@@ -175,10 +190,17 @@ const Home: React.FC = () => {
                   </button>
                 </div>
                 <div className="bg-white border border-black border-t-0 p-3">
-                  <p className="mb-3">Create a new thread on the imageboard with a few clicks.</p>
+                  <div className="flex items-center mb-3">
+                    <p className="mr-2">Create a new thread on the imageboard with a few clicks.</p>
+                    <div className="flex items-center bg-yellow-100 border border-black px-1 rotate-2">
+                      <span className="text-xs font-bold">UNDER CONSTRUCTION</span>
+                      <span className="ml-1 text-yellow-500">▲</span>
+                      <span className="text-black">▼</span>
+                    </div>
+                  </div>
                   <button 
                     onClick={() => setShowCreateModal(true)}
-                    className="bg-primary text-white font-bold py-1 px-3 border border-black"
+                    className="bg-primary text-white font-bold py-1 px-3 border border-black shadow"
                   >
                     Create Thread
                   </button>
@@ -191,22 +213,22 @@ const Home: React.FC = () => {
                 </div>
                 <div className="bg-white border border-black border-t-0 p-3">
                   {boards.length > 0 ? (
-                    <table className="w-full border-collapse border border-black text-left">
+                    <table className="w-full border-collapse border-2 border-black text-left">
                       <thead>
-                        <tr className="bg-gray-100">
-                          <th className="border border-black p-2">Board</th>
-                          <th className="border border-black p-2">Description</th>
-                          <th className="border border-black p-2">Posts</th>
+                        <tr className="bg-primary text-white">
+                          <th className="border border-black p-1 text-center font-bold">BOARD</th>
+                          <th className="border border-black p-1 text-center font-bold">DESCRIPTION</th>
+                          <th className="border border-black p-1 text-center font-bold">POSTS</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {boards.map(board => (
-                          <tr key={board.id} className="hover:bg-gray-50">
-                            <td className="border border-black p-2 font-mono">
+                        {boards.map((board, idx) => (
+                          <tr key={board.id} className={idx % 2 === 0 ? "bg-gray-100" : "bg-white"}>
+                            <td className="border border-black p-1 font-mono text-center">
                               <a href={`#${board.id}`} className="text-primary underline font-bold">/{board.id}/</a>
                             </td>
-                            <td className="border border-black p-2">{board.name}</td>
-                            <td className="border border-black p-2 text-center">{board.postCount}</td>
+                            <td className="border border-black p-1">{board.name}</td>
+                            <td className="border border-black p-1 text-center">{board.postCount}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -222,7 +244,18 @@ const Home: React.FC = () => {
           {/* Footer - classic 90s */}
           <div className="mt-8 text-center text-sm">
             <div className="border-t border-black pt-2">
-              <p>NostrChan © 2025 | <a href="#" className="text-primary underline">About</a> | <a href="#" className="text-primary underline">Terms</a> | <a href="#" className="text-primary underline">Privacy</a></p>
+              <p className="flex items-center justify-center">
+                <span className="text-primary mx-1">◆</span> 
+                NostrChan © 2025 
+                <span className="text-primary mx-1">◆</span> 
+                <a href="#" className="text-primary underline">About</a> 
+                <span className="text-primary mx-1">◆</span> 
+                <a href="#" className="text-primary underline">Terms</a> 
+                <span className="text-primary mx-1">◆</span> 
+                <a href="#" className="text-primary underline">Privacy</a>
+                <span className="text-primary mx-1">◆</span>
+              </p>
+              <p className="text-xs mt-1 italic">Best viewed with Netscape Navigator</p>
             </div>
           </div>
 
