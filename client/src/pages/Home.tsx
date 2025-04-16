@@ -139,30 +139,75 @@ const Home: React.FC = () => {
               </div>
               
               <div className="mb-4">
-                <div className="bg-primary text-white p-2 font-bold">
-                  recent posts
+                <div className="bg-primary text-white p-2 font-bold flex justify-between items-center">
+                  <span>trending now</span>
+                  <span className="inline-block animate-pulse bg-yellow-300 text-black text-xs px-1 font-bold">LIVE</span>
                 </div>
                 <div className="bg-white border border-black border-t-0 p-3">
-                  {/* Sample recent posts */}
-                  <div className="border border-black p-2 mb-2">
-                    <div className="flex justify-between mb-1">
-                      <span className="font-bold">Anonymous</span>
-                      <span className="text-xs">Today 03:45</span>
-                    </div>
-                    <p className="text-sm">Has anyone actually used Nostr for anything useful yet?</p>
-                    <div className="text-xs text-right mt-1">
-                      <a href="#" className="text-primary underline">Reply</a>
-                    </div>
+                  <div className="marquee mb-2">
+                    <span>Threads are automatically ranked by activity - the most active threads rise to the top! Post and reply to keep your favorite discussions alive!</span>
                   </div>
                   
-                  <div className="border border-black p-2">
-                    <div className="flex justify-between mb-1">
-                      <span className="font-bold">Anonymous</span>
-                      <span className="text-xs">Today 03:42</span>
+                  {/* Top 3 trending threads with rank badges */}
+                  <div className="space-y-2 mt-3">
+                    <div className="border border-black p-2 relative">
+                      <div className="absolute -left-1 -top-1 bg-yellow-400 text-black w-6 h-6 flex items-center justify-center font-bold border border-black">1</div>
+                      <div className="pl-6">
+                        <div className="flex justify-between mb-1">
+                          <span className="font-bold text-primary">King of the Hill Thread</span>
+                          <span className="text-xs">5 min ago</span>
+                        </div>
+                        <p className="text-sm">The most active threads will automatically move to the top! This creates a dynamic "king of the hill" experience.</p>
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="text-xs">15 replies</span>
+                          <div className="flex items-center">
+                            <span className="bg-primary text-white text-xs px-1 py-0.5">HOT</span>
+                            <div className="relative w-16 h-2 bg-gray-200 ml-2 overflow-hidden">
+                              <div className="absolute left-0 top-0 h-full bg-primary" style={{ width: '90%', animation: 'pulse 2s infinite' }}></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm">This retro UI is actually really cool and nostalgic!</p>
-                    <div className="text-xs text-right mt-1">
-                      <a href="#" className="text-primary underline">Reply</a>
+                    
+                    <div className="border border-black p-2 relative">
+                      <div className="absolute -left-1 -top-1 bg-gray-300 text-black w-6 h-6 flex items-center justify-center font-bold border border-black">2</div>
+                      <div className="pl-6">
+                        <div className="flex justify-between mb-1">
+                          <span className="font-bold">Real-time Updates</span>
+                          <span className="text-xs">12 min ago</span>
+                        </div>
+                        <p className="text-sm">The thread list refreshes automatically to show the most active discussions at the top!</p>
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="text-xs">8 replies</span>
+                          <div className="flex items-center">
+                            <span className="bg-primary text-white text-xs px-1 py-0.5">HOT</span>
+                            <div className="relative w-16 h-2 bg-gray-200 ml-2 overflow-hidden">
+                              <div className="absolute left-0 top-0 h-full bg-primary" style={{ width: '60%', animation: 'pulse 2s infinite' }}></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="border border-black p-2 relative">
+                      <div className="absolute -left-1 -top-1 bg-amber-600 text-white w-6 h-6 flex items-center justify-center font-bold border border-black">3</div>
+                      <div className="pl-6">
+                        <div className="flex justify-between mb-1">
+                          <span className="font-bold">This retro UI is actually really cool!</span>
+                          <span className="text-xs">18 min ago</span>
+                        </div>
+                        <p className="text-sm">The 90s aesthetic combined with modern functionality creates a unique experience.</p>
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="text-xs">5 replies</span>
+                          <div className="flex items-center">
+                            <span className="bg-primary text-white text-xs px-1 py-0.5">HOT</span>
+                            <div className="relative w-16 h-2 bg-gray-200 ml-2 overflow-hidden">
+                              <div className="absolute left-0 top-0 h-full bg-primary" style={{ width: '40%', animation: 'pulse 2s infinite' }}></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -137,7 +137,8 @@ export const ThreadList: React.FC<ThreadListProps> = ({
                         <div className="text-sm mb-3 line-clamp-2">
                           {thread.content}
                         </div>
-                        <div className="text-xs text-secondary flex items-center">
+                        <div className="text-xs text-secondary flex items-center justify-between">
+                        <div>
                           <span>
                             <i className="fas fa-comment mr-1"></i> {thread.replyCount} replies
                           </span>
@@ -147,6 +148,21 @@ export const ThreadList: React.FC<ThreadListProps> = ({
                             </span>
                           )}
                         </div>
+                        <div className="flex items-center">
+                          <span className="bg-primary text-white text-xs px-1 py-0.5 rounded-sm">
+                            HOT
+                          </span>
+                          <div className="relative w-16 h-2 bg-gray-200 ml-2 rounded-full overflow-hidden">
+                            <div 
+                              className="absolute left-0 top-0 h-full bg-primary transition-all duration-500"
+                              style={{ 
+                                width: `${Math.min(100, Math.max(20, (thread.replyCount / 10) * 100))}%`,
+                                animation: 'pulse 2s infinite' 
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
                       </div>
                     </div>
                   </div>

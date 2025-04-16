@@ -165,6 +165,13 @@
     animation: blink 1s step-end infinite;
   }
   
+  /* Pulse animation for active threads */
+  @keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+  }
+  
   /* 90s-style marquee for important announcements */
   .marquee {
     @apply bg-white border border-black p-1 overflow-hidden whitespace-nowrap;

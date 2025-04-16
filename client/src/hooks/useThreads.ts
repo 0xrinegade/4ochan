@@ -9,6 +9,30 @@ export const useThreads = (boardId?: string) => {
   const [error, setError] = useState<string | null>(null);
   const { getThreadsByBoard, createThread, connectedRelays } = useNostr();
   const { toast } = useToast();
+  
+  // Calculate activity score for sorting threads
+  const calculateActivityScore = useCallback((thread: Thread): number => {
+    const now = Date.now();
+    const threadAge = (now - thread.createdAt) / (1000 * 60 * 60); // Age in hours
+    const lastActivityTime = thread.lastReplyTime || thread.createdAt;
+    const lastActivityAge = (now - lastActivityTime) / (1000 * 60 * 60); // Age in hours
+    
+    // Formula: (replies × 10) + recency factor
+    // Higher scores = more active threads
+    const replyScore = thread.replyCount * 10;
+    const recencyScore = 100 / (1 + lastActivityAge); // Decays over time
+    
+    return replyScore + recencyScore;
+  }, []);
+  
+  // Sort threads by activity score
+  const sortThreadsByActivity = useCallback((threadList: Thread[]): Thread[] => {
+    return [...threadList].sort((a, b) => {
+      const scoreA = calculateActivityScore(a);
+      const scoreB = calculateActivityScore(b);
+      return scoreB - scoreA; // Higher scores first
+    });
+  }, [calculateActivityScore]);
 
   // Fetch threads for the given board
   const fetchThreads = useCallback(async () => {
@@ -17,7 +41,9 @@ export const useThreads = (boardId?: string) => {
     setLoading(true);
     try {
       const fetchedThreads = await getThreadsByBoard(boardId);
-      setThreads(fetchedThreads);
+      // Sort threads by activity score
+      const sortedThreads = sortThreadsByActivity(fetchedThreads);
+      setThreads(sortedThreads);
       setError(null);
     } catch (err: any) {
       setError(err.message || "Failed to load threads");
@@ -29,13 +55,34 @@ export const useThreads = (boardId?: string) => {
     } finally {
       setLoading(false);
     }
-  }, [boardId, getThreadsByBoard, connectedRelays, toast]);
+  }, [boardId, getThreadsByBoard, connectedRelays, toast, sortThreadsByActivity]);
+
+  // Periodically re-sort threads to update rankings
+  useEffect(() => {
+    if (threads.length === 0) return;
+    
+    // Re-sort threads every minute to update "king of the hill" rankings
+    const interval = setInterval(() => {
+      setThreads(prev => sortThreadsByActivity(prev));
+    }, 60000); // 1 minute
+    
+    return () => clearInterval(interval);
+  }, [threads, sortThreadsByActivity]);
 
   // Fetch threads when board changes or connection is established
   useEffect(() => {
     if (boardId && connectedRelays > 0) {
       fetchThreads();
     }
+    
+    // Set up polling for new threads every 30 seconds
+    const pollInterval = setInterval(() => {
+      if (boardId && connectedRelays > 0) {
+        fetchThreads();
+      }
+    }, 30000); // 30 seconds
+    
+    return () => clearInterval(pollInterval);
   }, [boardId, connectedRelays, fetchThreads]);
 
   // Create a new thread
@@ -50,7 +97,8 @@ export const useThreads = (boardId?: string) => {
     
     try {
       const newThread = await createThread(boardId, title, content, imageUrls);
-      setThreads(prev => [newThread, ...prev]);
+      // Add the new thread and re-sort
+      setThreads(prev => sortThreadsByActivity([newThread, ...prev]));
       toast({
         title: "Thread Created",
         description: "Your thread has been posted successfully",
