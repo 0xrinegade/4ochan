@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -54,7 +53,7 @@ export const UserBadges: React.FC<UserBadgesProps> = ({
       setError('');
       
       try {
-        const response = await apiRequest(`/api/users/${userId}/badges`);
+        const response = await fetch(`/api/users/${userId}/badges`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch badges');

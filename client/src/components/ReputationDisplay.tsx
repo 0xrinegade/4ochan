@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { apiRequest } from '@/lib/queryClient';
 
 interface ReputationLog {
   id: number;
@@ -43,7 +42,7 @@ export const ReputationDisplay: React.FC<ReputationDisplayProps> = ({
       try {
         // Fetch reputation score if not provided
         if (!initialScore) {
-          const scoreRes = await apiRequest(`/api/users/${userId}/reputation`);
+          const scoreRes = await fetch(`/api/users/${userId}/reputation`);
           if (scoreRes.ok) {
             const data = await scoreRes.json();
             setReputationScore(data.reputationScore);
@@ -54,7 +53,7 @@ export const ReputationDisplay: React.FC<ReputationDisplayProps> = ({
         
         // Fetch logs if showing details
         if (showDetails) {
-          const logsRes = await apiRequest(`/api/users/${userId}/reputation/logs`);
+          const logsRes = await fetch(`/api/users/${userId}/reputation/logs`);
           if (logsRes.ok) {
             const logsData = await logsRes.json();
             setLogs(logsData);
