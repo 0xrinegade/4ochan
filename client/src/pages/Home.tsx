@@ -44,14 +44,7 @@ const Home: React.FC = () => {
         <Header />
         
         <main className="container mx-auto px-4">
-          {/* Marquee - essential 90s element */}
-          <div className="overflow-hidden bg-black text-yellow-400 border border-primary mb-4">
-            <div className="inline-block whitespace-nowrap py-1 animate-marquee">
-              ★★★ WELCOME TO 4OCHAN.ORG - THE PREMIER NOSTRIC IMAGEBOARD! NO CRYPTO TALK ALLOWED! ENJOY YOUR STAY AND REMEMBER TO BE EXCELLENT TO EACH OTHER! ★★★ WELCOME TO 4OCHAN.ORG - THE PREMIER NOSTRIC IMAGEBOARD! NO CRYPTO TALK ALLOWED! ENJOY YOUR STAY AND REMEMBER TO BE EXCELLENT TO EACH OTHER! ★★★
-            </div>
-          </div>
-
-          {/* Subtitle only - h1 removed */}
+          {/* Subtitle only - h1 and marquee removed */}
           <div className="text-center mb-2">
             <p className="text-xs italic border-b border-primary pb-1">The premier nostric imageboard since 2025</p>
           </div>
