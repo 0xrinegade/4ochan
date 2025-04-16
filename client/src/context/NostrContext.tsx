@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { SimplePool, type Filter } from "nostr-tools";
+import { localCache } from "../lib/storage";
 import { 
   NostrEvent, 
   NostrIdentity, 
@@ -19,7 +20,6 @@ import {
   saveRelays, 
   KIND 
 } from "../lib/nostr";
-import { localCache } from "../lib/storage";
 
 interface NostrContextType {
   pool: SimplePool | null;

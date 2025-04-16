@@ -7,6 +7,7 @@ import Home from "@/pages/Home";
 import Thread from "@/pages/Thread";
 import UserProfilePage from "@/pages/UserProfilePage";
 import DesignSystem from "@/pages/DesignSystem";
+import { TestPage } from "./pages/TestPage";
 import { NostrProvider } from "./context/NostrContext";
 
 function Router() {
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/profile" component={UserProfilePage} />
       <Route path="/profile/:id" component={UserProfilePage} />
       <Route path="/design" component={DesignSystem} />
+      <Route path="/test" component={TestPage} />
       <Route component={NotFound} />
     </Switch>
   );
