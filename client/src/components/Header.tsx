@@ -3,6 +3,7 @@ import { useNostr } from "@/hooks/useNostr";
 import { Button } from "@/components/ui/button";
 import { RelayConnectionModal } from "@/components/RelayConnectionModal";
 import { OpenAILoginButton } from "@/components/OpenAILoginButton";
+import { NotificationBell } from "@/components/NotificationBell";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
@@ -101,6 +102,10 @@ export const Header: React.FC = () => {
                   onLoginSuccess={handleLoginSuccess}
                   className="text-xs py-0.5 px-2 h-auto" 
                 />
+              )}
+              {/* Only show notification bell when logged in */}
+              {currentUser && (
+                <NotificationBell />
               )}
               <Link href="/profile">
                 <span className="text-xs bg-white border border-black px-2 py-0.5 hover:bg-secondary inline-block cursor-pointer text-primary">My Profile</span>

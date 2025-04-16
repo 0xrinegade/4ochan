@@ -7,6 +7,7 @@ import { PostReplyForm } from "@/components/PostReplyForm";
 import { MediaGallery } from "@/components/MediaDisplay";
 import { MediaContent } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ThreadSubscribeButton } from "@/components/ThreadSubscribeButton";
 
 interface ThreadViewProps {
   threadId: string;
@@ -54,14 +55,23 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
               <i className="fas fa-arrow-left mr-1"></i> Back to threads
             </Button>
           </Link>
-          <Button 
-            onClick={() => refreshThread()} 
-            variant="ghost" 
-            className="text-sm text-accent"
-            disabled={loading}
-          >
-            <i className={`fas fa-sync-alt mr-1 ${loading ? "animate-spin" : ""}`}></i> Refresh
-          </Button>
+          <div className="flex items-center space-x-2">
+            {/* Only show subscribe button when thread is loaded */}
+            {thread && (
+              <ThreadSubscribeButton 
+                threadId={threadId} 
+                threadTitle={thread.title}
+              />
+            )}
+            <Button 
+              onClick={() => refreshThread()} 
+              variant="ghost" 
+              className="text-sm text-accent"
+              disabled={loading}
+            >
+              <i className={`fas fa-sync-alt mr-1 ${loading ? "animate-spin" : ""}`}></i> Refresh
+            </Button>
+          </div>
         </div>
         
         {/* Thread Container */}
