@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNostr } from "./useNostr";
-import { Thread, Post } from "../types";
+import { Thread, Post, MediaContent } from "../types";
 import { useToast } from "@/hooks/use-toast";
 
 export const useThreads = (boardId?: string) => {
@@ -89,14 +89,15 @@ export const useThreads = (boardId?: string) => {
   const handleCreateThread = async (
     title: string,
     content: string,
-    imageUrls: string[] = []
+    imageUrls: string[] = [],
+    media?: MediaContent[]
   ): Promise<Thread> => {
     if (!boardId) {
       throw new Error("Board ID is required to create a thread");
     }
     
     try {
-      const newThread = await createThread(boardId, title, content, imageUrls);
+      const newThread = await createThread(boardId, title, content, imageUrls, media);
       // Add the new thread and re-sort
       setThreads(prev => sortThreadsByActivity([newThread, ...prev]));
       toast({
@@ -170,14 +171,14 @@ export const useThread = (threadId?: string) => {
     content: string,
     replyToIds: string[] = [],
     imageUrls: string[] = [],
-    media?: any[]
+    media?: MediaContent[]
   ): Promise<Post> => {
     if (!threadId) {
       throw new Error("Thread ID is required to create a post");
     }
     
     try {
-      const newPost = await createPost(threadId, content, replyToIds, imageUrls, media as any);
+      const newPost = await createPost(threadId, content, replyToIds, imageUrls, media);
       setPosts(prev => [...prev, newPost]);
       
       // Update thread's reply count
