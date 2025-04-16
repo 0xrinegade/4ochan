@@ -11,26 +11,26 @@
 
 @layer base {
   :root {
-    --background: 36 67% 83%;
-    --foreground: 0 0% 10%;
+    --background: 60 80% 94%; /* More yellow-beige for 90s feel */
+    --foreground: 0 0% 0%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card-foreground: 0 0% 0%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
-    --primary: 0 59% 30%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 0 75% 30%; /* More saturated dark red */
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 10%;
+    --secondary-foreground: 0 0% 0%;
     --muted: 36 30% 90%;
     --muted-foreground: 0 0% 40%;
-    --accent: 0 59% 30%;
+    --accent: 195 80% 35%; /* Classic 90s web blue */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 80%;
+    --border: 0 0% 0%; /* Pure black borders */
     --input: 0 0% 90%;
-    --ring: 0 59% 30%;
-    --radius: 0rem;
+    --ring: 0 75% 30%;
+    --radius: 0rem; /* No rounded corners */
   }
 
   * {
@@ -132,5 +132,79 @@
   
   .quote-text {
     @apply text-green-700 italic;
+  }
+  
+  /* 90s-style buttons */
+  button:not(.unstyled) {
+    @apply bg-secondary border-2 border-border px-2 py-1 font-bold;
+    box-shadow: 2px 2px 0px #000;
+  }
+  
+  button:not(.unstyled):hover {
+    @apply bg-white;
+  }
+  
+  button:not(.unstyled):active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0px #000;
+  }
+  
+  /* 90s-style inputs */
+  input, textarea, select {
+    @apply border-2 border-black bg-white px-2 py-1;
+  }
+  
+  /* Blink effect for new content - very 90s web */
+  @keyframes blink {
+    0% { background-color: yellow; }
+    50% { background-color: transparent; }
+    100% { background-color: yellow; }
+  }
+  
+  .blink {
+    animation: blink 1s step-end infinite;
+  }
+  
+  /* 90s-style marquee for important announcements */
+  .marquee {
+    @apply bg-white border border-black p-1 overflow-hidden whitespace-nowrap;
+    text-align: center;
+  }
+  
+  .marquee span {
+    display: inline-block;
+    padding-left: 100%;
+    animation: marquee 15s linear infinite;
+  }
+  
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+  }
+  
+  /* Old-school horizontal rule */
+  hr {
+    height: 1px;
+    background: repeating-linear-gradient(to right, #000, #000 5px, transparent 5px, transparent 10px);
+    border: 0;
+  }
+  
+  /* Custom 90s-style bullet points */
+  ul.retro-list {
+    list-style-type: none;
+    padding-left: 1rem;
+  }
+  
+  ul.retro-list li {
+    position: relative;
+    padding-left: 1rem;
+  }
+  
+  ul.retro-list li::before {
+    content: "»";
+    position: absolute;
+    left: 0;
+    color: var(--primary);
+    font-weight: bold;
   }
 }
