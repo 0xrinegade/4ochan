@@ -57,7 +57,7 @@ const Home: React.FC = () => {
             {/* Left sidebar with quick links */}
             <div className="md:w-1/4">
               <div className="mb-4">
-                <div className="bg-primary text-white p-2 font-bold">
+                <div className="bg-primary text-white py-1 px-2 font-bold text-sm">
                   quick links
                 </div>
                 <div className="bg-white border border-black border-t-0 p-2">
@@ -72,7 +72,7 @@ const Home: React.FC = () => {
               </div>
               
               <div className="mb-4">
-                <div className="bg-primary text-white p-2 font-bold">
+                <div className="bg-primary text-white py-1 px-2 font-bold text-sm">
                   stats
                 </div>
                 <div className="bg-white border border-black border-t-0 p-2 text-sm">
@@ -86,7 +86,7 @@ const Home: React.FC = () => {
             {/* Main content area */}
             <div className="md:w-3/4">
               <div className="mb-4">
-                <div className="bg-primary text-white p-2 font-bold flex justify-between items-center">
+                <div className="bg-primary text-white py-1 px-2 font-bold text-sm flex justify-between items-center">
                   <span>trending now</span>
                   <span className="inline-block animate-pulse bg-yellow-300 text-black text-xs px-1 font-bold">LIVE</span>
                 </div>
@@ -161,7 +161,7 @@ const Home: React.FC = () => {
               </div>
 
               <div className="mb-4">
-                <div className="bg-primary text-white p-2 font-bold flex justify-between items-center">
+                <div className="bg-primary text-white py-1 px-2 font-bold text-sm flex justify-between items-center">
                   <span>create thread</span>
                   <button 
                     onClick={() => {}} 
@@ -182,7 +182,7 @@ const Home: React.FC = () => {
               </div>
 
               <div className="mb-4">
-                <div className="bg-primary text-white p-2 font-bold">
+                <div className="bg-primary text-white py-1 px-2 font-bold text-sm">
                   popular boards
                 </div>
                 <div className="bg-white border border-black border-t-0 p-3">
