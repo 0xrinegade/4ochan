@@ -121,107 +121,41 @@ export const BoardSidebar: React.FC = () => {
   };
   
   return (
-    <div className="w-full md:w-60 bg-card border-r border-border">
-      <div className="px-3 py-2 bg-primary text-primary-foreground flex justify-between items-center">
-        <h2 className="text-sm font-bold tracking-wide uppercase">Boards</h2>
-        <Button 
-          onClick={() => setIsCreateBoardModalOpen(true)} 
-          variant="secondary"
-          size="sm"
-          className="h-7 px-2 bg-accent/90 hover:bg-accent text-white border-0"
-        >
-          <PlusCircleIcon className="h-3.5 w-3.5 mr-1" /> New
-        </Button>
-      </div>
+    <div className="hidden md:block">
+      {/* This component has been replaced by the header in the retro 90s design */}
+      {/* All controls now available through the Header component */}
       
-      <div className="overflow-y-auto h-full max-h-[calc(100vh-14rem)]">
-        <ul className="board-list py-1">
-          {boards.map(board => (
-            <li 
-              key={board.id}
-              className={`
-                group px-3 py-2 cursor-pointer 
-                border-b border-border/50 transition-colors
-                hover:bg-muted/50 flex items-center justify-between
-                ${board.id === currentBoardId ? 'bg-primary/10 border-primary/20' : ''}
-              `}
-            >
-              <Link href={`/board/${board.id}`} className="w-full">
-                <div className="flex items-center w-full justify-between pr-1">
-                  <div className="flex flex-col">
-                    <span className={`text-sm font-bold monaco ${board.id === currentBoardId ? 'text-primary' : ''}`}>
-                      /{board.shortName}/
-                    </span>
-                    <span className={`text-xs ${board.id === currentBoardId ? 'text-foreground' : 'text-muted-foreground'}`}>
-                      {board.name}
-                    </span>
-                  </div>
-                  <span className="text-xs bg-secondary/20 rounded-full px-2 py-0.5 text-secondary-foreground/70">
-                    {board.threadCount}
-                  </span>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
-      
-      {/* User Identity Section */}
-      <div className="border-t border-border p-3">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold text-muted-foreground tracking-wide">IDENTITY</span>
-          <button 
-            className="text-xs text-accent hover:text-accent/80 flex items-center"
-            onClick={() => setIsChangeIdentityModalOpen(true)}
-          >
-            <KeyIcon className="h-3 w-3 mr-1" /> Change
-          </button>
-        </div>
-        <div className="flex items-center bg-muted/30 p-2 rounded-sm border border-border">
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-            <UserIcon className="h-4 w-4" />
-          </div>
-          <div className="ml-2 overflow-hidden">
-            <div className="text-sm font-medium truncate">
-              {identity.profile?.name || "Anon"}
-            </div>
-            <div className="text-xs monaco truncate text-muted-foreground">
-              {formatPubkey(identity.pubkey)}
-            </div>
-          </div>
-        </div>
-      </div>
-      
+      {/* Modals remain available */}
       {/* Create Board Modal */}
       <Dialog open={isCreateBoardModalOpen} onOpenChange={setIsCreateBoardModalOpen}>
-        <DialogContent className="border border-border">
-          <DialogHeader className="border-b border-border pb-2 mb-2">
-            <DialogTitle className="text-primary font-bold">Create New Board</DialogTitle>
+        <DialogContent className="border border-black">
+          <DialogHeader className="border-b border-black pb-2 mb-2">
+            <DialogTitle className="text-primary font-bold">Create New Coin</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreateBoard}>
             <div className="grid gap-4 py-2">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="shortName" className="text-right text-sm font-medium">
-                  Short Name
+                  Symbol
                 </Label>
                 <Input
                   id="shortName"
                   value={newBoardShortName}
                   onChange={(e) => setNewBoardShortName(e.target.value)}
-                  placeholder="b, tech, art, etc."
+                  placeholder="CAT, DOGE, PEPE, etc."
                   className="col-span-3 font-mono"
                   required
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="name" className="text-right text-sm font-medium">
-                  Display Name
+                  Coin Name
                 </Label>
                 <Input
                   id="name"
                   value={newBoardName}
                   onChange={(e) => setNewBoardName(e.target.value)}
-                  placeholder="Random, Technology, Artwork, etc."
+                  placeholder="CatCoin, DogeMoon, PepeFinance, etc."
                   className="col-span-3"
                   required
                 />
@@ -234,18 +168,18 @@ export const BoardSidebar: React.FC = () => {
                   id="description"
                   value={newBoardDescription}
                   onChange={(e) => setNewBoardDescription(e.target.value)}
-                  placeholder="A short description of the board's purpose..."
+                  placeholder="A short description of your coin..."
                   className="col-span-3 text-sm"
                   rows={3}
                 />
               </div>
             </div>
-            <DialogFooter className="mt-4 pt-2 border-t border-border">
+            <DialogFooter className="mt-4 pt-2 border-t border-black">
               <Button 
                 type="submit" 
-                className="bg-primary hover:bg-primary/90"
+                className="bg-primary hover:bg-primary/90 border border-black"
               >
-                <PlusCircleIcon className="h-4 w-4 mr-1" /> Create Board
+                <PlusCircleIcon className="h-4 w-4 mr-1" /> Create Coin
               </Button>
             </DialogFooter>
           </form>
@@ -254,8 +188,8 @@ export const BoardSidebar: React.FC = () => {
       
       {/* Change Identity Modal */}
       <Dialog open={isChangeIdentityModalOpen} onOpenChange={setIsChangeIdentityModalOpen}>
-        <DialogContent className="border border-border">
-          <DialogHeader className="border-b border-border pb-2 mb-2">
+        <DialogContent className="border border-black">
+          <DialogHeader className="border-b border-black pb-2 mb-2">
             <DialogTitle className="text-primary font-bold">Change Identity</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleChangeIdentity}>
@@ -272,17 +206,26 @@ export const BoardSidebar: React.FC = () => {
                   className="col-span-3 monaco text-xs"
                 />
               </div>
-              <div className="text-xs text-muted-foreground col-span-4 bg-muted/30 p-3 rounded-sm border border-border">
+              <div className="text-xs text-black col-span-4 bg-white p-3 border border-black">
                 <p className="mb-1 font-semibold">About Nostr Keys</p>
                 Import an existing key or generate a new one. Your key is stored locally and never sent to servers.
-                <p className="mt-1 text-accent/90">Keep your private key secret – anyone with access to it can post as you.</p>
+                <p className="mt-1 text-primary">Keep your private key secret – anyone with access to it can post as you.</p>
               </div>
             </div>
-            <DialogFooter className="mt-4 pt-2 border-t border-border space-x-2">
-              <Button type="button" variant="outline" onClick={handleGenerateNewIdentity} className="border-primary/30 text-primary">
+            <DialogFooter className="mt-4 pt-2 border-t border-black space-x-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleGenerateNewIdentity} 
+                className="border-black text-primary"
+              >
                 <KeyIcon className="h-3.5 w-3.5 mr-1" /> Generate New
               </Button>
-              <Button type="submit" disabled={!newPrivKey} className="bg-primary hover:bg-primary/90">
+              <Button 
+                type="submit" 
+                disabled={!newPrivKey} 
+                className="bg-primary hover:bg-primary/90 border border-black"
+              >
                 Import Key
               </Button>
             </DialogFooter>

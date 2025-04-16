@@ -3,7 +3,6 @@ import { useNostr } from "@/hooks/useNostr";
 import { Button } from "@/components/ui/button";
 import { RelayConnectionModal } from "@/components/RelayConnectionModal";
 import { Link } from "wouter";
-import { CircleIcon, NetworkIcon, HomeIcon, SettingsIcon, CircleUserIcon } from "lucide-react";
 
 export const Header: React.FC = () => {
   const { connectedRelays, relays } = useNostr();
@@ -14,53 +13,46 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="border-b border-border">
-      {/* Top bar */}
-      <div className="bg-primary text-primary-foreground px-4 py-2.5">
-        <div className="container mx-auto flex justify-between items-center">
+    <header className="mb-4">
+      {/* Simple retro logo and navigation */}
+      <div className="bg-background flex items-start p-4">
+        <Link href="/">
           <div className="flex items-center">
-            <Link href="/">
-              <h1 className="text-xl font-bold cursor-pointer tracking-tight">NostrChan</h1>
-            </Link>
-            <span className="ml-2 text-xs bg-accent/90 px-2 py-0.5 rounded-sm">ALPHA</span>
+            <div className="w-20 h-20 border border-black bg-white flex items-center justify-center overflow-hidden">
+              <svg width="70" height="70" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="30" r="25" fill="#ffb6c1" />
+                <circle cx="40" cy="25" r="5" fill="#000" />
+                <circle cx="60" cy="25" r="5" fill="#000" />
+                <path d="M40,40 Q50,50 60,40" stroke="#000" strokeWidth="2" fill="none" />
+              </svg>
+            </div>
           </div>
-          
-          {/* Connection Status */}
-          <div className="flex items-center space-x-2">
-            <span className="text-xs font-mono flex items-center">
-              <CircleIcon className={`h-2 w-2 mr-1 ${connectedRelays > 0 ? "text-green-400" : "text-red-400"}`} />
-              {connectedRelays > 0
-                ? `${connectedRelays} relay${connectedRelays !== 1 ? "s" : ""}`
-                : "offline"}
-            </span>
-            <Button 
-              onClick={toggleConnectionModal} 
-              variant="secondary"
-              size="sm"
-              className="h-7 text-xs font-medium"
-            >
-              <NetworkIcon className="h-3.5 w-3.5 mr-1" /> Relays
-            </Button>
-          </div>
+        </Link>
+      </div>
+      
+      {/* Create meme coin section - matches the screenshot */}
+      <div className="mb-4">
+        <div className="bg-primary text-white p-2 font-bold">
+          create meme coin
+        </div>
+        <div className="bg-white border border-black border-t-0 p-3">
+          <p className="mb-3">create your own meme coin with a few clicks. no coding or liquidity required.</p>
+          <button 
+            onClick={toggleConnectionModal}
+            className="bg-primary text-white font-bold py-1 px-3 border border-black"
+          >
+            create meme coin
+          </button>
         </div>
       </div>
       
-      {/* Navigation bar */}
-      <div className="bg-card border-b border-border">
-        <div className="container mx-auto">
-          <div className="flex items-center space-x-1 px-1">
-            <Link href="/">
-              <Button variant="ghost" className="text-sm h-9" size="sm">
-                <HomeIcon className="h-4 w-4 mr-1" /> Home
-              </Button>
-            </Link>
-            <Button variant="ghost" className="text-sm h-9" size="sm">
-              <CircleUserIcon className="h-4 w-4 mr-1" /> Profile
-            </Button>
-            <Button variant="ghost" className="text-sm h-9" size="sm">
-              <SettingsIcon className="h-4 w-4 mr-1" /> Settings
-            </Button>
-          </div>
+      {/* Boards section - for board listing */}
+      <div className="mb-4">
+        <div className="bg-primary text-white p-2 font-bold">
+          meme coins
+        </div>
+        <div className="bg-white border border-black border-t-0 p-3">
+          <p>loading...</p>
         </div>
       </div>
       

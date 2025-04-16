@@ -11,26 +11,26 @@
 
 @layer base {
   :root {
-    --background: 40 30% 96%;
-    --foreground: 220 15% 25%;
+    --background: 36 67% 83%;
+    --foreground: 0 0% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 220 15% 25%;
+    --card-foreground: 0 0% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 25%;
-    --primary: 197 30% 43%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 0 59% 30%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 200 8% 76%;
-    --secondary-foreground: 220 15% 25%;
-    --muted: 197 10% 94%;
-    --muted-foreground: 220 15% 45%;
-    --accent: 9 80% 65%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 10%;
+    --muted: 36 30% 90%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 0 59% 30%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 197 30% 90%;
-    --input: 197 30% 90%;
-    --ring: 197 30% 43%;
-    --radius: 0.25rem;
+    --border: 0 0% 80%;
+    --input: 0 0% 90%;
+    --ring: 0 59% 30%;
+    --radius: 0rem;
   }
 
   * {
@@ -38,27 +38,40 @@
   }
 
   body {
-    font-family: 'Libertarian', sans-serif;
+    font-family: 'Libertarian', Arial, sans-serif;
     @apply antialiased bg-background text-foreground;
-    background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23d1d5db' fill-opacity='0.2' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3Ccircle cx='13' cy='13' r='1'/%3E%3C/g%3E%3C/svg%3E");
+    background-image: none;
   }
   
-  /* Scrollbar Styling */
+  /* Basic HTML elements like in the 90s web */
+  a {
+    @apply text-primary underline;
+  }
+  
+  table {
+    @apply border-collapse border border-border;
+  }
+  
+  th, td {
+    @apply border border-border p-1;
+  }
+  
+  /* Scrollbar Styling - simple for retro look */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 16px;
+    height: 16px;
   }
   
   ::-webkit-scrollbar-track {
-    @apply bg-muted;
+    @apply bg-secondary;
   }
   
   ::-webkit-scrollbar-thumb {
-    @apply bg-primary/70 rounded-full;
+    @apply bg-primary;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-primary;
+    @apply bg-primary brightness-90;
   }
 
   .monaco {
@@ -76,19 +89,25 @@
   .post-image {
     max-height: 250px;
     max-width: 250px;
-    @apply rounded border border-border shadow-sm cursor-pointer transition-transform hover:scale-[1.02];
+    @apply border border-black shadow-none cursor-pointer;
   }
 
   .thread-container {
-    @apply bg-white rounded-sm shadow-sm border border-border overflow-hidden;
+    @apply bg-white border border-black overflow-hidden mb-4;
   }
 
   .board-title {
-    @apply bg-primary text-primary-foreground px-3 py-1.5 text-sm font-bold uppercase tracking-wide;
+    @apply bg-primary text-primary-foreground px-2 py-1 text-sm font-bold uppercase tracking-wide;
   }
   
   .thread-title {
-    @apply font-bold text-primary text-lg;
+    @apply font-bold text-primary text-base;
+  }
+  
+  /* Retro style header and sections */
+  .section-header {
+    @apply bg-primary text-primary-foreground px-2 py-1 font-bold;
+    text-transform: lowercase;
   }
 
   .post {
