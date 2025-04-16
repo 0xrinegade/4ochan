@@ -1,0 +1,254 @@
+import {
+  SimplePool,
+  getEventHash,
+  getPublicKey,
+  nip19,
+  generateSecretKey,
+  finalizeEvent,
+} from "nostr-tools";
+import { NostrEvent, NostrIdentity, Relay, NostrProfile } from "../types";
+
+// Default relays to connect to
+export const DEFAULT_RELAYS = [
+  "wss://relay.damus.io",
+  "wss://relay.nostr.info",
+  "wss://nostr.wine",
+  "wss://nos.lol",
+];
+
+// Kind numbers for our custom event types
+export const KIND = {
+  METADATA: 0,
+  TEXT_NOTE: 1,
+  BOARD_DEFINITION: 9901, // Custom kind for board definition
+  THREAD: 9902, // Custom kind for thread
+  POST: 9903, // Custom kind for post within a thread
+};
+
+// Create an event pool for managing relay connections
+export const createPool = (relays: string[] = DEFAULT_RELAYS) => {
+  const pool = new SimplePool();
+  return pool;
+};
+
+// Generate a new identity or load from localStorage
+export const getOrCreateIdentity = (): NostrIdentity => {
+  const savedIdentity = localStorage.getItem("nostr-identity");
+
+  if (savedIdentity) {
+    try {
+      // The saved identity might have the private key as a hex string
+      const parsed = JSON.parse(savedIdentity);
+      return parsed;
+    } catch (error) {
+      console.error("Failed to parse saved identity", error);
+    }
+  }
+
+  // Create a new identity
+  const privkey = generateSecretKey();
+  const pubkey = getPublicKey(privkey);
+  
+  const identity: NostrIdentity = {
+    pubkey,
+    privkey,
+    profile: { name: "Anonymous" }
+  };
+  
+  // Store a serializable version
+  const serializableIdentity = {
+    ...identity,
+    privkey: undefined // Don't store private key in localStorage for security
+  };
+  
+  localStorage.setItem("nostr-identity", JSON.stringify(serializableIdentity));
+  return identity;
+};
+
+// Save identity to localStorage
+export const saveIdentity = (identity: NostrIdentity) => {
+  // Create a serializable version of the identity
+  const serializableIdentity = {
+    ...identity,
+    // Don't store private key for security
+    privkey: undefined
+  };
+  
+  localStorage.setItem("nostr-identity", JSON.stringify(serializableIdentity));
+};
+
+// Load saved relays or use defaults
+export const getSavedRelays = (): Relay[] => {
+  const savedRelays = localStorage.getItem("nostr-relays");
+  
+  if (savedRelays) {
+    try {
+      return JSON.parse(savedRelays);
+    } catch (error) {
+      console.error("Failed to parse saved relays", error);
+    }
+  }
+  
+  // Return default relays
+  return DEFAULT_RELAYS.map(url => ({ 
+    url, 
+    status: 'disconnected', 
+    read: true, 
+    write: true 
+  }));
+};
+
+// Save relays to localStorage
+export const saveRelays = (relays: Relay[]) => {
+  localStorage.setItem("nostr-relays", JSON.stringify(relays));
+};
+
+// Create and sign a new event
+export const createEvent = async (
+  kind: number,
+  content: string,
+  tags: string[][] = [],
+  identity: NostrIdentity
+): Promise<NostrEvent> => {
+  if (!identity.privkey) {
+    throw new Error("Private key required to create an event");
+  }
+  
+  const unsignedEvent: any = {
+    kind,
+    created_at: Math.floor(Date.now() / 1000),
+    tags,
+    content,
+    pubkey: identity.pubkey,
+  };
+  
+  // Make sure we have a Uint8Array for the private key
+  let privkeyBytes: Uint8Array;
+  if (typeof identity.privkey === 'string') {
+    // Convert hex string to Uint8Array if needed
+    privkeyBytes = new Uint8Array(
+      identity.privkey.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []
+    );
+  } else {
+    privkeyBytes = identity.privkey;
+  }
+  
+  const event = finalizeEvent(unsignedEvent, privkeyBytes);
+  
+  return event as NostrEvent;
+};
+
+// Create a board definition event
+export const createBoardEvent = async (
+  shortName: string,
+  name: string,
+  description: string,
+  identity: NostrIdentity
+): Promise<NostrEvent> => {
+  const content = JSON.stringify({
+    shortName,
+    name,
+    description,
+  });
+  
+  return await createEvent(KIND.BOARD_DEFINITION, content, [], identity);
+};
+
+// Create a thread event
+export const createThreadEvent = async (
+  boardId: string,
+  title: string,
+  content: string,
+  imageUrls: string[] = [],
+  identity: NostrIdentity
+): Promise<NostrEvent> => {
+  const threadContent = JSON.stringify({
+    title,
+    content,
+    images: imageUrls,
+  });
+  
+  const tags = [
+    ["e", boardId, "", "root"],
+    ["board", boardId],
+  ];
+  
+  imageUrls.forEach(url => {
+    tags.push(["image", url]);
+  });
+  
+  return await createEvent(KIND.THREAD, threadContent, tags, identity);
+};
+
+// Create a post (reply) event
+export const createPostEvent = async (
+  threadId: string,
+  content: string,
+  replyToIds: string[] = [],
+  imageUrls: string[] = [],
+  identity: NostrIdentity
+): Promise<NostrEvent> => {
+  const postContent = JSON.stringify({
+    content,
+    images: imageUrls,
+  });
+  
+  const tags = [
+    ["e", threadId, "", "root"],
+  ];
+  
+  // Add references to posts being replied to
+  replyToIds.forEach(id => {
+    tags.push(["e", id, "", "reply"]);
+  });
+  
+  // Add image tags
+  imageUrls.forEach(url => {
+    tags.push(["image", url]);
+  });
+  
+  return await createEvent(KIND.POST, postContent, tags, identity);
+};
+
+// Format a pubkey to npub format
+export const formatPubkey = (pubkey: string): string => {
+  try {
+    const npub = nip19.npubEncode(pubkey);
+    return `${npub.slice(0, 8)}...${npub.slice(-4)}`;
+  } catch (error) {
+    return `${pubkey.slice(0, 6)}...${pubkey.slice(-4)}`;
+  }
+};
+
+// Format date for display
+export const formatDate = (timestamp: number): string => {
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+};
+
+// Upload image to a service and return URL
+export const uploadImage = async (imageData: string): Promise<string> => {
+  // For now, we'll just return a mock URL since we'd need to integrate
+  // with a real decentralized storage service
+  // In a real implementation, this would upload to IPFS or other decentralized storage
+  
+  try {
+    // This is where we would make an API call to upload the image
+    // For now, just simulate a delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Mock response with a sample URL - in production this would be from a real service
+    return `https://nostr-images.example/${Math.random().toString(36).substring(2, 15)}.jpg`;
+  } catch (error) {
+    console.error("Failed to upload image", error);
+    throw new Error("Image upload failed");
+  }
+};

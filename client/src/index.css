@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Libertarian';
+  src: url('@assets/Libertarian.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@layer base {
+  :root {
+    --background: 192 15% 94%;
+    --foreground: 220 15% 25%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 25%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 25%;
+    --primary: 210 33% 24%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 184 6% 62%;
+    --secondary-foreground: 220 15% 25%;
+    --muted: 210 33% 96%;
+    --muted-foreground: 220 15% 45%;
+    --accent: 6 78% 57%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 192 15% 89%;
+    --input: 192 15% 89%;
+    --ring: 210 33% 24%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    font-family: 'Libertarian', sans-serif;
+    @apply antialiased bg-background text-foreground;
+  }
+
+  .monaco {
+    font-family: 'Monaco', 'Courier New', monospace;
+  }
+
+  .post-num {
+    @apply monaco text-xs text-primary;
+  }
+
+  .timestamp {
+    @apply text-xs text-secondary;
+  }
+
+  .post-image {
+    max-height: 250px;
+    max-width: 250px;
+    @apply rounded;
+  }
+
+  .thread-container {
+    @apply bg-white rounded shadow-sm;
+  }
+
+  .post {
+    @apply border-t border-gray-200;
+  }
+
+  .post:first-child {
+    @apply border-t-0;
+  }
+}
