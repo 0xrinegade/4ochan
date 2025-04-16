@@ -443,9 +443,9 @@ export const uploadMedia = async (
       name: fileName,
       size: sizeInBytes
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error uploading media to nostr.build:", error);
-    throw new Error(`Failed to upload media file: ${error.message}`);
+    throw new Error(`Failed to upload media file: ${error?.message || 'Unknown error'}`);
   }
 };
 

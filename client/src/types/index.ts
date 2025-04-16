@@ -36,6 +36,9 @@ export interface Board {
   name: string;
   description: string;
   threadCount: number;
+  postCount?: number;
+  createdAt?: number;
+  pubkey?: string;
 }
 
 export interface MediaContent {
