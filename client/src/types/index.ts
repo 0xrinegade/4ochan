@@ -85,3 +85,25 @@ export interface ImageUpload {
   loading: boolean;
   error?: string;
 }
+
+export interface ThreadSubscription {
+  id: string;
+  threadId: string;
+  title?: string; // Thread title, if available
+  notifyOnReplies: boolean;
+  notifyOnMentions: boolean;
+  createdAt: number;
+  lastNotified?: number;
+}
+
+export interface Notification {
+  id: string;
+  recipientPubkey: string;
+  title: string;
+  message: string;
+  threadId: string;
+  postId?: string;
+  read: boolean;
+  createdAt: number;
+  readAt?: number;
+}
