@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "wouter";
+import { useParams, Link } from "wouter";
 import { Header } from "@/components/Header";
 import { BoardSidebar } from "@/components/BoardSidebar";
 import { ThreadList } from "@/components/ThreadList";
@@ -257,6 +257,8 @@ const Home: React.FC = () => {
                 <a href="#" className="text-primary underline">Terms</a> 
                 <span className="text-primary mx-1">◆</span> 
                 <a href="#" className="text-primary underline">Privacy</a>
+                <span className="text-primary mx-1">◆</span>
+                <a href="/design" className="text-primary underline">Design System</a>
                 <span className="text-primary mx-1">◆</span>
               </p>
               <p className="text-[10px] mt-0.5 italic">Best viewed with Netscape Navigator</p>
