@@ -57,8 +57,8 @@ const Home: React.FC = () => {
             {/* Left sidebar with quick links */}
             <div className="md:w-1/4">
               <div className="mb-4">
-                <div className="bg-primary text-white py-1 px-2 font-bold text-sm">
-                  quick links
+                <div className="bg-primary text-white py-1 px-2 font-bold text-sm flex items-center">
+                  <span className="mr-1">■</span> QUICK LINKS
                 </div>
                 <div className="bg-white border border-black border-t-0 p-2">
                   <ul className="list-disc pl-5">
@@ -72,8 +72,8 @@ const Home: React.FC = () => {
               </div>
               
               <div className="mb-4">
-                <div className="bg-primary text-white py-1 px-2 font-bold text-sm">
-                  stats
+                <div className="bg-primary text-white py-1 px-2 font-bold text-sm flex items-center">
+                  <span className="mr-1">■</span> STATS
                 </div>
                 <div className="bg-white border border-black border-t-0 p-2 text-sm">
                   <p>Online: 420</p>
@@ -87,7 +87,9 @@ const Home: React.FC = () => {
             <div className="md:w-3/4">
               <div className="mb-4">
                 <div className="bg-primary text-white py-1 px-2 font-bold text-sm flex justify-between items-center">
-                  <span>trending now</span>
+                  <div className="flex items-center">
+                    <span className="mr-1">■</span> TRENDING NOW
+                  </div>
                   <span className="inline-block animate-pulse bg-yellow-300 text-black text-xs px-1 font-bold">LIVE</span>
                 </div>
                 <div className="bg-white border border-black border-t-0 p-3">
@@ -162,7 +164,9 @@ const Home: React.FC = () => {
 
               <div className="mb-4">
                 <div className="bg-primary text-white py-1 px-2 font-bold text-sm flex justify-between items-center">
-                  <span>create thread</span>
+                  <div className="flex items-center">
+                    <span className="mr-1">■</span> CREATE THREAD
+                  </div>
                   <button 
                     onClick={() => {}} 
                     className="bg-white text-primary text-xs font-bold py-0 px-2 border border-white"
@@ -182,8 +186,8 @@ const Home: React.FC = () => {
               </div>
 
               <div className="mb-4">
-                <div className="bg-primary text-white py-1 px-2 font-bold text-sm">
-                  popular boards
+                <div className="bg-primary text-white py-1 px-2 font-bold text-sm flex items-center">
+                  <span className="mr-1">■</span> POPULAR BOARDS
                 </div>
                 <div className="bg-white border border-black border-t-0 p-3">
                   {boards.length > 0 ? (
