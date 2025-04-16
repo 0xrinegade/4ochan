@@ -30,29 +30,24 @@ export const Header: React.FC = () => {
         </Link>
       </div>
       
-      {/* Create meme coin section - matches the screenshot */}
+      {/* Nostr connection section */}
       <div className="mb-4">
         <div className="bg-primary text-white p-2 font-bold">
-          create meme coin
+          nostr connection
         </div>
         <div className="bg-white border border-black border-t-0 p-3">
-          <p className="mb-3">create your own meme coin with a few clicks. no coding or liquidity required.</p>
+          <p className="mb-3">connect to nostr relays to participate in the imageboard.</p>
           <button 
             onClick={toggleConnectionModal}
             className="bg-primary text-white font-bold py-1 px-3 border border-black"
           >
-            create meme coin
+            manage relays
           </button>
-        </div>
-      </div>
-      
-      {/* Boards section - for board listing */}
-      <div className="mb-4">
-        <div className="bg-primary text-white p-2 font-bold">
-          meme coins
-        </div>
-        <div className="bg-white border border-black border-t-0 p-3">
-          <p>loading...</p>
+          <span className="ml-3 text-sm">
+            {connectedRelays > 0 
+              ? `Connected to ${connectedRelays} relay${connectedRelays !== 1 ? 's' : ''}`
+              : 'Not connected'}
+          </span>
         </div>
       </div>
       
