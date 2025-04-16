@@ -11,9 +11,10 @@ import { NostrEvent, NostrIdentity, Relay, NostrProfile } from "../types";
 // Default relays to connect to
 export const DEFAULT_RELAYS = [
   "wss://relay.damus.io",
-  "wss://relay.nostr.info",
-  "wss://nostr.wine",
-  "wss://nos.lol",
+  "wss://relay.nostr.band",
+  "wss://nostr.fmt.wiz.biz",
+  "wss://relay.snort.social",
+  "wss://nostr.bitcoiner.social",
 ];
 
 // Kind numbers for our custom event types

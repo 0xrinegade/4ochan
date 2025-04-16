@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNostr } from '../context/NostrContext';
 import { Notification } from '../types';
 import { formatDate, timeAgo } from '../lib/nostr';
+import { useLocation } from 'wouter';
 
 interface NotificationBellProps {
   className?: string;
@@ -67,7 +68,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
     }
   };
 
-  // Mark a notification as read
+  // Mark a notification as read and navigate to the thread
+  const [, setLocation] = useLocation();
   const handleNotificationClick = async (notification: Notification) => {
     try {
       if (!notification.read) {
@@ -80,8 +82,13 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
       
-      // Here you could navigate to the thread/post
-      // navigation.navigate(`/thread/${notification.threadId}`);
+      // Close the notification panel
+      setIsOpen(false);
+      
+      // Navigate to the thread if thread ID exists
+      if (notification.threadId) {
+        setLocation(`/thread/${notification.threadId}`);
+      }
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }

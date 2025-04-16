@@ -552,14 +552,16 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     notifyOnReplies: boolean = true,
     notifyOnMentions: boolean = true
   ): Promise<ThreadSubscription> => {
-    if (!pool) {
-      throw new Error("Not connected to any relays");
-    }
-    
     // Check if thread exists
     const thread = await getThread(threadId);
     if (!thread) {
       throw new Error("Thread not found");
+    }
+    
+    // Check if already subscribed
+    const existingSub = localCache.getSubscriptionByThreadId(threadId);
+    if (existingSub) {
+      return existingSub;
     }
     
     // Create and publish subscription event
@@ -567,7 +569,15 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       createSubscriptionEvent(threadId, notifyOnReplies, notifyOnMentions, identity)
     );
     
-    await publishEvent(event);
+    try {
+      // Try to publish to relays if connected (best effort)
+      if (pool) {
+        await publishEvent(event);
+      }
+    } catch (error) {
+      console.warn("Could not publish subscription to relays:", error);
+      // Continue anyway - we'll store locally
+    }
     
     // Create subscription object
     const subscription: ThreadSubscription = {
@@ -579,182 +589,102 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       createdAt: event.created_at
     };
     
+    // Store in local cache
+    localCache.addSubscription(subscription);
+    
+    // Create a notification for the subscription
+    const notificationId = Math.random().toString(36).substring(2, 15);
+    const notification: Notification = {
+      id: notificationId,
+      recipientPubkey: identity.pubkey,
+      title: "Subscription Activated",
+      message: `You are now subscribed to thread: ${thread.title || 'Untitled Thread'}`,
+      threadId,
+      read: false,
+      createdAt: Math.floor(Date.now() / 1000)
+    };
+    
+    localCache.addNotification(notification);
+    
     return subscription;
-  }, [pool, identity, publishEvent, getThread]);
+  }, [identity, publishEvent, getThread, pool]);
   
   // Unsubscribe from a thread
   const unsubscribeFromThread = useCallback(async (subscriptionId: string): Promise<void> => {
-    if (!pool) {
-      throw new Error("Not connected to any relays");
+    // Get subscription from cache
+    const subscription = localCache.getSubscription(subscriptionId);
+    if (!subscription) {
+      throw new Error("Subscription not found");
     }
     
-    // Create and publish unsubscribe event
-    const event = await import("../lib/nostr").then(({ removeSubscriptionEvent }) => 
-      removeSubscriptionEvent(subscriptionId, identity)
-    );
+    // Try to create and publish unsubscribe event if connected
+    try {
+      if (pool) {
+        const event = await import("../lib/nostr").then(({ removeSubscriptionEvent }) => 
+          removeSubscriptionEvent(subscriptionId, identity)
+        );
+        
+        await publishEvent(event);
+      }
+    } catch (error) {
+      console.warn("Could not publish unsubscribe event to relays:", error);
+      // Continue anyway - we'll remove from local cache
+    }
     
-    await publishEvent(event);
-  }, [pool, identity, publishEvent]);
+    // Remove from local cache
+    localCache.removeSubscription(subscriptionId);
+    
+    // Create a notification for unsubscribing
+    const notificationId = Math.random().toString(36).substring(2, 15);
+    const threadTitle = subscription.title || 'Untitled Thread';
+    const notification: Notification = {
+      id: notificationId,
+      recipientPubkey: identity.pubkey,
+      title: "Unsubscribed",
+      message: `You are no longer subscribed to: ${threadTitle}`,
+      threadId: subscription.threadId,
+      read: false,
+      createdAt: Math.floor(Date.now() / 1000)
+    };
+    
+    localCache.addNotification(notification);
+  }, [identity, publishEvent, pool]);
   
   // Get all thread subscriptions for the current user
   const getThreadSubscriptions = useCallback(async (): Promise<ThreadSubscription[]> => {
-    if (!pool) {
-      throw new Error("Not connected to any relays");
-    }
-    
-    // Fetch subscription events
-    const filter: Filter = {
-      kinds: [KIND.SUBSCRIPTION],
-      authors: [identity.pubkey],
-      '#subscription': ['thread']
-    };
-    
-    const relayUrls = relays.filter(r => r.status === 'connected' && r.read).map(r => r.url);
-    const events = await pool.querySync(relayUrls, filter);
-    
-    // Parse subscription events
-    const subscriptions: ThreadSubscription[] = [];
-    
-    for (const event of events) {
-      try {
-        const subscriptionData = JSON.parse(event.content);
-        
-        // Find the thread ID from the tags
-        const threadTag = event.tags.find((tag: string[]) => 
-          tag[0] === 'e' && tag[3] === 'thread'
-        );
-        
-        if (threadTag) {
-          const threadId = threadTag[1];
-          
-          // Try to get the thread title
-          let title: string | undefined;
-          try {
-            const thread = await getThread(threadId);
-            title = thread?.title;
-          } catch (error) {
-            console.error("Failed to fetch thread for subscription", error);
-          }
-          
-          const subscription: ThreadSubscription = {
-            id: event.id,
-            threadId,
-            title,
-            notifyOnReplies: subscriptionData.notifyOnReplies !== false,
-            notifyOnMentions: subscriptionData.notifyOnMentions !== false,
-            createdAt: event.created_at,
-            lastNotified: subscriptionData.lastNotified
-          };
-          
-          subscriptions.push(subscription);
-        }
-      } catch (error) {
-        console.error("Failed to parse subscription event", event, error);
-      }
-    }
-    
-    return subscriptions.sort((a, b) => b.createdAt - a.createdAt);
-  }, [pool, identity, relays, getThread]);
+    // Get from local cache
+    return localCache.getAllSubscriptions();
+  }, []);
   
   // Check if user is subscribed to a thread
   const isSubscribedToThread = useCallback(async (threadId: string): Promise<boolean> => {
-    const subscriptions = await getThreadSubscriptions();
-    return subscriptions.some(sub => sub.threadId === threadId);
-  }, [getThreadSubscriptions]);
+    const subscription = localCache.getSubscriptionByThreadId(threadId);
+    return !!subscription;
+  }, []);
   
   // Get notifications for the current user
   const getNotifications = useCallback(async (
     includeRead: boolean = false,
     limit: number = 50
   ): Promise<Notification[]> => {
-    if (!pool) {
-      throw new Error("Not connected to any relays");
-    }
-    
-    // Fetch notification events
-    const filter: Filter = {
-      kinds: [KIND.NOTIFICATION],
-      '#p': [identity.pubkey], // Events with our pubkey in p tags
-      limit
-    };
-    
-    const relayUrls = relays.filter(r => r.status === 'connected' && r.read).map(r => r.url);
-    const events = await pool.querySync(relayUrls, filter);
-    
-    // Parse notification events
-    const notifications: Notification[] = [];
-    
-    for (const event of events) {
-      try {
-        const notificationData = JSON.parse(event.content);
-        
-        // Find referenced thread and post
-        const threadTag = event.tags.find((tag: string[]) => 
-          tag[0] === 'e' && tag[3] === 'thread'
-        );
-        
-        const postTag = event.tags.find((tag: string[]) => 
-          tag[0] === 'e' && tag[3] === 'post'
-        );
-        
-        if (threadTag) {
-          const notification: Notification = {
-            id: event.id,
-            recipientPubkey: identity.pubkey,
-            title: notificationData.title,
-            message: notificationData.message,
-            threadId: threadTag[1],
-            postId: postTag ? postTag[1] : undefined,
-            read: notificationData.read || false,
-            createdAt: event.created_at,
-            readAt: notificationData.readAt
-          };
-          
-          // Skip read notifications if not requested
-          if (notification.read && !includeRead) {
-            continue;
-          }
-          
-          notifications.push(notification);
-        }
-      } catch (error) {
-        console.error("Failed to parse notification event", event, error);
-      }
-    }
-    
-    return notifications.sort((a, b) => b.createdAt - a.createdAt);
-  }, [pool, identity, relays]);
+    // Get from local cache
+    return localCache.getAllNotifications(includeRead).slice(0, limit);
+  }, []);
   
   // Mark a notification as read
   const markNotificationRead = useCallback(async (notificationId: string): Promise<void> => {
-    if (!pool) {
-      throw new Error("Not connected to any relays");
-    }
-    
-    // Create and publish read marker event
-    const event = await import("../lib/nostr").then(({ markNotificationAsRead }) => 
-      markNotificationAsRead(notificationId, identity)
-    );
-    
-    await publishEvent(event);
-  }, [pool, identity, publishEvent]);
+    localCache.markNotificationAsRead(notificationId);
+  }, []);
   
   // Mark all notifications as read
   const markAllNotificationsRead = useCallback(async (): Promise<void> => {
-    const notifications = await getNotifications(false);
-    
-    for (const notification of notifications) {
-      if (!notification.read) {
-        await markNotificationRead(notification.id);
-      }
-    }
-  }, [getNotifications, markNotificationRead]);
+    localCache.markAllNotificationsAsRead();
+  }, []);
   
   // Get count of unread notifications
   const getUnreadNotificationCount = useCallback(async (): Promise<number> => {
-    const notifications = await getNotifications(false);
-    return notifications.filter(n => !n.read).length;
-  }, [getNotifications]);
+    return localCache.getUnreadNotificationCount();
+  }, []);
 
   // Auto-connect on mount
   useEffect(() => {
