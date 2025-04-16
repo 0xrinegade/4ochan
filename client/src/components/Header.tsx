@@ -98,7 +98,7 @@ export const Header: React.FC = () => {
             ) : (
               <OpenAILoginButton 
                 onLoginSuccess={handleLoginSuccess}
-                className="text-xs py-0.5 px-2 h-auto border border-white" 
+                className="text-xs py-0.5 px-2 h-auto" 
               />
             )}
             <Link href="/profile">
