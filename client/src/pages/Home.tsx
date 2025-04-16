@@ -51,12 +51,9 @@ const Home: React.FC = () => {
             </div>
           </div>
 
-          {/* 90s-style title with decorative elements */}
+          {/* Subtitle only - h1 removed */}
           <div className="text-center mb-2">
-            <h1 className="text-3xl font-bold text-primary tracking-wide uppercase">
-              <span className="text-black">━━━</span> 4ochan.org <span className="text-black">━━━</span>
-            </h1>
-            <p className="text-xs italic mt-0 border-b border-primary pb-1">The premier nostric imageboard since 2025</p>
+            <p className="text-xs italic border-b border-primary pb-1">The premier nostric imageboard since 2025</p>
           </div>
           
           {/* Top navigation - classic 90s tab-style */}
