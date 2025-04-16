@@ -13,49 +13,46 @@ export const OpenAILoginButton: React.FC<OpenAILoginButtonProps> = ({
 }) => {
   const handleLogin = async () => {
     try {
-      // In a real implementation, we would redirect to OpenAI's OAuth endpoint
-      // For now, we'll simulate a successful OpenAI login
+      // Get the redirect URL from our backend
       const response = await apiRequest({
         method: "GET",
         url: "/api/auth/openai-redirect"
       });
       
       if (response && response.redirectUrl) {
-        // In a real implementation, we would redirect to this URL
-        // window.location.href = response.redirectUrl;
-        
-        // For demonstration, we'll simulate a successful OAuth callback
-        simulateOAuthCallback();
+        // Redirect to OpenAI's OAuth endpoint
+        window.location.href = response.redirectUrl;
+      } else {
+        console.error("Failed to get OAuth redirect URL");
       }
     } catch (error) {
       console.error("Failed to initiate OpenAI login:", error);
     }
   };
   
-  // This function simulates what would happen after a successful OAuth redirect
-  const simulateOAuthCallback = async () => {
-    try {
-      // In a real implementation, this would be a callback from OpenAI with an auth code
-      // We'd send that code to our backend to exchange for tokens
-      const mockResponse = {
-        success: true,
-        username: "openai_user_" + Math.floor(Math.random() * 1000),
-        userId: Math.floor(Math.random() * 10000)
-      };
-      
+  // Check for login success on component mount
+  React.useEffect(() => {
+    // Check if this is a callback from OAuth (URL contains login_success)
+    const urlParams = new URLSearchParams(window.location.search);
+    const loginSuccess = urlParams.get('login_success');
+    const username = urlParams.get('username');
+    const pubkey = urlParams.get('pubkey');
+    
+    if (loginSuccess === 'true' && username) {
       // Store user info in localStorage
       localStorage.setItem("aiUser", JSON.stringify({
-        username: mockResponse.username,
-        userId: mockResponse.userId,
+        username: username,
+        pubkey: pubkey || "",
         loginTime: new Date().toISOString()
       }));
       
       // Call the success handler
-      onLoginSuccess(mockResponse.username);
-    } catch (error) {
-      console.error("OAuth callback simulation failed:", error);
+      onLoginSuccess(username);
+      
+      // Clean up the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
-  };
+  }, [onLoginSuccess]);
   
   return (
     <Button 
