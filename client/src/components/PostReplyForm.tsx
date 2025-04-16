@@ -3,15 +3,29 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { uploadImage } from "@/lib/nostr";
+import { apiRequest } from "@/lib/queryClient";
 
 interface PostReplyFormProps {
   onSubmitReply: (content: string, imageUrls: string[]) => Promise<void>;
+  threadId?: string;
 }
 
-export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply }) => {
+interface GPTProcessResponse {
+  success: boolean;
+  message?: string;
+  originalText: string;
+  processedText: string;
+  sentiment?: number;
+  topics?: string[];
+}
+
+export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, threadId }) => {
   const [replyText, setReplyText] = useState("");
+  const [processedText, setProcessedText] = useState("");
+  const [isProcessed, setIsProcessed] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
@@ -21,13 +35,75 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply }) =
     }
   };
 
+  const processWithGPT = async (userInput: string) => {
+    if (!userInput.trim()) {
+      toast({
+        title: "Error",
+        description: "Message cannot be empty",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Send to GPT-In-The-Middle API
+      const response = await apiRequest<GPTProcessResponse>({
+        method: "POST",
+        url: "/api/gpt-process",
+        data: {
+          userInput,
+          threadId,
+          context: `This is a message in thread #${threadId || 'unknown'}`
+        }
+      });
+
+      if (response.success) {
+        setProcessedText(response.processedText);
+        setIsProcessed(true);
+        
+        // Show success message
+        toast({
+          title: "AI Processing Complete",
+          description: "Your message has been processed by GPT-4o. Review and post!",
+        });
+        
+        return true;
+      } else {
+        toast({
+          title: "Processing Failed",
+          description: response.message || "Failed to process your message with AI",
+          variant: "destructive",
+        });
+        return false;
+      }
+    } catch (error: any) {
+      console.error("Error processing with GPT:", error);
+      toast({
+        title: "Processing Error",
+        description: error.message || "An error occurred while processing your message",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleProcessClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await processWithGPT(replyText);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!replyText.trim()) {
+    // Don't allow submission if there's no processed text
+    if (!isProcessed || !processedText.trim()) {
       toast({
-        title: "Error",
-        description: "Reply cannot be empty",
+        title: "Processing Required",
+        description: "Please write your message and click 'Process with AI' first",
         variant: "destructive",
       });
       return;
@@ -65,16 +141,18 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply }) =
         }
       }
       
-      // Submit the reply
-      await onSubmitReply(replyText, imageUrls);
+      // Submit the processed reply
+      await onSubmitReply(processedText, imageUrls);
       
       // Reset form
       setReplyText("");
+      setProcessedText("");
+      setIsProcessed(false);
       setSelectedFile(null);
       
       toast({
         title: "Reply Posted",
-        description: "Your reply has been posted successfully",
+        description: "Your AI-processed reply has been posted successfully",
       });
     } catch (error: any) {
       toast({
@@ -88,28 +166,65 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply }) =
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="mb-4">
+    <form onSubmit={handleSubmit} className="border border-black p-3 bg-[#f5f5dc]">
+      <div className="mb-2">
+        <div className="text-sm font-bold mb-1 bg-primary text-white p-1">YOUR MESSAGE</div>
         <Textarea
           value={replyText}
-          onChange={(e) => setReplyText(e.target.value)}
-          placeholder="Write your reply..."
-          rows={4}
-          className="w-full p-2 border border-gray-300 rounded text-sm"
-          disabled={isSubmitting}
+          onChange={(e) => {
+            setReplyText(e.target.value);
+            // Reset processed state when user edits the text
+            if (isProcessed) {
+              setIsProcessed(false);
+            }
+          }}
+          placeholder="Write your message here... AI will process it before posting!"
+          rows={3}
+          className="w-full p-2 border border-black rounded-none bg-white text-sm font-mono"
+          disabled={isSubmitting || isProcessing}
         />
       </div>
+
+      {/* AI Processing Button */}
+      <div className="flex justify-center mb-2">
+        <Button
+          type="button"
+          onClick={handleProcessClick}
+          className="bg-[#8b0000] hover:bg-[#6b0000] text-white text-sm border border-black rounded-none w-full"
+          disabled={isProcessing || isSubmitting || !replyText.trim()}
+        >
+          {isProcessing ? (
+            <>
+              <span className="animate-pulse">AI is processing...</span>
+            </>
+          ) : (
+            "Process with GPT-4o"
+          )}
+        </Button>
+      </div>
+
+      {/* AI Processed Text Section */}
+      {(isProcessed || processedText) && (
+        <div className="mb-3 border border-black p-2 bg-white">
+          <div className="text-sm font-bold mb-1 bg-primary text-white p-1">
+            AI-PROCESSED MESSAGE (THIS WILL BE POSTED)
+          </div>
+          <div className="p-2 min-h-[60px] text-sm font-mono whitespace-pre-wrap">
+            {processedText || "⌛ Waiting for AI to process your message..."}
+          </div>
+        </div>
+      )}
+      
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <Button
             type="button"
-            variant="ghost"
-            className="flex items-center text-gray-600 hover:text-primary mr-4"
+            variant="outline"
+            className="flex items-center text-black hover:text-primary mr-2 border border-black rounded-none"
             onClick={() => document.getElementById("reply-image-upload")?.click()}
             disabled={isSubmitting}
           >
-            <i className="fas fa-image mr-1"></i>
-            <span className="text-sm">Add Image</span>
+            <span className="text-xs">Add Image</span>
           </Button>
           <input
             id="reply-image-upload"
@@ -119,24 +234,27 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply }) =
             onChange={handleFileChange}
             disabled={isSubmitting}
           />
-          <span className="text-xs text-gray-500">
-            {selectedFile ? selectedFile.name : "No file selected"}
+          <span className="text-xs text-gray-700">
+            {selectedFile ? selectedFile.name : ""}
           </span>
         </div>
         <Button
           type="submit"
-          className="bg-primary hover:bg-blue-800 text-white text-sm"
-          disabled={isSubmitting || isUploading}
+          className="bg-primary hover:bg-[#6b0000] text-white text-sm border border-black rounded-none"
+          disabled={isSubmitting || isUploading || !isProcessed}
         >
           {(isSubmitting || isUploading) ? (
             <>
-              <i className="fas fa-spinner fa-spin mr-1"></i>
               {isUploading ? "Uploading..." : "Posting..."}
             </>
           ) : (
             "Post Reply"
           )}
         </Button>
+      </div>
+
+      <div className="mt-2 text-xs text-center text-gray-700 italic">
+        Your message will be processed by GPT-4o before posting. The AI will make it more engaging while preserving your intent.
       </div>
     </form>
   );

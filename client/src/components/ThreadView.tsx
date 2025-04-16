@@ -220,7 +220,7 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
               </div>
             )}
             
-            <PostReplyForm onSubmitReply={handleSubmitReply} />
+            <PostReplyForm onSubmitReply={handleSubmitReply} threadId={threadId} />
           </div>
         </div>
       </div>

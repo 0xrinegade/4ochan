@@ -11,7 +11,7 @@ import {
 // Since we're using the Nostr protocol for content,
 // these backend routes handle user profiles and reputation systems
 
-import { authenticateWithAI, generateAIResponse } from "./openai";
+import { authenticateWithAI, generateAIResponse, processUserInput } from "./openai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
@@ -330,6 +330,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Create an HTTP server
   const httpServer = createServer(app);
+  
+  // ===== GPT-IN-THE-MIDDLE ROUTES =====
+  
+  // Process user input through GPT-4o
+  app.post("/api/gpt-process", async (req, res) => {
+    try {
+      const { userInput, context, threadId, username } = req.body;
+      
+      if (!userInput || typeof userInput !== 'string') {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Please provide your message text." 
+        });
+      }
+      
+      // Process the input through GPT-4o
+      const processedResponse = await processUserInput(
+        userInput,
+        context || `This is a message in thread #${threadId || 'unknown'}`,
+        username
+      );
+      
+      return res.status(200).json({
+        success: true,
+        originalText: processedResponse.originalIntent,
+        processedText: processedResponse.content,
+        sentiment: processedResponse.sentimentScore,
+        topics: processedResponse.topicTags
+      });
+    } catch (error) {
+      console.error("Error in GPT-in-the-middle processing:", error);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Failed to process your message. Please try again."
+      });
+    }
+  });
   
   // ===== AI AUTHENTICATION ROUTES =====
   

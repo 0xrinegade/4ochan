@@ -73,3 +73,93 @@ export async function generateAIResponse(prompt: string): Promise<string> {
     return "Sorry, I couldn't generate a response at the moment. Please try again later.";
   }
 }
+
+interface GPTInTheMiddleResponse {
+  content: string;
+  originalIntent: string;
+  sentimentScore?: number;
+  topicTags?: string[];
+}
+
+/**
+ * GPT-In-The-Middle: Processes user input and turns it into AI-generated content
+ * @param userInput Original user message
+ * @param context Optional context about the thread/conversation
+ * @param username Username of the person posting
+ */
+export async function processUserInput(
+  userInput: string, 
+  context?: string,
+  username?: string
+): Promise<GPTInTheMiddleResponse> {
+  try {
+    const systemPrompt = `You are the GPT-In-The-Middle for a retro-styled imageboard where all user messages are processed through you before being posted.
+    Your job is to take the user's input and transform it into a more engaging, entertaining message while preserving their original intent.
+    
+    Guidelines:
+    1. Keep the same general meaning and intent of the original message
+    2. Add some personality appropriate to a 90s-style internet forum
+    3. You may enhance details or add minor embellishments that fit the context
+    4. Format text naturally with paragraph breaks where appropriate
+    5. If the input is toxic, hateful, or inappropriate, respond with a gentle warning instead
+    6. Occasionally add nostalgic references to early internet culture if relevant
+    
+    ${context ? `Conversation context: ${context}` : ''}
+    
+    Respond with ONLY the transformed message text that will be posted. Don't include any meta-commentary or explanations of what you're doing.`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt
+        },
+        {
+          role: "user",
+          content: userInput,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 500,
+    });
+
+    // Get sentiment analysis in a separate API call
+    const sentimentResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `Analyze the sentiment of the following text on a scale from 1 to 10, 
+          where 1 is extremely negative and 10 is extremely positive. 
+          Also extract 1-3 topic tags that describe what the content is about.
+          Respond with JSON in this format: {"sentiment": number, "topics": [string, string?]}`
+        },
+        {
+          role: "user",
+          content: userInput,
+        },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.2,
+      max_tokens: 50,
+    });
+
+    // Parse sentiment analysis
+    const sentimentContent = sentimentResponse.choices[0].message.content || '{"sentiment": 5, "topics": ["general"]}';
+    const sentimentData = JSON.parse(sentimentContent);
+
+    return {
+      content: response.choices[0].message.content || "Error processing your message. Please try again.",
+      originalIntent: userInput,
+      sentimentScore: sentimentData.sentiment,
+      topicTags: sentimentData.topics
+    };
+  } catch (error) {
+    console.error("Error in GPT-In-The-Middle processing:", error);
+    return {
+      content: "Sorry, I couldn't process your message at the moment. Please try again later.",
+      originalIntent: userInput
+    };
+  }
+}
