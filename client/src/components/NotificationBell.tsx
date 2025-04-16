@@ -112,12 +112,12 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
       {/* Bell Icon with Badge */}
       <button 
         onClick={handleBellClick}
-        className="relative text-xs bg-white border border-black px-2 py-0.5 hover:bg-[#d0d0d0] text-primary"
+        className="relative text-xs bg-[#c0c0c0] border-t-[1px] border-l-[1px] border-[#ffffff] border-b-[1px] border-r-[1px] border-[#808080] px-2 py-0.5 hover:bg-[#d0d0d0] text-black"
       >
         <div className="font-bold flex items-center">
           ✉
           {unreadCount > 0 && (
-            <span className="ml-1 bg-primary text-white text-xs px-1 border border-black">
+            <span className="ml-1 bg-primary text-[#f0e6d2] text-xs px-1 border border-black">
               {unreadCount}
             </span>
           )}
@@ -134,8 +134,9 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
             {unreadCount > 0 && (
               <button 
                 onClick={handleMarkAllRead}
-                className="text-xs bg-[#c0c0c0] hover:bg-[#d0d0d0] text-black px-2 py-0.5 
-                         border border-black"
+                className="text-xs bg-[#c0c0c0] hover:bg-[#d0d0d0] text-black px-2 py-0.5
+                         border-t-[1px] border-l-[1px] border-[#ffffff] 
+                         border-b-[1px] border-r-[1px] border-[#808080]"
               >
                 MARK ALL READ
               </button>
@@ -143,12 +144,16 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
           </div>
           
           {isLoading ? (
-            <div className="p-4 text-center">
-              Loading...
+            <div className="p-4 text-center bg-[#f0e6d2]">
+              <div className="inline-block px-3 py-1 bg-[#c0c0c0] border border-black">
+                Loading...
+              </div>
             </div>
           ) : notifications.length === 0 ? (
-            <div className="p-4 text-center">
-              No notifications
+            <div className="p-4 text-center bg-[#f0e6d2]">
+              <div className="inline-block px-3 py-1 bg-[#c0c0c0] border border-black">
+                No notifications
+              </div>
             </div>
           ) : (
             <div>
