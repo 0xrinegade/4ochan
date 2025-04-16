@@ -21,12 +21,7 @@ const UserProfilePage: React.FC = () => {
         <Header />
         
         <main className="container mx-auto px-4">
-          {/* Top navigation - classic 90s tab-style */}
-          <div className="flex border-b border-black mb-4">
-            <a href="/" className="bg-white px-4 py-1 border border-black border-b-0 mr-1">Home</a>
-            <a href="#" className="bg-primary text-white px-4 py-1 font-bold border border-black border-b-0 mr-1">Profile</a>
-            <a href="#" className="bg-white px-4 py-1 border border-black border-b-0 mr-1">Settings</a>
-          </div>
+          {/* Main content starts here */}
           
           {/* Main content area - 90s style */}
           <div className="flex flex-col-reverse md:flex-row gap-4">
