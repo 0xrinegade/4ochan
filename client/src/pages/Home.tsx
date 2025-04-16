@@ -6,20 +6,15 @@ import { ThreadList } from "@/components/ThreadList";
 import { useNostr } from "@/hooks/useNostr";
 import { useBoards } from "@/hooks/useBoards";
 import { Button } from "@/components/ui/button";
-
-// Sample imageboard data for our retro UI
-const boards = [
-  { id: "b", name: "Random", postCount: 143 },
-  { id: "a", name: "Anime", postCount: 78 },
-  { id: "g", name: "Technology", postCount: 92 },
-  { id: "v", name: "Video Games", postCount: 105 },
-  { id: "pol", name: "Politics", postCount: 231 },
-];
+import { formatPubkey } from "@/lib/nostr";
+import { CreateThreadModal } from "@/components/CreateThreadModal";
+import { Board } from "@/types";
 
 const Home: React.FC = () => {
   const { id: boardId } = useParams<{ id?: string }>();
   const { boards: nostrBoards, loading: loadingBoards } = useBoards();
-  const { connect, connectedRelays } = useNostr();
+  const nostr = useNostr();
+  const { connect, connectedRelays, relays, identity } = nostr;
   const [connecting, setConnecting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -79,11 +74,13 @@ const Home: React.FC = () => {
                 <div className="bg-white border border-black border-t-0 p-1 text-xs">
                   <div className="flex items-center mb-0.5">
                     <span className="animate-blink text-green-600 mr-1">●</span>
-                    <p>Visitors: <span className="font-mono bg-black text-green-400 px-1">0042069</span></p>
+                    <p>Connected Relays: <span className="font-mono bg-black text-green-400 px-1">{connectedRelays || 0}</span></p>
                   </div>
-                  <p>Threads: 1,337</p>
-                  <p>Posts today: 8,008</p>
-                  <p className="text-[10px] mt-1 text-center italic border-t border-dotted border-gray-400 pt-1">You are visitor #<span className="font-bold">42,069</span></p>
+                  <p>Total Boards: {nostrBoards.length}</p>
+                  <p>Total Threads: {nostrBoards.reduce((sum, board) => sum + (board.threadCount || 0), 0)}</p>
+                  <p className="text-[10px] mt-1 text-center italic border-t border-dotted border-gray-400 pt-1">
+                    Your Nostr ID: <span className="font-bold">{identity ? formatPubkey(identity.pubkey) : 'Not connected'}</span>
+                  </p>
                 </div>
               </div>
             </div>
@@ -203,7 +200,7 @@ const Home: React.FC = () => {
                   <span className="mr-1">■</span> POPULAR BOARDS
                 </div>
                 <div className="bg-white border border-black border-t-0 p-2">
-                  {boards.length > 0 ? (
+                  {nostrBoards.length > 0 ? (
                     <table className="w-full border-collapse border-2 border-black text-left">
                       <thead>
                         <tr className="bg-primary text-white">
@@ -213,19 +210,19 @@ const Home: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {boards.map((board, idx) => (
+                        {nostrBoards.map((board, idx) => (
                           <tr key={board.id} className={idx % 2 === 0 ? "bg-gray-100" : "bg-white"}>
                             <td className="border border-black p-0.5 font-mono text-center text-xs">
                               <a href={`#${board.id}`} className="text-primary underline font-bold">/{board.id}/</a>
                             </td>
-                            <td className="border border-black p-0.5 text-xs">{board.name}</td>
-                            <td className="border border-black p-0.5 text-center text-xs">{board.postCount}</td>
+                            <td className="border border-black p-0.5 text-xs">{board.name} {board.pubkey ? '[REAL NOSTR]' : ''}</td>
+                            <td className="border border-black p-0.5 text-center text-xs">{board.postCount || 0}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   ) : (
-                    <p className="text-xs">loading...</p>
+                    <p className="text-xs">loading boards from Nostr relays...</p>
                   )}
                 </div>
               </div>
@@ -253,7 +250,7 @@ const Home: React.FC = () => {
               {/* Visitor counter moved from header */}
               <div className="my-1.5">
                 <span className="bg-white border border-black inline-block px-2 py-0.5 text-[10px]">
-                  Visitors: 133,742 | Active users: 420
+                  Nostr Relays: {relays.length} | Connected: {connectedRelays} | Boards: {nostrBoards.length}
                 </span>
               </div>
               
@@ -276,6 +273,19 @@ const Home: React.FC = () => {
           <div className="hidden">
             <BoardSidebar />
           </div>
+          
+          {/* Create Thread Modal */}
+          {showCreateModal && (
+            <CreateThreadModal
+              isOpen={showCreateModal}
+              onClose={() => setShowCreateModal(false)}
+              onCreateThread={(title, content, imageUrls) => {
+                console.log("Creating thread:", { title, content, imageUrls });
+                setShowCreateModal(false);
+                return Promise.resolve();
+              }}
+            />
+          )}
         </main>
       </div>
     </div>
