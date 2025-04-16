@@ -1,15 +1,55 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNostr } from "@/hooks/useNostr";
 import { Button } from "@/components/ui/button";
 import { RelayConnectionModal } from "@/components/RelayConnectionModal";
+import { AILoginModal } from "@/components/AILoginModal";
 import { Link } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 export const Header: React.FC = () => {
   const { connectedRelays, relays } = useNostr();
   const [showConnectionModal, setShowConnectionModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  // Load user from localStorage on component mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem("aiUser");
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        setCurrentUser(userData.username);
+      } catch (e) {
+        // Invalid data in localStorage
+        localStorage.removeItem("aiUser");
+      }
+    }
+  }, []);
 
   const toggleConnectionModal = () => {
     setShowConnectionModal(!showConnectionModal);
+  };
+  
+  const handleLogin = () => {
+    setShowLoginModal(true);
+  };
+  
+  const handleLogout = () => {
+    localStorage.removeItem("aiUser");
+    setCurrentUser(null);
+    toast({
+      title: "Logged Out",
+      description: "You have been logged out successfully.",
+    });
+  };
+  
+  const handleLoginSuccess = (username: string) => {
+    setCurrentUser(username);
+    localStorage.setItem("aiUser", JSON.stringify({ 
+      username,
+      loginTime: new Date().toISOString()
+    }));
   };
 
   // Format current date in classic 90s style
@@ -49,7 +89,25 @@ export const Header: React.FC = () => {
               ? `Connected to ${connectedRelays} relay${connectedRelays !== 1 ? 's' : ''}`
               : 'Offline - Click to Connect'}
           </p>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2 justify-end">
+            {currentUser ? (
+              <div className="flex gap-2 items-center">
+                <span className="text-xs">Logged in as <b>{currentUser}</b></span>
+                <button 
+                  onClick={handleLogout}
+                  className="text-xs underline"
+                >
+                  Log Out
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={handleLogin}
+                className="text-xs bg-white text-primary px-2 py-0.5 border border-white"
+              >
+                AI Login
+              </button>
+            )}
             <Link href="/profile">
               <span className="text-xs underline cursor-pointer">My Profile</span>
             </Link>
@@ -75,6 +133,13 @@ export const Header: React.FC = () => {
         isOpen={showConnectionModal}
         onClose={() => setShowConnectionModal(false)}
         relays={relays}
+      />
+
+      {/* AI Login Modal */}
+      <AILoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLoginSuccess={handleLoginSuccess}
       />
     </header>
   );

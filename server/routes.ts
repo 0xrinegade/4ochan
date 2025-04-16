@@ -359,9 +359,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             nostrPubkey: "", // Empty for AI-generated users
             displayName: authResult.username,
             avatar: null,
-            isAdmin: false,
-            isModerator: false,
-            isVerified: false,
           });
         } else {
           // Update last seen
