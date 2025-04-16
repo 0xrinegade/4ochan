@@ -23,6 +23,8 @@ export const KIND = {
   BOARD_DEFINITION: 9901, // Custom kind for board definition
   THREAD: 9902, // Custom kind for thread
   POST: 9903, // Custom kind for post within a thread
+  SUBSCRIPTION: 9904, // Custom kind for thread subscription
+  NOTIFICATION: 9905, // Custom kind for user notification
 };
 
 // Create an event pool for managing relay connections
@@ -362,4 +364,83 @@ export const uploadMedia = async (
 export const uploadImage = async (imageData: string): Promise<string> => {
   const mediaFile = await uploadMedia(imageData, "image.jpg", "image/jpeg");
   return mediaFile.url;
+};
+
+// Create a thread subscription event
+export const createSubscriptionEvent = async (
+  threadId: string,
+  notifyOnReplies: boolean = true,
+  notifyOnMentions: boolean = true,
+  identity: NostrIdentity
+): Promise<NostrEvent> => {
+  const subscriptionContent = JSON.stringify({
+    notifyOnReplies,
+    notifyOnMentions,
+    createdAt: Math.floor(Date.now() / 1000)
+  });
+  
+  const tags = [
+    ["e", threadId, "", "thread"],
+    ["subscription", "thread"]
+  ];
+  
+  return await createEvent(KIND.SUBSCRIPTION, subscriptionContent, tags, identity);
+};
+
+// Remove a subscription (by creating a deletion event)
+export const removeSubscriptionEvent = async (
+  subscriptionId: string,
+  identity: NostrIdentity
+): Promise<NostrEvent> => {
+  const tags = [
+    ["e", subscriptionId]
+  ];
+  
+  return await createEvent(KIND.METADATA, "", tags, identity);
+};
+
+// Create a notification event
+export const createNotificationEvent = async (
+  recipientPubkey: string,
+  title: string,
+  message: string,
+  threadId: string,
+  postId: string | null,
+  identity: NostrIdentity
+): Promise<NostrEvent> => {
+  const notificationContent = JSON.stringify({
+    title,
+    message,
+    createdAt: Math.floor(Date.now() / 1000),
+    read: false
+  });
+  
+  const tags = [
+    ["p", recipientPubkey], // Recipient pubkey
+    ["e", threadId, "", "thread"], // Thread reference
+  ];
+  
+  // Add post reference if available
+  if (postId) {
+    tags.push(["e", postId, "", "post"]);
+  }
+  
+  return await createEvent(KIND.NOTIFICATION, notificationContent, tags, identity);
+};
+
+// Mark a notification as read
+export const markNotificationAsRead = async (
+  notificationId: string,
+  identity: NostrIdentity
+): Promise<NostrEvent> => {
+  const content = JSON.stringify({
+    read: true,
+    readAt: Math.floor(Date.now() / 1000)
+  });
+  
+  const tags = [
+    ["e", notificationId, "", "notification"]
+  ];
+  
+  return await createEvent(KIND.METADATA, content, tags, identity);
 };

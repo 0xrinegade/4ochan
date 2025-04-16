@@ -325,15 +325,16 @@ export class DatabaseStorage implements IStorage {
     limit: number = 50, 
     includeRead: boolean = false
   ): Promise<Notification[]> {
-    let query = db.select()
-      .from(notifications)
-      .where(eq(notifications.userId, userId));
-      
-    if (!includeRead) {
-      query = query.where(eq(notifications.read, false));
-    }
+    const queryConditions = includeRead 
+      ? eq(notifications.userId, userId)
+      : and(
+          eq(notifications.userId, userId),
+          eq(notifications.read, false)
+        );
     
-    return query
+    return db.select()
+      .from(notifications)
+      .where(queryConditions)
       .orderBy(desc(notifications.createdAt))
       .limit(limit);
   }

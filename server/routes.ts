@@ -5,7 +5,8 @@ import { WebSocketServer } from "ws";
 import { z } from "zod";
 import { 
   insertUserSchema, insertBadgeSchema, insertUserBadgeSchema, 
-  insertReputationLogSchema, insertFollowerSchema 
+  insertReputationLogSchema, insertFollowerSchema,
+  insertThreadSubscriptionSchema, insertNotificationSchema
 } from '@shared/schema';
 
 // Since we're using the Nostr protocol for content,
@@ -324,6 +325,221 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(204).end();
     } catch (error) {
       console.error("Error unfollowing user:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // ===== THREAD SUBSCRIPTION ROUTES =====
+  
+  // Get all user's thread subscriptions
+  app.get("/api/users/:id/subscriptions", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+
+      const subscriptions = await storage.getUserSubscriptions(userId);
+      return res.json(subscriptions);
+    } catch (error) {
+      console.error("Error fetching subscriptions:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // Check if user is subscribed to a thread
+  app.get("/api/users/:id/subscriptions/:threadId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { threadId } = req.params;
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
+      if (!threadId) {
+        return res.status(400).json({ error: "Thread ID is required" });
+      }
+
+      const isSubscribed = await storage.isUserSubscribed(userId, threadId);
+      return res.json({ userId, threadId, isSubscribed });
+    } catch (error) {
+      console.error("Error checking subscription:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // Subscribe to a thread
+  app.post("/api/users/:id/subscriptions", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+
+      // Validate subscription data
+      const subscriptionSchema = insertThreadSubscriptionSchema.omit({ userId: true });
+      const result = subscriptionSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: "Invalid subscription data", details: result.error });
+      }
+      
+      if (!result.data.threadId) {
+        return res.status(400).json({ error: "Thread ID is required" });
+      }
+
+      const subscription = await storage.subscribeToThread({
+        userId,
+        threadId: result.data.threadId,
+        notifyOnReplies: result.data.notifyOnReplies ?? true,
+        notifyOnMentions: result.data.notifyOnMentions ?? true
+      });
+
+      return res.status(201).json(subscription);
+    } catch (error) {
+      console.error("Error subscribing to thread:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // Unsubscribe from a thread
+  app.delete("/api/users/:id/subscriptions/:threadId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { threadId } = req.params;
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
+      if (!threadId) {
+        return res.status(400).json({ error: "Thread ID is required" });
+      }
+
+      await storage.unsubscribeFromThread(userId, threadId);
+      return res.status(204).end();
+    } catch (error) {
+      console.error("Error unsubscribing from thread:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // Update subscription preferences
+  app.patch("/api/users/:id/subscriptions/:threadId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { threadId } = req.params;
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
+      if (!threadId) {
+        return res.status(400).json({ error: "Thread ID is required" });
+      }
+
+      // Validate update data
+      const updateSchema = insertThreadSubscriptionSchema.partial().omit({ userId: true, threadId: true });
+      const result = updateSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: "Invalid subscription update data", details: result.error });
+      }
+
+      const updatedSubscription = await storage.updateThreadSubscription(userId, threadId, result.data);
+      if (!updatedSubscription) {
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+
+      return res.json(updatedSubscription);
+    } catch (error) {
+      console.error("Error updating subscription:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // ===== NOTIFICATION ROUTES =====
+  
+  // Get user's notifications
+  app.get("/api/users/:id/notifications", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const includeRead = req.query.includeRead === "true";
+
+      const notifications = await storage.getUserNotifications(userId, limit, includeRead);
+      return res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // Get unread notification count
+  app.get("/api/users/:id/notifications/count", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+
+      const count = await storage.countUnreadNotifications(userId);
+      return res.json({ userId, unreadCount: count });
+    } catch (error) {
+      console.error("Error counting notifications:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // Mark a notification as read
+  app.patch("/api/notifications/:id", async (req, res) => {
+    try {
+      const notificationId = parseInt(req.params.id);
+      if (isNaN(notificationId)) {
+        return res.status(400).json({ error: "Invalid notification ID" });
+      }
+
+      await storage.markNotificationAsRead(notificationId);
+      return res.status(204).end();
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // Mark all notifications as read for a user
+  app.patch("/api/users/:id/notifications/read-all", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+
+      await storage.markAllNotificationsAsRead(userId);
+      return res.status(204).end();
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // Delete a notification
+  app.delete("/api/notifications/:id", async (req, res) => {
+    try {
+      const notificationId = parseInt(req.params.id);
+      if (isNaN(notificationId)) {
+        return res.status(400).json({ error: "Invalid notification ID" });
+      }
+
+      await storage.deleteNotification(notificationId);
+      return res.status(204).end();
+    } catch (error) {
+      console.error("Error deleting notification:", error);
       return res.status(500).json({ error: "Internal server error" });
     }
   });
