@@ -10,12 +10,10 @@ import { NostrEvent, NostrIdentity, Relay, NostrProfile } from "../types";
 
 // Default relays to connect to
 export const DEFAULT_RELAYS = [
-  "wss://relay.primal.net",
-  "wss://nos.lol",
-  "wss://relay.nostr.band",
   "wss://relay.snort.social",
-  "wss://relay.current.fyi",
+  "wss://relay.damus.io",
   "wss://purplepag.es",
+  "wss://relay.current.fyi",
 ];
 
 // Kind numbers for our custom event types
@@ -81,13 +79,34 @@ export const saveIdentity = (identity: NostrIdentity) => {
   localStorage.setItem("nostr-identity", JSON.stringify(serializableIdentity));
 };
 
-// Load saved relays or use defaults
+// Load saved relays or use defaults with reliability check
 export const getSavedRelays = (): Relay[] => {
   const savedRelays = localStorage.getItem("nostr-relays");
   
   if (savedRelays) {
     try {
-      return JSON.parse(savedRelays);
+      const parsed = JSON.parse(savedRelays);
+      
+      // Check if there are any problematic relays and replace them
+      const updatedRelays = parsed.map((relay: Relay) => {
+        // Replace known problematic relays with better alternatives
+        if (relay.url === "wss://relay.nostr.info") {
+          console.log("Replacing problematic relay with better alternative");
+          return {
+            ...relay,
+            url: "wss://relay.damus.io",
+            status: 'disconnected'
+          };
+        }
+        return relay;
+      });
+      
+      // Save any changes made
+      if (JSON.stringify(updatedRelays) !== savedRelays) {
+        saveRelays(updatedRelays);
+      }
+      
+      return updatedRelays;
     } catch (error) {
       console.error("Failed to parse saved relays", error);
     }

@@ -71,31 +71,43 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.getItem("nostr-auto-reconnect") !== "false"
   );
 
-  // Connect to relays
+  // Connect to relays with better error handling
   const connect = useCallback(async () => {
     if (isConnecting || pool) return;
     
     setIsConnecting(true);
     const newPool = createPool();
     
-    const relayUrls = relays.map(r => r.url);
     const updatedRelays = [...relays];
-    
     let connected = 0;
     
-    // Connect to each relay
+    // Connect to each relay with 5 second timeout
     for (let i = 0; i < updatedRelays.length; i++) {
       const relay = updatedRelays[i];
       relay.status = 'connecting';
       setRelays([...updatedRelays]);
       
       try {
-        await newPool.ensureRelay(relay.url);
+        // Create a promise that will reject after 5 seconds
+        const connectWithTimeout = Promise.race([
+          newPool.ensureRelay(relay.url),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Connection timeout")), 5000))
+        ]);
+        
+        await connectWithTimeout;
         relay.status = 'connected';
         connected++;
+        console.log(`Successfully connected to relay: ${relay.url}`);
       } catch (error) {
         console.error(`Failed to connect to relay: ${relay.url}`, error);
         relay.status = 'error';
+        
+        // If this relay failed, try to replace it with a working one later
+        if (relay.url === "wss://relay.nostr.info") {
+          relay.url = "wss://relay.damus.io";
+          relay.status = 'disconnected';
+          saveRelays(updatedRelays);
+        }
       }
       
       setRelays([...updatedRelays]);
@@ -106,7 +118,11 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setIsConnecting(false);
     
     // Load boards after connecting
-    loadBoards();
+    if (connected > 0) {
+      loadBoards();
+    } else {
+      console.error("Failed to connect to any relays");
+    }
   }, [isConnecting, pool, relays]);
 
   // Disconnect from all relays
@@ -709,6 +725,30 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     };
   }, []);
+  
+  // Auto-connect to relays if needed
+  useEffect(() => {
+    // If autoConnect is enabled and no connections, attempt to connect
+    if (autoConnect && !pool && !isConnecting && relays.length > 0) {
+      console.log("Auto-connecting to relays...");
+      connect();
+    }
+  }, [autoConnect, pool, isConnecting, relays, connect]);
+  
+  // Auto-reconnect if all connections fail
+  useEffect(() => {
+    if (pool && autoReconnect && connectedRelays === 0 && !isConnecting) {
+      console.log("No connected relays. Attempting to reconnect in 5 seconds...");
+      
+      const timer = setTimeout(() => {
+        console.log("Auto-reconnecting...");
+        disconnect();
+        connect();
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [autoReconnect, pool, connectedRelays, isConnecting, disconnect, connect]);
   
   // Create initial boards if empty when connected
   useEffect(() => {
