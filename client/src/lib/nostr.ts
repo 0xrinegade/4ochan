@@ -10,10 +10,13 @@ import { NostrEvent, NostrIdentity, Relay, NostrProfile } from "../types";
 
 // Default relays to connect to
 export const DEFAULT_RELAYS = [
-  "wss://relay.snort.social",
-  "wss://relay.damus.io",
-  "wss://purplepag.es",
-  "wss://relay.current.fyi",
+  "wss://nos.lol",         // Very reliable relay
+  "wss://nostr.wine",      // Good fallback relay
+  "wss://relay.snort.social", // Popular with good uptime
+  "wss://purplepag.es",    // Good for text events
+  "wss://relay.current.fyi", // Another stable option
+  "wss://relay.nostr.band", // Backup option
+  "wss://nostr.mutinywallet.com", // Additional stable relay
 ];
 
 // Kind numbers for our custom event types

@@ -71,27 +71,36 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.getItem("nostr-auto-reconnect") !== "false"
   );
 
-  // Connect to relays with better error handling
+  // Connect to relays with improved error handling and automatic retry
   const connect = useCallback(async () => {
     if (isConnecting || pool) return;
     
+    console.log("Auto-connecting to relays...");
     setIsConnecting(true);
     const newPool = createPool();
     
     const updatedRelays = [...relays];
     let connected = 0;
     
-    // Connect to each relay with 5 second timeout
+    // Map of problematic relays to fallback options
+    const fallbackRelays: Record<string, string> = {
+      "wss://relay.nostr.info": "wss://nos.lol",
+      "wss://relay.damus.io": "wss://nostr.wine",
+      "wss://relay.snort.social": "wss://purplepag.es",
+      "wss://relay.current.fyi": "wss://nostr.mutinywallet.com"
+    };
+    
+    // Connect to each relay with 8 second timeout (increased from 5)
     for (let i = 0; i < updatedRelays.length; i++) {
       const relay = updatedRelays[i];
       relay.status = 'connecting';
       setRelays([...updatedRelays]);
       
       try {
-        // Create a promise that will reject after 5 seconds
+        // Create a promise that will reject after 8 seconds
         const connectWithTimeout = Promise.race([
           newPool.ensureRelay(relay.url),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Connection timeout")), 5000))
+          new Promise((_, reject) => setTimeout(() => reject(new Error("connection timed out")), 8000))
         ]);
         
         await connectWithTimeout;
@@ -102,16 +111,47 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         console.error(`Failed to connect to relay: ${relay.url}`, error);
         relay.status = 'error';
         
-        // If this relay failed, try to replace it with a working one later
-        if (relay.url === "wss://relay.nostr.info") {
-          relay.url = "wss://relay.damus.io";
-          relay.status = 'disconnected';
-          saveRelays(updatedRelays);
+        // If this relay failed, try to replace it with a working fallback
+        if (fallbackRelays[relay.url]) {
+          // Check if the fallback relay is already in our list
+          const fallbackExists = updatedRelays.some(r => r.url === fallbackRelays[relay.url]);
+          
+          if (!fallbackExists) {
+            // Add the fallback relay to our list
+            updatedRelays.push({
+              url: fallbackRelays[relay.url],
+              status: 'disconnected',
+              read: relay.read,
+              write: relay.write
+            });
+            
+            // Try to connect to the fallback immediately
+            try {
+              console.log(`Trying fallback relay: ${fallbackRelays[relay.url]}`);
+              const fallbackIndex = updatedRelays.length - 1;
+              updatedRelays[fallbackIndex].status = 'connecting';
+              
+              await Promise.race([
+                newPool.ensureRelay(fallbackRelays[relay.url]),
+                new Promise((_, reject) => setTimeout(() => reject(new Error("fallback connection timed out")), 8000))
+              ]);
+              
+              updatedRelays[fallbackIndex].status = 'connected';
+              connected++;
+              console.log(`Successfully connected to fallback relay: ${fallbackRelays[relay.url]}`);
+            } catch (fallbackError) {
+              console.error(`Failed to connect to fallback relay: ${fallbackRelays[relay.url]}`, fallbackError);
+              updatedRelays[updatedRelays.length - 1].status = 'error';
+            }
+          }
         }
       }
       
       setRelays([...updatedRelays]);
     }
+    
+    // Save the updated relays
+    saveRelays(updatedRelays);
     
     setConnectedRelays(connected);
     setPool(newPool);
@@ -122,6 +162,14 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       loadBoards();
     } else {
       console.error("Failed to connect to any relays");
+      
+      // If all connections failed, try again in 10 seconds
+      setTimeout(() => {
+        if (connectedRelays === 0 && !isConnecting) {
+          console.log("Auto-reconnecting after complete failure...");
+          connect();
+        }
+      }, 10000);
     }
   }, [isConnecting, pool, relays]);
 
@@ -737,14 +785,31 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   
   // Auto-reconnect if all connections fail
   useEffect(() => {
+    // If we have a pool but no connected relays, attempt to reconnect
     if (pool && autoReconnect && connectedRelays === 0 && !isConnecting) {
-      console.log("No connected relays. Attempting to reconnect in 5 seconds...");
+      console.log("No connected relays. Attempting to reconnect in 8 seconds...");
       
+      // Use a longer timeout to avoid rapid reconnection attempts
       const timer = setTimeout(() => {
         console.log("Auto-reconnecting...");
-        disconnect();
-        connect();
-      }, 5000);
+        
+        // First try to get the current relays working
+        const connectAttempt = async () => {
+          try {
+            // Try a full disconnect/connect cycle
+            disconnect();
+            
+            // Add a small delay between disconnect and connect
+            setTimeout(() => {
+              connect();
+            }, 1000);
+          } catch (error) {
+            console.error("Reconnection error:", error);
+          }
+        };
+        
+        connectAttempt();
+      }, 8000); // Increased from 5s to 8s
       
       return () => clearTimeout(timer);
     }
