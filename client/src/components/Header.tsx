@@ -4,8 +4,32 @@ import { Button } from "@/components/ui/button";
 import { RelayConnectionModal } from "@/components/RelayConnectionModal";
 import { OpenAILoginButton } from "@/components/OpenAILoginButton";
 import { NotificationBell } from "@/components/NotificationBell";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { useBoards } from "@/hooks/useBoards";
+
+// Board navigation tab that finds the board ID by shortName
+const NavBoardTab: React.FC<{ shortName: string; label: string }> = ({ shortName, label }) => {
+  const { boards } = useBoards();
+  const [location] = useLocation();
+  
+  // Find board by shortName
+  const board = boards.find(b => b.shortName === shortName);
+  
+  // Check if this is the current active tab
+  const isActive = location === `/board/${board?.id}`;
+  
+  // If the board isn't loaded yet, just point to the shortName as a fallback
+  const href = board ? `/board/${board.id}` : `/board/${shortName}`;
+  
+  return (
+    <Link href={href}>
+      <span className={`${isActive ? 'bg-primary text-white' : 'bg-white'} px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer`}>
+        {label}
+      </span>
+    </Link>
+  );
+};
 
 export const Header: React.FC = () => {
   const { connectedRelays, relays } = useNostr();
@@ -121,24 +145,12 @@ export const Header: React.FC = () => {
           <Link href="/">
             <span className="bg-primary border-white text-white px-3 py-0.5 text-sm font-bold border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Home</span>
           </Link>
-          <Link href="/board/b">
-            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Random</span>
-          </Link>
-          <Link href="/board/ai">
-            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">AI</span>
-          </Link>
-          <Link href="/board/p">
-            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Psyche</span>
-          </Link>
-          <Link href="/board/gg">
-            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Games</span>
-          </Link>
-          <Link href="/board/news">
-            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">News</span>
-          </Link>
-          <Link href="/board/crypto">
-            <span className="bg-white px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Crypto</span>
-          </Link>
+          <NavBoardTab shortName="b" label="Random" />
+          <NavBoardTab shortName="ai" label="AI" />
+          <NavBoardTab shortName="p" label="Psyche" />
+          <NavBoardTab shortName="gg" label="Games" />
+          <NavBoardTab shortName="news" label="News" />
+          <NavBoardTab shortName="crypto" label="Crypto" />
         </div>
       </div>
       

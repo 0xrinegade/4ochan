@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { Header } from "@/components/Header";
 import { BoardSidebar } from "@/components/BoardSidebar";
 import { ThreadList } from "@/components/ThreadList";
@@ -213,7 +213,7 @@ const Home: React.FC = () => {
                         {nostrBoards.map((board, idx) => (
                           <tr key={board.id} className={idx % 2 === 0 ? "bg-gray-100" : "bg-white"}>
                             <td className="border border-black p-0.5 font-mono text-center text-xs">
-                              <a href={`#${board.id}`} className="text-primary underline font-bold">/{board.id}/</a>
+                              <Link href={`/board/${board.id}`} className="text-primary underline font-bold">/{board.shortName || board.id.slice(0,4)}/</Link>
                             </td>
                             <td className="border border-black p-0.5 text-xs">{board.name} {board.pubkey ? '[REAL NOSTR]' : ''}</td>
                             <td className="border border-black p-0.5 text-center text-xs">{board.postCount || 0}</td>
