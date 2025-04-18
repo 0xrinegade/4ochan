@@ -18,11 +18,11 @@ const Home: React.FC = () => {
   const [connecting, setConnecting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Find the current board details
-  const currentBoard = boardId 
-    ? nostrBoards.find(board => board.id === boardId)
-    : nostrBoards.length > 0 
-      ? nostrBoards[0] 
+  // Find the current board details - either by ID or shortName
+  const currentBoard = boardId
+    ? nostrBoards.find(board => board.id === boardId || board.shortName === boardId)
+    : nostrBoards.length > 0
+      ? nostrBoards[0]
       : undefined;
 
   // Connect to relays if not connected
@@ -49,16 +49,16 @@ const Home: React.FC = () => {
                 </div>
                 <div className="bg-white border border-black border-t-0 p-1">
                   <ul className="list-disc pl-4 text-sm">
-                    <li className="mb-0.5"><a href="#" className="text-primary underline">Random</a></li>
-                    <li className="mb-0.5"><a href="#" className="text-primary underline">Technology</a></li>
+                    <li className="mb-0.5"><Link href="/board/b" className="text-primary underline">Random</Link></li>
+                    <li className="mb-0.5"><Link href="/board/tech" className="text-primary underline">Technology</Link></li>
                     <li className="mb-0.5">
                       <div className="flex items-center">
-                        <a href="#" className="text-primary underline">Anime</a>
+                        <Link href="/board/ai" className="text-primary underline">AI</Link>
                         <div className="ml-1 text-[10px] font-bold bg-red-500 text-white px-1 animate-pulse">NEW!</div>
                       </div>
                     </li>
-                    <li className="mb-0.5"><a href="#" className="text-primary underline">Politics</a></li>
-                    <li className="mb-0.5"><a href="#" className="text-primary underline">Video Games</a></li>
+                    <li className="mb-0.5"><Link href="/board/p" className="text-primary underline">Psyche</Link></li>
+                    <li className="mb-0.5"><Link href="/board/gg" className="text-primary underline">Games</Link></li>
                   </ul>
                   <div className="mt-2 p-1 border border-blue-500 bg-blue-100 text-center text-xs">
                     <div className="font-bold text-blue-700">HOT TIP:</div>
@@ -87,7 +87,17 @@ const Home: React.FC = () => {
             
             {/* Main content area */}
             <div className="md:w-3/4">
-              <div className="mb-2">
+              {/* If a board is selected, show threads */}
+              {currentBoard && boardId ? (
+                <ThreadList 
+                  boardId={currentBoard.id}
+                  boardName={currentBoard.name}
+                  boardShortName={currentBoard.shortName}
+                  boardDescription={currentBoard.description}
+                />
+              ) : (
+                /* Otherwise show trending content on the homepage */
+                <div className="mb-2">
                 <div className="bg-primary text-white py-0.5 px-2 font-bold text-xs flex justify-between items-center">
                   <div className="flex items-center">
                     <span className="mr-1">■</span> TRENDING NOW
@@ -213,7 +223,7 @@ const Home: React.FC = () => {
                         {nostrBoards.map((board, idx) => (
                           <tr key={board.id} className={idx % 2 === 0 ? "bg-gray-100" : "bg-white"}>
                             <td className="border border-black p-0.5 font-mono text-center text-xs">
-                              <Link href={`/board/${board.id}`} className="text-primary underline font-bold">/{board.shortName || board.id.slice(0,4)}/</Link>
+                              <Link href={`/board/${board.shortName || board.id}`} className="text-primary underline font-bold">/{board.shortName || board.id.slice(0,4)}/</Link>
                             </td>
                             <td className="border border-black p-0.5 text-xs">{board.name} {board.pubkey ? '[REAL NOSTR]' : ''}</td>
                             <td className="border border-black p-0.5 text-center text-xs">{board.postCount || 0}</td>

@@ -8,19 +8,15 @@ import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useBoards } from "@/hooks/useBoards";
 
-// Board navigation tab that finds the board ID by shortName
+// Board navigation tab that simply uses the shortName
 const NavBoardTab: React.FC<{ shortName: string; label: string }> = ({ shortName, label }) => {
-  const { boards } = useBoards();
   const [location] = useLocation();
   
-  // Find board by shortName
-  const board = boards.find(b => b.shortName === shortName);
+  // Use simple path for board links that use shortName directly
+  const href = `/board/${shortName}`;
   
-  // Check if this is the current active tab
-  const isActive = location === `/board/${board?.id}`;
-  
-  // If the board isn't loaded yet, just point to the shortName as a fallback
-  const href = board ? `/board/${board.id}` : `/board/${shortName}`;
+  // Check if this is the current active tab (simpler check)
+  const isActive = location.startsWith(href);
   
   return (
     <Link href={href}>

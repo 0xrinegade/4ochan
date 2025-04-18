@@ -14,7 +14,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/board/:id" component={Home} />
+      <Route path="/board/:id" component={Home} />  {/* id can be either a board ID or shortName */}
       <Route path="/thread/:id" component={Thread} />
       <Route path="/profile" component={UserProfilePage} />
       <Route path="/profile/:id" component={UserProfilePage} />
