@@ -72,62 +72,45 @@ export const getOrCreateIdentity = (): NostrIdentity => {
   }
 
   // Create a new identity
+  // generateSecretKey returns a Uint8Array
   const privkey = generateSecretKey();
   const pubkey = getPublicKey(privkey);
   
+  // Convert Uint8Array to hex string for consistent handling
+  const privkeyHex = Array.from(privkey)
+    .map((b: number) => b.toString(16).padStart(2, '0'))
+    .join('');
+  
   const identity: NostrIdentity = {
     pubkey,
-    privkey,
+    privkey: privkeyHex,
     profile: { name: "Anonymous" }
   };
   
-  // Store a serializable version that includes the private key (needed for signing)
-  let serializableIdentity = {};
-  
-  // Convert privkey to hex string for storage if it's a Uint8Array
-  if (privkey instanceof Uint8Array) {
-    const privkeyHex = Array.from(privkey)
-      .map((b: number) => b.toString(16).padStart(2, '0'))
-      .join('');
-    
-    serializableIdentity = {
-      ...identity,
-      privkey: privkeyHex
-    };
-  } else {
-    serializableIdentity = identity;
-  }
-  
-  localStorage.setItem("nostr-identity", JSON.stringify(serializableIdentity));
+  // Store the identity in localStorage - it's already in serializable format
+  // since we converted the privkey to hex string above
+  localStorage.setItem("nostr-identity", JSON.stringify(identity));
   return identity;
 };
 
 // Save identity to localStorage
 export const saveIdentity = (identity: NostrIdentity) => {
-  // Create a serializable version of the identity with private key
-  let serializableIdentity = {};
+  // Ensure the private key is in hex string format for storage
+  let storedIdentity = { ...identity };
   
-  // Convert privkey to hex string for storage if it's a Uint8Array
   if (identity.privkey) {
     if (identity.privkey instanceof Uint8Array) {
+      // Convert Uint8Array to hex string
       const privkeyHex = Array.from(identity.privkey)
         .map((b: number) => b.toString(16).padStart(2, '0'))
         .join('');
       
-      serializableIdentity = {
-        ...identity,
-        privkey: privkeyHex
-      };
-    } else {
-      // Already in a serializable format
-      serializableIdentity = identity;
+      storedIdentity.privkey = privkeyHex;
     }
-  } else {
-    // No private key, just store what we have
-    serializableIdentity = identity;
+    // If it's already a string, we can store it directly
   }
   
-  localStorage.setItem("nostr-identity", JSON.stringify(serializableIdentity));
+  localStorage.setItem("nostr-identity", JSON.stringify(storedIdentity));
 };
 
 // Load saved relays or use defaults with reliability check
@@ -196,18 +179,27 @@ export const createEvent = async (
     pubkey: identity.pubkey,
   };
   
-  // Make sure we have a Uint8Array for the private key
-  let privkeyBytes: Uint8Array;
+  // Make sure we have the correct format for the private key
+  // The nostr-tools library expects a Uint8Array in the type definition,
+  // but the implementation accepts hex string or bigint as well
+  let privateKey: Uint8Array;
+  
   if (typeof identity.privkey === 'string') {
-    // Convert hex string to Uint8Array if needed
-    privkeyBytes = new Uint8Array(
+    // Convert hex string to Uint8Array
+    privateKey = new Uint8Array(
       identity.privkey.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []
     );
+  } else if (identity.privkey instanceof Uint8Array) {
+    // Already a Uint8Array
+    privateKey = identity.privkey;
   } else {
-    privkeyBytes = identity.privkey;
+    throw new Error("Invalid private key format");
   }
   
-  const event = finalizeEvent(unsignedEvent, privkeyBytes);
+  // Use the correct typing to satisfy TypeScript
+  // We need to use "as any" here because the type definition expects Uint8Array
+  // but the actual implementation accepts hex strings as well
+  const event = finalizeEvent(unsignedEvent, privateKey as any);
   
   return event as NostrEvent;
 };
