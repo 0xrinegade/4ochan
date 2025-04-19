@@ -261,13 +261,14 @@ export class DatabaseStorage implements IStorage {
       
     if (existing.length === 0) {
       // Create a new progress record
+      const insertData = {
+        userId,
+        achievementId,
+        progress,
+        unlockedAt: progress === 100 ? new Date() : null
+      };
       const result = await db.insert(userAchievements)
-        .values({
-          userId,
-          achievementId,
-          progress,
-          unlockedAt: progress === 100 ? new Date() : null
-        })
+        .values(insertData)
         .returning();
       return result[0];
     } else {

@@ -101,21 +101,33 @@ function AppRouter() {
   return (
     <PageTransition>
       <Switch>
-        <Route path="/" component={Home} />
+        <Route path="/">
+          <Home />
+        </Route>
         <Route path="/board/:id">
           {(params) => <Home id={params.id} key={`board-${params.id}`} />}
         </Route>
         <Route path="/thread/:id">
           {(params) => <Thread id={params.id} key={`thread-${params.id}`} />}
         </Route>
-        <Route path="/profile" component={UserProfilePage} />
+        <Route path="/profile">
+          <UserProfilePage />
+        </Route>
         <Route path="/profile/:id">
           {(params) => <UserProfilePage id={params.id} key={`profile-${params.id}`} />}
         </Route>
-        <Route path="/design" component={DesignSystem} />
-        <Route path="/test" component={TestPage} />
-        <Route path="/subscriptions" component={SubscriptionsPage} />
-        <Route component={NotFound} />
+        <Route path="/design">
+          <DesignSystem />
+        </Route>
+        <Route path="/test">
+          <TestPage />
+        </Route>
+        <Route path="/subscriptions">
+          <SubscriptionsPage />
+        </Route>
+        <Route>
+          <NotFound />
+        </Route>
       </Switch>
     </PageTransition>
   );
