@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ThreadSubscribeButton } from "@/components/ThreadSubscribeButton";
 import { useNostr } from "@/context/NostrContext";
 import { MarkdownContent } from "@/components/MarkdownContent";
-import { PumpFunWidget } from "@/components/PumpFunWidget";
+import { PumpFunWidget, extractEthereumAddresses } from "@/components/PumpFunWidget";
 import { 
   ArrowUp, 
   ArrowDown, 
@@ -305,6 +305,26 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                   )}
                   <div className="text-sm mb-2">
                     <MarkdownContent content={thread.content} />
+                    
+                    {/* Check if this is the crypto board and detect contract addresses in thread */}
+                    {thread.boardId === 'crypto' && thread.content && (() => {
+                      // Use our utility function to extract valid Ethereum addresses
+                      const addresses = extractEthereumAddresses(thread.content);
+                      
+                      if (addresses.length > 0) {
+                        return (
+                          <div className="mt-3">
+                            {addresses.map((address, index) => (
+                              <PumpFunWidget 
+                                key={`thread-contract-${index}`}
+                                contractAddress={address} 
+                              />
+                            ))}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                   
                   <div className="flex mt-2">
@@ -387,20 +407,18 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                         {/* Check if this is the crypto board and detect contract addresses */}
                         {thread && thread.boardId === 'crypto' && (
                           <>
-                            {/* Look for Ethereum addresses in the format 0x... */}
+                            {/* Look for Ethereum addresses in the post content */}
                             {post.content && (() => {
-                              // Match potential Ethereum addresses with regex
-                              // This checks for 0x followed by 40 hex characters, with word boundaries
-                              const ethAddressRegex = /\b(0x[a-fA-F0-9]{40})\b/g;
-                              const matches = [...post.content.matchAll(ethAddressRegex)];
+                              // Use our utility function to extract valid Ethereum addresses
+                              const addresses = extractEthereumAddresses(post.content);
                               
-                              if (matches.length > 0) {
+                              if (addresses.length > 0) {
                                 return (
                                   <div className="mt-3">
-                                    {matches.map((match, index) => (
+                                    {addresses.map((address, index) => (
                                       <PumpFunWidget 
                                         key={`${post.id}-contract-${index}`}
-                                        contractAddress={match[1]} 
+                                        contractAddress={address} 
                                       />
                                     ))}
                                   </div>
