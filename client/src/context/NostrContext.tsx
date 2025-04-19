@@ -560,11 +560,12 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
     
     // Create and publish thread event
+    let createdEvent: NostrEvent;
     try {
       const { createThreadEvent } = await import("../lib/nostr");
       console.log("Imported createThreadEvent function");
       
-      const event = await createThreadEvent(
+      createdEvent = await createThreadEvent(
         boardId, 
         title, 
         content, 
@@ -574,12 +575,12 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       );
       
       console.log("Thread event created successfully:", {
-        eventId: event.id,
-        eventKind: event.kind,
-        tagsCount: event.tags.length
+        eventId: createdEvent.id,
+        eventKind: createdEvent.kind,
+        tagsCount: createdEvent.tags.length
       });
       
-      await publishEvent(event);
+      await publishEvent(createdEvent);
       console.log("Successfully published thread event to relays");
     } catch (error) {
       console.error("Error in thread creation:", error);
@@ -591,18 +592,18 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       throw error; // Re-throw to allow the caller to handle it
     }
     
-    // Create thread object
+    // Create thread object using the successfully created event
     const thread: Thread = {
-      id: event.id,
+      id: createdEvent.id,
       boardId,
       title,
       content,
       images: imageUrls,
       media: media,
       authorPubkey: identity.pubkey,
-      createdAt: event.created_at,
+      createdAt: createdEvent.created_at,
       replyCount: 0,
-      lastReplyTime: event.created_at
+      lastReplyTime: createdEvent.created_at
     };
     
     // Add to local cache
@@ -636,21 +637,43 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     
     // Create and publish post event
-    const event = await import("../lib/nostr").then(({ createPostEvent }) => 
-      createPostEvent(threadId, content, replyToIds, imageUrls, identity, media as any)
-    );
-    
-    await publishEvent(event);
+    let createdEvent: NostrEvent;
+    try {
+      const { createPostEvent } = await import("../lib/nostr");
+      createdEvent = await createPostEvent(
+        threadId, 
+        content, 
+        replyToIds, 
+        imageUrls, 
+        identity, 
+        media as any
+      );
+      
+      console.log("Post event created successfully:", {
+        eventId: createdEvent.id,
+        eventKind: createdEvent.kind,
+        tagsCount: createdEvent.tags.length
+      });
+      
+      await publishEvent(createdEvent);
+    } catch (error) {
+      console.error("Error in post creation:", error);
+      if (error instanceof Error) {
+        console.error("Error message:", error.message);
+        console.error("Stack trace:", error.stack);
+      }
+      throw error;
+    }
     
     // Create post object
     const post: Post = {
-      id: event.id,
+      id: createdEvent.id,
       threadId,
       content,
       images: imageUrls,
       media: media,
       authorPubkey: identity.pubkey,
-      createdAt: event.created_at,
+      createdAt: createdEvent.created_at,
       references: replyToIds
     };
     
@@ -679,28 +702,34 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     
     // Create and publish subscription event
-    const event = await import("../lib/nostr").then(({ createSubscriptionEvent }) => 
-      createSubscriptionEvent(threadId, notifyOnReplies, notifyOnMentions, identity)
-    );
-    
+    let createdEvent: NostrEvent;
     try {
+      const { createSubscriptionEvent } = await import("../lib/nostr");
+      createdEvent = await createSubscriptionEvent(
+        threadId, 
+        notifyOnReplies, 
+        notifyOnMentions, 
+        identity
+      );
+      
       // Try to publish to relays if connected (best effort)
       if (pool) {
-        await publishEvent(event);
+        await publishEvent(createdEvent);
       }
     } catch (error) {
       console.warn("Could not publish subscription to relays:", error);
-      // Continue anyway - we'll store locally
+      // Continue anyway - we'll create a local subscription
+      throw error;
     }
     
     // Create subscription object
     const subscription: ThreadSubscription = {
-      id: event.id,
+      id: createdEvent.id,
       threadId,
       title: thread.title,
       notifyOnReplies,
       notifyOnMentions,
-      createdAt: event.created_at
+      createdAt: createdEvent.created_at
     };
     
     // Store in local cache
@@ -734,11 +763,15 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Try to create and publish unsubscribe event if connected
     try {
       if (pool) {
-        const event = await import("../lib/nostr").then(({ removeSubscriptionEvent }) => 
-          removeSubscriptionEvent(subscriptionId, identity)
-        );
+        const { removeSubscriptionEvent } = await import("../lib/nostr");
+        const createdEvent = await removeSubscriptionEvent(subscriptionId, identity);
         
-        await publishEvent(event);
+        console.log("Unsubscribe event created successfully:", {
+          eventId: createdEvent.id,
+          eventKind: createdEvent.kind
+        });
+        
+        await publishEvent(createdEvent);
       }
     } catch (error) {
       console.warn("Could not publish unsubscribe event to relays:", error);

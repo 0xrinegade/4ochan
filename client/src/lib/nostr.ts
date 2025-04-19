@@ -174,29 +174,51 @@ export const createEvent = async (
     pubkey: identity.pubkey,
   };
   
-  // Make sure we have the correct format for the private key
-  // The nostr-tools library expects a Uint8Array in the type definition,
-  // but the implementation accepts hex string or bigint as well
-  let privateKey: Uint8Array;
-  
-  if (typeof identity.privkey === 'string') {
-    // Convert hex string to Uint8Array
-    privateKey = new Uint8Array(
-      identity.privkey.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []
-    );
-  } else if (identity.privkey instanceof Uint8Array) {
-    // Already a Uint8Array
-    privateKey = identity.privkey;
-  } else {
-    throw new Error("Invalid private key format");
+  try {
+    console.log("Creating event with:", { 
+      kind, 
+      pubkey: identity.pubkey,
+      privkeyType: typeof identity.privkey,
+      isUint8Array: identity.privkey instanceof Uint8Array,
+      tagsCount: tags.length
+    });
+    
+    // nostr-tools can actually accept a hex string for the private key
+    // but let's handle both formats to be safe
+    let privateKey: any;
+    
+    if (typeof identity.privkey === 'string') {
+      // If already a hex string, use it directly
+      // The library implementation accepts hex strings even though the
+      // TypeScript type definition expects Uint8Array
+      privateKey = identity.privkey;
+    } else if (identity.privkey instanceof Uint8Array) {
+      // Convert Uint8Array to hex string
+      privateKey = Array.from(identity.privkey)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    } else {
+      throw new Error("Invalid private key format");
+    }
+    
+    // Sign and finalize the event
+    // Use "as any" to bypass TypeScript's type checking
+    const event = finalizeEvent(unsignedEvent, privateKey as any);
+    
+    console.log("Event created successfully:", {
+      id: event.id,
+      sig: event.sig ? event.sig.substring(0, 10) + '...' : 'missing'
+    });
+    
+    return event as NostrEvent;
+  } catch (error) {
+    console.error("Error in createEvent:", error);
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Stack trace:", error.stack);
+    }
+    throw error;
   }
-  
-  // Use the correct typing to satisfy TypeScript
-  // We need to use "as any" here because the type definition expects Uint8Array
-  // but the actual implementation accepts hex strings as well
-  const event = finalizeEvent(unsignedEvent, privateKey as any);
-  
-  return event as NostrEvent;
 };
 
 // Create a board definition event
