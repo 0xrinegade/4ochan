@@ -676,3 +676,55 @@
     color: hsl(var(--primary));
     font-weight: bold;
   }
+  
+  /* Typst document styling */
+  .typst-container {
+    margin: 1rem 0;
+    border: 2px solid black;
+    overflow: hidden;
+  }
+  
+  .typst-light {
+    background-color: #f8f9fa;
+    color: #333;
+  }
+  
+  .typst-dark {
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+  }
+  
+  .typst-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    border-bottom: 1px solid black;
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+  
+  .typst-title {
+    font-weight: bold;
+    font-family: 'Libertarian', monospace;
+  }
+  
+  .typst-action-buttons {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .typst-action-button {
+    padding: 2px 6px;
+    border: 1px solid black;
+    background-color: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+    font-size: 0.75rem;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  
+  .typst-action-button:hover {
+    filter: brightness(95%);
+    text-decoration: none;
+  }
