@@ -838,11 +838,45 @@
   }
   
   /* Typst document specific elements */
+  /* Document structure */
+  .typst-document {
+    font-family: 'Libertarian', serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: white;
+    padding: 1.5rem;
+    border: 1px solid #ddd;
+  }
+  
+  .typst-document-title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0 0 1rem;
+    text-align: center;
+    color: #000;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #000;
+  }
+  
+  .typst-document-author {
+    text-align: center;
+    font-style: italic;
+    margin-bottom: 2rem;
+    font-size: 1rem;
+    color: #666;
+  }
+  
+  .typst-document-content {
+    margin: 0 auto;
+    max-width: 650px;
+  }
+  
+  /* Headings */
   .typst-heading-1 {
     font-size: 1.8rem;
     font-weight: bold;
-    margin: 1.5rem 0 1rem;
-    color: hsl(var(--primary));
+    margin: 1.8rem 0 1rem;
+    color: #000;
     border-bottom: 1px solid #ddd;
     padding-bottom: 0.5rem;
   }
@@ -850,45 +884,106 @@
   .typst-heading-2 {
     font-size: 1.5rem;
     font-weight: bold;
-    margin: 1.2rem 0 0.8rem;
-    color: hsl(var(--primary));
+    margin: 1.5rem 0 0.8rem;
+    color: #222;
   }
   
   .typst-heading-3 {
     font-size: 1.2rem;
     font-weight: bold;
-    margin: 1rem 0 0.6rem;
-    color: hsl(var(--primary));
+    margin: 1.2rem 0 0.6rem;
+    color: #444;
+  }
+  
+  /* Lists */
+  .typst-list {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
   }
   
   .typst-list-item {
-    margin: 0.25rem 0;
-    padding-left: 1.5rem;
-    position: relative;
-    list-style-type: none;
-  }
-  
-  .typst-list-item::before {
-    content: "•";
-    position: absolute;
-    left: 0.5rem;
-    color: hsl(var(--primary));
-  }
-  
-  .typst-block {
     margin: 0.5rem 0;
-    padding: 0.5rem;
-    background-color: #f5f5f5;
-    border-left: 3px solid hsl(var(--primary));
+    padding-left: 0.5rem;
+    position: relative;
+    list-style-type: disc;
+  }
+  
+  /* Paragraphs */
+  .typst-paragraph {
+    margin: 0.75rem 0;
+    text-align: justify;
+    hyphens: auto;
+  }
+  
+  /* Block elements */
+  .typst-block, .typst-box {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    border-left: 3px solid #555;
+    font-family: 'Libertarian', serif;
+  }
+  
+  .typst-block-generic {
+    border-left-color: #0d6efd;
+  }
+  
+  .typst-block-type {
     font-family: 'Monaco', 'Courier New', monospace;
+    font-weight: bold;
+    color: #0d6efd;
+    margin-bottom: 0.5rem;
   }
   
-  .typst-line {
-    margin: 0.25rem 0;
-    line-height: 1.6;
+  /* Figures */
+  .typst-figure {
+    margin: 2rem 0;
+    padding: 1rem;
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    text-align: center;
   }
   
-  .typst-line code {
+  .typst-figure-caption {
+    margin-top: 0.5rem;
+    font-style: italic;
+    color: #666;
+  }
+  
+  /* Tables */
+  .typst-table-container {
+    margin: 1.5rem 0;
+    overflow-x: auto;
+  }
+  
+  .typst-table-placeholder {
+    padding: 1rem;
+    background-color: #f0f0f0;
+    border: 1px dashed #aaa;
+    color: #666;
+    font-style: italic;
+    text-align: center;
+  }
+  
+  /* Code blocks */
+  .typst-code-block {
+    margin: 1.5rem 0;
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    overflow-x: auto;
+  }
+  
+  .typst-code {
+    margin: 0;
+    padding: 1rem;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  
+  /* Inline formatting */
+  .typst-paragraph code, .typst-list-item code {
     background-color: #f0f0f0;
     padding: 0.1rem 0.3rem;
     border-radius: 3px;
@@ -897,40 +992,74 @@
     color: #d63384;
   }
   
-  .typst-line strong {
+  .typst-paragraph strong, .typst-list-item strong {
     font-weight: bold;
+    color: #000;
+  }
+  
+  .typst-paragraph em, .typst-list-item em {
+    font-style: italic;
+  }
+  
+  .typst-math {
+    font-family: 'Times New Roman', serif;
+    font-style: italic;
     color: #0d6efd;
   }
   
-  .typst-line em {
-    font-style: italic;
-    color: #6610f2;
+  .typst-empty-line {
+    height: 1rem;
   }
   
   /* Dark mode styles for Typst elements */
-  .theme-dark .typst-heading-1,
-  .theme-dark .typst-heading-2,
-  .theme-dark .typst-heading-3 {
-    color: hsl(var(--primary));
+  .theme-dark .typst-document {
+    background-color: #1a1a1a;
+    color: #ddd;
     border-color: #444;
   }
   
-  .theme-dark .typst-block {
-    background-color: #2d2d2d;
-    border-left-color: hsl(var(--primary));
+  .theme-dark .typst-document-title {
+    color: #fff;
+    border-color: #555;
   }
   
-  .theme-dark .typst-line code {
+  .theme-dark .typst-document-author {
+    color: #aaa;
+  }
+  
+  .theme-dark .typst-heading-1,
+  .theme-dark .typst-heading-2,
+  .theme-dark .typst-heading-3 {
+    color: #fff;
+    border-color: #444;
+  }
+  
+  .theme-dark .typst-block, 
+  .theme-dark .typst-box,
+  .theme-dark .typst-code-block,
+  .theme-dark .typst-figure {
+    background-color: #2d2d2d;
+    border-color: #444;
+  }
+  
+  .theme-dark .typst-paragraph code, 
+  .theme-dark .typst-list-item code {
     background-color: #333;
     color: #ff7b72;
   }
   
-  .theme-dark .typst-line strong {
+  .theme-dark .typst-block-type {
     color: #79c0ff;
   }
   
-  .theme-dark .typst-line em {
-    color: #d2a8ff;
+  .theme-dark .typst-math {
+    color: #79c0ff;
+  }
+  
+  .theme-dark .typst-table-placeholder {
+    background-color: #2a2a2a;
+    border-color: #555;
+    color: #aaa;
   }
   
   .theme-dark .typst-render {
