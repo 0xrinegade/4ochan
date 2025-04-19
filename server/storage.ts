@@ -1,13 +1,18 @@
-import { eq, and, desc, count } from "drizzle-orm";
+import { eq, and, desc, count, gte, lte, isNull, isNotNull } from "drizzle-orm";
 import { db } from "./db";
 import { 
   users, badges, userBadges, reputationLogs, followers, 
-  threadSubscriptions, notifications,
+  threadSubscriptions, notifications, achievements, userAchievements,
+  userStats, reputationLevels,
   type User, type InsertUser, type Badge, type InsertBadge,
   type UserBadge, type InsertUserBadge, type ReputationLog, 
   type InsertReputationLog, type Follower, type InsertFollower,
   type ThreadSubscription, type InsertThreadSubscription,
-  type Notification, type InsertNotification
+  type Notification, type InsertNotification,
+  type Achievement, type InsertAchievement,
+  type UserAchievement, type InsertUserAchievement,
+  type UserStats, type InsertUserStats,
+  type ReputationLevel, type InsertReputationLevel
 } from "@shared/schema";
 
 // Enhanced storage interface for user profiles and reputation systems
@@ -201,6 +206,178 @@ export class DatabaseStorage implements IStorage {
       .from(reputationLogs)
       .where(eq(reputationLogs.userId, userId))
       .orderBy(reputationLogs.createdAt);
+  }
+  
+  // Achievement management methods
+  async getAchievements(includeHidden: boolean = false): Promise<Achievement[]> {
+    if (includeHidden) {
+      return db.select().from(achievements);
+    } else {
+      return db.select().from(achievements).where(eq(achievements.isHidden, false));
+    }
+  }
+  
+  async getAchievement(id: number): Promise<Achievement | undefined> {
+    const result = await db.select().from(achievements).where(eq(achievements.id, id));
+    return result[0];
+  }
+  
+  async createAchievement(achievementData: InsertAchievement): Promise<Achievement> {
+    const result = await db.insert(achievements)
+      .values({
+        ...achievementData,
+        createdAt: new Date()
+      })
+      .returning();
+    return result[0];
+  }
+  
+  async getUserAchievements(userId: number): Promise<UserAchievement[]> {
+    return db.select()
+      .from(userAchievements)
+      .where(eq(userAchievements.userId, userId));
+  }
+  
+  async awardAchievement(userAchievementData: InsertUserAchievement): Promise<UserAchievement> {
+    const result = await db.insert(userAchievements)
+      .values({
+        ...userAchievementData,
+        unlockedAt: new Date()
+      })
+      .returning();
+    return result[0];
+  }
+  
+  async updateAchievementProgress(userId: number, achievementId: number, progress: number): Promise<UserAchievement | undefined> {
+    // Check if the user already has this achievement
+    const existing = await db.select()
+      .from(userAchievements)
+      .where(
+        and(
+          eq(userAchievements.userId, userId),
+          eq(userAchievements.achievementId, achievementId)
+        )
+      );
+      
+    if (existing.length === 0) {
+      // Create a new progress record
+      const result = await db.insert(userAchievements)
+        .values({
+          userId,
+          achievementId,
+          progress,
+          unlockedAt: progress === 100 ? new Date() : null
+        })
+        .returning();
+      return result[0];
+    } else {
+      // Update existing progress
+      const result = await db.update(userAchievements)
+        .set({ 
+          progress,
+          unlockedAt: progress === 100 ? new Date() : existing[0].unlockedAt
+        })
+        .where(
+          and(
+            eq(userAchievements.userId, userId),
+            eq(userAchievements.achievementId, achievementId)
+          )
+        )
+        .returning();
+      return result[0];
+    }
+  }
+  
+  // User stats management methods
+  async getUserStats(userId: number): Promise<UserStats | undefined> {
+    const result = await db.select().from(userStats).where(eq(userStats.userId, userId));
+    return result[0];
+  }
+  
+  async createUserStats(userStatsData: InsertUserStats): Promise<UserStats> {
+    const result = await db.insert(userStats)
+      .values({
+        ...userStatsData,
+        lastUpdated: new Date()
+      })
+      .returning();
+    return result[0];
+  }
+  
+  async updateUserStats(userId: number, statsData: Partial<InsertUserStats>): Promise<UserStats | undefined> {
+    const result = await db.update(userStats)
+      .set({
+        ...statsData,
+        lastUpdated: new Date()
+      })
+      .where(eq(userStats.userId, userId))
+      .returning();
+    return result[0];
+  }
+  
+  async incrementUserStats(userId: number, field: keyof Omit<UserStats, 'id' | 'userId' | 'lastUpdated'>, amount: number = 1): Promise<void> {
+    // Check if stats exist for this user
+    const stats = await this.getUserStats(userId);
+    
+    if (!stats) {
+      // Create default stats with the incremented field
+      const defaultStats: any = {
+        userId,
+        postsCreated: 0,
+        threadsCreated: 0,
+        postsRepliedTo: 0,
+        imagesUploaded: 0,
+        reactionsReceived: 0,
+        totalViews: 0,
+        reputationPoints: 0,
+        karmaPoints: 0
+      };
+      
+      defaultStats[field] = amount;
+      await this.createUserStats(defaultStats);
+    } else {
+      // Increment the existing field
+      const updateData: any = { lastUpdated: new Date() };
+      updateData[field] = (stats as any)[field] + amount;
+      
+      await db.update(userStats)
+        .set(updateData)
+        .where(eq(userStats.userId, userId));
+    }
+  }
+  
+  // Reputation levels
+  async getReputationLevels(): Promise<ReputationLevel[]> {
+    return db.select().from(reputationLevels).orderBy(reputationLevels.level);
+  }
+  
+  async getReputationLevel(level: number): Promise<ReputationLevel | undefined> {
+    const result = await db.select().from(reputationLevels).where(eq(reputationLevels.level, level));
+    return result[0];
+  }
+  
+  async getReputationLevelByPoints(points: number): Promise<ReputationLevel | undefined> {
+    const result = await db.select().from(reputationLevels)
+      .where(
+        and(
+          lte(reputationLevels.minPoints, points),
+          or(
+            isNull(reputationLevels.maxPoints),
+            gte(reputationLevels.maxPoints, points)
+          )
+        )
+      )
+      .orderBy(desc(reputationLevels.level))
+      .limit(1);
+    
+    return result[0];
+  }
+  
+  async createReputationLevel(levelData: InsertReputationLevel): Promise<ReputationLevel> {
+    const result = await db.insert(reputationLevels)
+      .values(levelData)
+      .returning();
+    return result[0];
   }
   
   // Follower management methods
