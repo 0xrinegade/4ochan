@@ -67,9 +67,6 @@ export const AllThreadsHeatmap: React.FC = () => {
               continue;
             }
             
-            // Get reply count from content or default to 0
-            const replyCount = threadData.replyCount || 0;
-            
             // Extract board ID from tags if not in content
             let boardId = threadData.boardId || 'unknown';
             if (boardId === 'unknown') {
@@ -90,7 +87,7 @@ export const AllThreadsHeatmap: React.FC = () => {
               createdAt: event.created_at || Math.floor(Date.now() / 1000),
               images: Array.isArray(threadData.images) ? threadData.images : [],
               media: Array.isArray(threadData.media) ? threadData.media : [],
-              replyCount: typeof replyCount === 'number' ? replyCount : 0,
+              replyCount: 0, // We'll fetch this separately
               lastReplyTime: threadData.lastReplyTime || event.created_at || Math.floor(Date.now() / 1000)
             };
             
