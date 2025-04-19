@@ -7,30 +7,59 @@ import { useNostr } from "@/hooks/useNostr";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-// Helper function to set Open Graph meta tags
+// Helper function to set Open Graph and Twitter Card meta tags
 const setOpenGraphTags = (title: string, description: string, imageUrl?: string) => {
-  // Find existing OG tags and remove them
-  document.querySelectorAll('meta[property^="og:"]').forEach(tag => tag.remove());
+  // Find existing OG and Twitter tags and remove them
+  document.querySelectorAll('meta[property^="og:"], meta[name^="twitter:"]').forEach(tag => tag.remove());
   
+  // Combine site name with title for better display in previews
+  const formattedTitle = `${title} | 4ochan.org`;
+  
+  // Base meta tags for OpenGraph
   const metaTags = [
-    { property: 'og:title', content: title },
+    { property: 'og:title', content: formattedTitle },
     { property: 'og:description', content: description },
     { property: 'og:type', content: 'website' },
     { property: 'og:url', content: window.location.href },
+    { property: 'og:site_name', content: '4ochan.org' },
   ];
   
-  // Add image tag if provided
+  // Twitter Card tags
+  const twitterTags = [
+    { name: 'twitter:card', content: imageUrl ? 'summary_large_image' : 'summary' },
+    { name: 'twitter:title', content: formattedTitle },
+    { name: 'twitter:description', content: description },
+  ];
+  
+  // Add image tags if provided
   if (imageUrl) {
     metaTags.push({ property: 'og:image', content: imageUrl });
+    twitterTags.push({ name: 'twitter:image', content: imageUrl });
+  } else {
+    // Add a default image tag using the official 4ochan logo
+    const defaultImage = `${window.location.origin}/images/logo-4o.png`;
+    metaTags.push({ property: 'og:image', content: defaultImage });
+    twitterTags.push({ name: 'twitter:image', content: defaultImage });
   }
   
-  // Create and append the meta tags
+  // Create and append the OpenGraph meta tags
   metaTags.forEach(tag => {
     const meta = document.createElement('meta');
     meta.setAttribute('property', tag.property);
     meta.setAttribute('content', tag.content);
     document.head.appendChild(meta);
   });
+  
+  // Create and append the Twitter Card meta tags
+  twitterTags.forEach(tag => {
+    const meta = document.createElement('meta');
+    meta.setAttribute('name', tag.name);
+    meta.setAttribute('content', tag.content);
+    document.head.appendChild(meta);
+  });
+  
+  // Also update the document title for better browser history/tabs
+  document.title = formattedTitle;
 };
 
 interface ThreadProps {
@@ -46,6 +75,22 @@ const Thread: React.FC<ThreadProps> = ({ id, replyId }) => {
   
   const { connectedRelays, connect } = useNostr();
   const isMobile = useIsMobile();
+  
+  // Set default OpenGraph tags on component mount
+  useEffect(() => {
+    // Set initial/default OpenGraph tags
+    const title = specificReplyId 
+      ? `Reply to Thread #${threadId.substring(0, 6)}` 
+      : `Thread #${threadId.substring(0, 6)}`;
+      
+    const description = specificReplyId
+      ? `View this specific reply in the thread on 4ochan.org` 
+      : `View this thread on 4ochan.org`;
+      
+    setOpenGraphTags(title, description);
+    
+    // This will be updated later when the actual thread data loads
+  }, [threadId, specificReplyId]);
 
   return (
     <div className="min-h-screen flex flex-col">
