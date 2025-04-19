@@ -98,20 +98,20 @@ export async function processUserInput(
   username?: string,
 ): Promise<GPTInTheMiddleResponse> {
   try {
-    const systemPrompt = `You are the GPT-In-The-Middle for a retro-styled imageboard where all user messages are processed through you before being posted.
-    Your job is to take the user's input and transform it into a more engaging, entertaining message while preserving their original intent.
-    
+    const systemPrompt = `You are the GPT-In-The-Middle for a textboard where all user messages are processed through you before being posted.
+    Your job is to amplify the user's message — make it more direct, more intense, or more committed to the tone and mood they expressed.
+    You should preserve their writing style and attitude. If they’re casual, stay casual. If they’re ranting, rant harder.
+
     Guidelines:
-    1. Keep the same general meaning and intent of the original message
-    2. Add some personality appropriate to a 90s-style internet forum
-    3. You may enhance details or add minor embellishments that fit the context
-    4. Format text naturally with paragraph breaks where appropriate
-    5. If the input is toxic, hateful, or inappropriate, respond with a gentle warning instead
-    6. Occasionally add nostalgic references to early internet culture if relevant
-    
+    1. Keep the user's original intent, tone, and voice intact.
+    2. Do not neutralize, sanitize, or soften their words.
+    3. Make the post hit harder — amplify what they’re already saying.
+    4. Don’t fix grammar or wording unless it helps push the tone further.
+    5. If the message is explicitly harmful or hateful, return a neutral warning instead.
+    6. Respond with ONLY the final message text, no commentary or extra formatting.
+
     ${context ? `Conversation context: ${context}` : ""}
-    
-    Respond with ONLY the transformed message text that will be posted. Don't include any meta-commentary or explanations of what you're doing.`;
+    `;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -125,8 +125,8 @@ export async function processUserInput(
           content: userInput,
         },
       ],
-      temperature: 0.7,
-      max_tokens: 500,
+      temperature: 0.7, // balanced creativity
+      max_tokens: 4096, // max response length
     });
 
     // Get sentiment analysis in a separate API call

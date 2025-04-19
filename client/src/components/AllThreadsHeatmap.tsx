@@ -35,9 +35,12 @@ export const AllThreadsHeatmap: React.FC = () => {
         // Fetch threads from all boards, using a global scope to fetch multiple boards' threads
         console.log(`Fetching all threads for heatmap from ${connectedRelays.length} relays...`);
         
-        // Use querySync instead of list (which doesn't exist in the SimplePool API)
+        // Import KIND from nostr.ts
+        const { KIND } = await import('@/lib/nostr');
+        
+        // Use querySync with the proper kind from constants
         const allThreads = await pool.querySync(connectedRelays, {
-          kinds: [9801], // THREAD (custom kind)
+          kinds: [KIND.THREAD], // Use the constant for thread kind (9902)
           limit: 50 // Limit to prevent too many threads in the heatmap
         });
         
@@ -46,23 +49,49 @@ export const AllThreadsHeatmap: React.FC = () => {
         
         for (const event of allThreads) {
           try {
-            const threadData = JSON.parse(event.content);
+            // Skip events with invalid/empty content
+            if (!event.content) {
+              continue;
+            }
+            
+            let threadData;
+            try {
+              threadData = JSON.parse(event.content);
+            } catch (parseError) {
+              console.warn(`Could not parse thread content for event ${event.id}`, parseError);
+              continue; // Skip events with invalid JSON
+            }
+            
+            // Ensure we have at least minimal required data
+            if (!threadData || typeof threadData !== 'object') {
+              continue;
+            }
             
             // Get reply count from content or default to 0
             const replyCount = threadData.replyCount || 0;
             
-            // Create properly formatted thread object
+            // Extract board ID from tags if not in content
+            let boardId = threadData.boardId || 'unknown';
+            if (boardId === 'unknown') {
+              // Try to find board tag
+              const boardTag = event.tags.find((tag: string[]) => tag[0] === 'board');
+              if (boardTag && boardTag.length > 1) {
+                boardId = boardTag[1];
+              }
+            }
+            
+            // Create properly formatted thread object with safe defaults
             const thread: Thread = {
               id: event.id,
-              boardId: threadData.boardId || 'unknown',
+              boardId: boardId,
               title: threadData.title || 'Untitled Thread',
               content: threadData.content || '',
               authorPubkey: event.pubkey,
-              createdAt: event.created_at,
-              images: threadData.images || [],
-              media: threadData.media || [],
-              replyCount: replyCount,
-              lastReplyTime: threadData.lastReplyTime || event.created_at
+              createdAt: event.created_at || Math.floor(Date.now() / 1000),
+              images: Array.isArray(threadData.images) ? threadData.images : [],
+              media: Array.isArray(threadData.media) ? threadData.media : [],
+              replyCount: typeof replyCount === 'number' ? replyCount : 0,
+              lastReplyTime: threadData.lastReplyTime || event.created_at || Math.floor(Date.now() / 1000)
             };
             
             processedThreads.push(thread);
