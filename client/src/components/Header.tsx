@@ -20,7 +20,7 @@ const NavBoardTab: React.FC<{ shortName: string; label: string }> = ({ shortName
   
   return (
     <Link href={href}>
-      <span className={`${isActive ? 'bg-primary text-white' : 'bg-white'} px-3 py-0.5 text-sm border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer`}>
+      <span className={`${isActive ? 'bg-primary text-white' : 'bg-white'} px-2 md:px-3 py-0.5 text-xs md:text-sm border border-black border-b-0 mr-1 mb-1 md:mb-0 relative -mb-[1px] inline-block cursor-pointer`}>
         {label}
       </span>
     </Link>
@@ -77,6 +77,8 @@ export const Header: React.FC = () => {
     day: 'numeric' 
   });
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
   return (
     <header className="mb-4">
       {/* Retro 90s banner and title with navigation tabs inside */}
@@ -84,8 +86,8 @@ export const Header: React.FC = () => {
         <div className="flex justify-between items-start mb-4">
           <Link href="/">
             <div className="flex items-center cursor-pointer">
-              <div className="w-12 h-12 bg-white flex items-center justify-center overflow-hidden border border-black mr-3">
-                <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-white flex items-center justify-center overflow-hidden border border-black mr-2 md:mr-3">
+                <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="50" cy="30" r="25" fill="#ffb6c1" />
                   <circle cx="40" cy="25" r="5" fill="#000" />
                   <circle cx="60" cy="25" r="5" fill="#000" />
@@ -93,12 +95,23 @@ export const Header: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight">NostrChan</h1>
+                <h1 className="text-xl md:text-2xl font-bold tracking-tight">NostrChan</h1>
                 <p className="text-xs">Decentralized Imageboard</p>
               </div>
             </div>
           </Link>
           
+          {/* Mobile menu button */}
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden flex flex-col space-y-1 p-1 border border-white"
+          >
+            <div className="w-5 h-0.5 bg-white"></div>
+            <div className="w-5 h-0.5 bg-white"></div>
+            <div className="w-5 h-0.5 bg-white"></div>
+          </button>
+          
+          {/* Desktop user info */}
           <div className="text-right text-sm hidden md:block">
             <p>{dateString}</p>
             <p>
@@ -136,10 +149,50 @@ export const Header: React.FC = () => {
           </div>
         </div>
         
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white text-black border border-black p-2 mb-2">
+            {/* Mobile login */}
+            <div className="flex flex-col space-y-2 mb-2">
+              {currentUser ? (
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs">Logged in as <b>{currentUser}</b></span>
+                  <button 
+                    onClick={handleLogout}
+                    className="text-xs bg-primary text-white border border-black px-2 py-1 hover:bg-opacity-90"
+                  >
+                    Log Out
+                  </button>
+                </div>
+              ) : (
+                <OpenAILoginButton 
+                  onLoginSuccess={handleLoginSuccess}
+                  className="text-xs py-1 px-2 h-auto w-full" 
+                />
+              )}
+              
+              <div className="flex justify-between">
+                <button 
+                  onClick={toggleConnectionModal}
+                  className="text-xs bg-primary text-white border border-black px-2 py-1 hover:bg-opacity-90"
+                >
+                  Manage Relays
+                </button>
+                <NotificationBell />
+              </div>
+              
+              <div className="text-xs">
+                <p>Relays: {connectedRelays}/{relays.length} connected</p>
+                <p>{dateString}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Top navigation tabs - inside header and sitting on bottom border */}
-        <div className="flex -mb-px ml-1">
+        <div className="flex flex-wrap overflow-x-auto -mb-px ml-1">
           <Link href="/">
-            <span className="bg-primary border-white text-white px-3 py-0.5 text-sm font-bold border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Home</span>
+            <span className="bg-primary border-white text-white px-2 md:px-3 py-0.5 text-xs md:text-sm font-bold border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Home</span>
           </Link>
           <NavBoardTab shortName="b" label="Random" />
           <NavBoardTab shortName="ai" label="AI" />

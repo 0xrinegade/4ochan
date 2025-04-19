@@ -35,15 +35,15 @@ const Home: React.FC = () => {
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto">
         <Header />
-        <main className="container mx-auto px-4">
+        <main className="container mx-auto px-2 sm:px-4">
           <div className="flex flex-col md:flex-row gap-2">
-            <div className="md:w-1/4">
+            <div className="w-full md:w-1/4">
               <div className="mb-2">
                 <div className="bg-primary text-white py-0.5 px-2 font-bold text-xs flex items-center">
                   <span className="mr-1">■</span> QUICK LINKS
                 </div>
                 <div className="bg-white border border-black border-t-0 p-1">
-                  <ul className="list-disc pl-4 text-sm">
+                  <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-1 gap-1 md:list-disc md:pl-4 text-sm">
                     <li className="mb-0.5"><Link href="/board/b" className="text-primary underline">Random</Link></li>
                     <li className="mb-0.5"><Link href="/board/tech" className="text-primary underline">Technology</Link></li>
                     <li className="mb-0.5"><Link href="/board/ai" className="text-primary underline">AI</Link></li>
@@ -54,7 +54,7 @@ const Home: React.FC = () => {
               </div>
             </div>
 
-            <div className="md:w-3/4">
+            <div className="w-full md:w-3/4">
               {currentBoard && boardId ? (
                 <ThreadList 
                   boardId={currentBoard.id}
@@ -79,30 +79,30 @@ const Home: React.FC = () => {
           {/* Footer - classic 90s */}
           <div className="mt-4 text-center text-xs">
             <div className="border-t border-black pt-1">
-              <p className="flex items-center justify-center flex-wrap">
-                <span className="text-primary mx-1">◆</span> 
-                4ochan.org © 2025 
-                <span className="text-primary mx-1">◆</span> 
+              <p className="flex items-center justify-center flex-wrap gap-x-1 gap-y-2">
+                <span className="text-primary">◆</span> 
+                <span>4ochan.org © 2025</span> 
+                <span className="text-primary">◆</span> 
                 <a href="#" className="text-primary underline">About</a> 
-                <span className="text-primary mx-1">◆</span> 
+                <span className="text-primary">◆</span> 
                 <a href="#" className="text-primary underline">Terms</a> 
-                <span className="text-primary mx-1">◆</span> 
+                <span className="text-primary">◆</span> 
                 <a href="#" className="text-primary underline">Privacy</a>
-                <span className="text-primary mx-1">◆</span>
-                <a href="/design" className="text-primary underline">Design System</a>
-                <span className="text-primary mx-1">◆</span>
+                <span className="text-primary">◆</span>
+                <a href="/design" className="text-primary underline">Design</a>
+                <span className="text-primary">◆</span>
               </p>
-              <p className="text-[10px] mt-0.5 italic">Best viewed with Netscape Navigator</p>
+              <p className="text-[10px] mt-1.5 italic">Best viewed with Netscape Navigator</p>
               
               {/* Visitor counter moved from header */}
               <div className="my-1.5">
                 <span className="bg-white border border-black inline-block px-2 py-0.5 text-[10px]">
-                  Nostr Relays: {relays.length} | Connected: {connectedRelays} | Boards: {nostrBoards.length}
+                  Relays: {relays.length} | Connected: {connectedRelays} | Boards: {nostrBoards.length}
                 </span>
               </div>
               
               {/* Classic 90s web badges */}
-              <div className="flex items-center justify-center mt-1.5 space-x-1">
+              <div className="flex flex-wrap items-center justify-center mt-1.5 gap-1">
                 <div className="border border-black bg-gray-200 px-1 text-[8px] font-mono">HTML 1.0</div>
                 <div className="border border-black bg-gray-200 px-1 text-[8px] font-mono">800x600</div>
                 <div className="border border-black bg-blue-700 text-white px-1 text-[8px] animate-pulse font-mono">JAVASCRIPT ON</div>
