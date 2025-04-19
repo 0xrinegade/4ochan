@@ -47,6 +47,7 @@ export const Header: React.FC = () => {
   const themeDropdownRef = useRef<HTMLDivElement>(null);
   const { currentTheme, setTheme, themes } = useTheme();
   const { toast } = useToast();
+  const { navigateTo } = useNavigation();
 
   // Load user from localStorage on component mount
   useEffect(() => {

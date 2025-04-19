@@ -8,8 +8,11 @@ import { useBoards } from "@/hooks/useBoards";
 import { CreateThreadModal } from "@/components/CreateThreadModal";
 import { formatPubkey } from "@/lib/nostr";
 
-const Home: React.FC = () => {
-  const { id: boardId } = useParams<{ id?: string }>();
+const Home: React.FC<{ id?: string }> = ({ id }) => {
+  // If id is not passed as a prop, try to get it from the URL params
+  const params = useParams<{ id?: string }>();
+  const boardId = id || params.id;
+  
   const { boards: nostrBoards, loading: loadingBoards } = useBoards();
   const nostr = useNostr();
   const { connect, connectedRelays, relays, identity } = nostr;

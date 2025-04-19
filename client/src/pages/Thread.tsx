@@ -7,8 +7,11 @@ import { useNostr } from "@/hooks/useNostr";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const Thread: React.FC = () => {
-  const { id: threadId } = useParams<{ id: string }>();
+const Thread: React.FC<{ id?: string }> = ({ id }) => {
+  // If id is not passed as a prop, try to get it from the URL params
+  const params = useParams<{ id: string }>();
+  const threadId = id || params.id;
+  
   const { connectedRelays, connect } = useNostr();
   const isMobile = useIsMobile();
 

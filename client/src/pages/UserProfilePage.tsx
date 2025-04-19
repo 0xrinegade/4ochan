@@ -6,12 +6,13 @@ import { UserProfile } from '@/components/UserProfile';
 import { ReputationDisplay } from '@/components/ReputationDisplay';
 import { useToast } from '@/hooks/use-toast';
 
-const UserProfilePage: React.FC = () => {
+const UserProfilePage: React.FC<{ id?: string }> = ({ id: propId }) => {
   const { toast } = useToast();
-  const { id } = useParams<{ id?: string }>();
+  const { id: paramId } = useParams<{ id?: string }>();
   const { identity, connectedRelays } = useNostr();
   
-  // Use either the URL parameter or the current user's pubkey
+  // Use the prop ID, URL parameter, or the current user's pubkey (in that order of precedence)
+  const id = propId || paramId;
   const targetId = id || identity.pubkey;
   const isCurrentUser = id === identity.pubkey || !id;
 
