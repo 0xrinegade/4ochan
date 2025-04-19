@@ -304,6 +304,7 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
       setSelectedFile(null);
       setUploadedMedia([]);
       setShowMediaUploader(false);
+      setShowDrawingBoard(false);
       
       toast({
         title: "Reply Posted",
@@ -338,16 +339,27 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
         />
       </div>
       
-      {/* Media Uploader Toggle */}
-      <div className="mb-2">
+      {/* Media Uploader and Drawing Tool Toggles */}
+      <div className="flex mb-2 space-x-2">
         <Button
           type="button"
           variant="outline"
-          className="w-full border-black text-foreground hover:bg-accent rounded-none text-xs"
+          className="flex-1 border-black text-foreground hover:bg-accent rounded-none text-xs"
           onClick={() => setShowMediaUploader(!showMediaUploader)}
           disabled={isSubmitting}
         >
           {showMediaUploader ? "Hide Media Uploader" : `Add Media (Images, Video, Audio, Files)`}
+        </Button>
+        
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1 border-black text-foreground hover:bg-accent rounded-none text-xs"
+          onClick={() => setShowDrawingBoard(!showDrawingBoard)}
+          disabled={isSubmitting}
+        >
+          <PencilIcon className="h-3 w-3 mr-1" />
+          {showDrawingBoard ? "Hide Drawing Tool" : "Open Drawing Tool"}
         </Button>
       </div>
 
@@ -359,6 +371,16 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
             onMediaUploaded={handleMediaUploaded}
             maxFiles={4}
             acceptedTypes="image/*,video/*,audio/*,application/pdf,text/plain"
+          />
+        </div>
+      )}
+      
+      {/* Drawing Board */}
+      {showDrawingBoard && (
+        <div className="mb-4">
+          <DrawingBoard 
+            onClose={() => setShowDrawingBoard(false)}
+            onSaveDrawing={handleSaveDrawing}
           />
         </div>
       )}

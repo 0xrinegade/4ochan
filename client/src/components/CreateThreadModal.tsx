@@ -7,6 +7,9 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { uploadImage } from "@/lib/nostr";
 import { apiRequest } from "@/lib/queryClient";
+import { PencilIcon } from "lucide-react";
+import { DrawingBoard } from "@/components/DrawingBoard";
+import { MediaContent } from "@/types";
 
 interface CreateThreadModalProps {
   isOpen: boolean;
@@ -35,14 +38,58 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
   const [processedContent, setProcessedContent] = useState("");
   const [isProcessed, setIsProcessed] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadedMedia, setUploadedMedia] = useState<MediaContent[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showDrawingBoard, setShowDrawingBoard] = useState(false);
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedFile(e.target.files[0]);
+    }
+  };
+  
+  const handleSaveDrawing = async (imageDataUrl: string) => {
+    try {
+      setIsUploading(true);
+      toast({
+        title: "Uploading Drawing",
+        description: "Your drawing is being uploaded...",
+      });
+      
+      // Upload the drawing to Nostr
+      const imageUrl = await uploadImage(imageDataUrl);
+      
+      // Create a media object for the drawing
+      const media: MediaContent = {
+        id: `drawing-${Date.now()}`,
+        url: imageUrl,
+        type: 'image',
+        name: `Drawing ${new Date().toLocaleTimeString()}`,
+        size: Math.round(imageDataUrl.length * 0.75), // Approximate size calculation
+      };
+      
+      // Add to uploaded media
+      setUploadedMedia(prev => [...prev, media]);
+      
+      // Close drawing board
+      setShowDrawingBoard(false);
+      
+      toast({
+        title: "Drawing Uploaded",
+        description: "Your drawing has been added to your thread.",
+      });
+    } catch (error) {
+      console.error("Error uploading drawing:", error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload your drawing.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -163,6 +210,14 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
       // Handle image upload if selected
       let imageUrls: string[] = [];
       
+      // First include any drawing images that were already uploaded
+      uploadedMedia.forEach(media => {
+        if (media.type === 'image' && media.url) {
+          imageUrls.push(media.url);
+        }
+      });
+      
+      // Then handle traditional file upload if selected
       if (selectedFile) {
         setIsUploading(true);
         
@@ -198,6 +253,8 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
       setProcessedContent("");
       setIsProcessed(false);
       setSelectedFile(null);
+      setUploadedMedia([]);
+      setShowDrawingBoard(false);
       
       // Close modal
       onClose();
@@ -249,8 +306,8 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
             </div>
             
             <div>
-              <Label htmlFor="image" className="font-bold text-foreground">Image</Label>
-              <div className="flex items-center mt-1">
+              <Label htmlFor="image" className="font-bold text-foreground">Images & Media</Label>
+              <div className="flex items-center mt-1 space-x-2">
                 <Button
                   type="button"
                   variant="outline"
@@ -259,6 +316,15 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
                 >
                   <span className="text-xs">Add Image</span>
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowDrawingBoard(!showDrawingBoard)}
+                  className="flex items-center border-black rounded-none"
+                >
+                  <PencilIcon className="h-3 w-3 mr-1" />
+                  <span className="text-xs">{showDrawingBoard ? "Hide Drawing Tool" : "Open Drawing Tool"}</span>
+                </Button>
                 <input
                   id="image-upload"
                   type="file"
@@ -266,10 +332,21 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
                   className="hidden"
                   onChange={handleFileChange}
                 />
-                <span className="ml-3 text-xs text-muted-foreground">
-                  {selectedFile ? selectedFile.name : "No file selected"}
+                <span className="text-xs text-muted-foreground ml-2">
+                  {selectedFile ? selectedFile.name : ""}
+                  {uploadedMedia.length > 0 && !selectedFile && `${uploadedMedia.length} drawing(s) attached`}
                 </span>
               </div>
+              
+              {/* Drawing Board */}
+              {showDrawingBoard && (
+                <div className="mt-2">
+                  <DrawingBoard 
+                    onClose={() => setShowDrawingBoard(false)}
+                    onSaveDrawing={handleSaveDrawing}
+                  />
+                </div>
+              )}
             </div>
             
             <div className="flex justify-between pt-2 border-t border-gray-300">
