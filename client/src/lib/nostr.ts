@@ -111,7 +111,13 @@ export const getOrCreateIdentity = (): NostrIdentity => {
   const identity: NostrIdentity = {
     pubkey,
     privkey: privkeyHex,
-    profile: { name: "Anonymous" }
+    profile: { 
+      name: "Anonymous", 
+      pubkey: pubkey,
+      picture: "",
+      about: "I'm a new 4ochan user",
+      nip05: ""
+    }
   };
   
   // Store the identity in localStorage - it's already in serializable format
@@ -439,10 +445,10 @@ export const createThreadEvent = async (
   });
   
   // Format tags properly according to NIP-01 and NIP-10 standards
+  // Since boardId isn't actually an event ID, we should use a custom tag instead
   const tags = [
-    // For "e" tag, make sure all 4 parts are properly formatted or use simpler version
-    ["e", boardId], // Simpler version without relay hint or marker
-    ["board", boardId],
+    ["board", boardId], // Board reference using custom tag
+    ["t", title.substring(0, 20)], // Topic tag with truncated title
   ];
   
   // Add image tags for backward compatibility, using only 2-element tags
@@ -477,14 +483,25 @@ export const createPostEvent = async (
   });
   
   // Format tags properly according to NIP-01 and NIP-10 standards
-  const tags = [
-    ["e", threadId], // Simpler version of root reference
-  ];
+  // For event tags, we must ensure the thread ID is a proper event ID (32 bytes hex)
+  const tags = [];
+  
+  // Add the root reference first
+  // Properly validate that the thread ID is a valid 64-character hex string
+  if (/^[0-9a-fA-F]{64}$/.test(threadId)) {
+    tags.push(["e", threadId, "", "root"]);
+  } else {
+    // For non-standard IDs, use a custom tag
+    tags.push(["thread", threadId]);
+  }
   
   // Add references to posts being replied to
-  replyToIds.forEach(id => {
-    tags.push(["e", id]); // Reference to specific post being replied to
-  });
+  for (const id of replyToIds) {
+    // Validate it's a valid event ID
+    if (/^[0-9a-fA-F]{64}$/.test(id)) {
+      tags.push(["e", id, "", "reply"]);
+    }
+  }
   
   // Add image tags for backward compatibility
   imageUrls.forEach(url => {
@@ -737,11 +754,20 @@ export const createSubscriptionEvent = async (
     createdAt: Math.floor(Date.now() / 1000)
   });
   
-  // Format tags consistently with the other event types
-  const tags = [
-    ["e", threadId], // Thread reference
-    ["subscription", "thread"] // Subscription type
-  ];
+  // Format tags properly - validate the thread ID
+  const tags = [];
+  
+  // Add the root reference first
+  // Properly validate that the thread ID is a valid 64-character hex string
+  if (/^[0-9a-fA-F]{64}$/.test(threadId)) {
+    tags.push(["e", threadId]);
+  } else {
+    // For non-standard IDs, use a custom tag
+    tags.push(["thread_id", threadId]);
+  }
+  
+  // Add the subscription type
+  tags.push(["subscription", "thread"]);
   
   return await createEvent(KIND.SUBSCRIPTION, subscriptionContent, tags, identity);
 };
@@ -780,15 +806,24 @@ export const createNotificationEvent = async (
     read: false
   });
   
-  // Format tags consistently
+  // Format tags properly
   const tags = [
-    ["p", recipientPubkey], // Recipient pubkey
-    ["e", threadId] // Thread reference
+    ["p", recipientPubkey], // Recipient pubkey tag format is correct
   ];
   
-  // Add post reference if available
-  if (postId) {
-    tags.push(["e", postId]);
+  // Add thread reference with proper validation
+  if (/^[0-9a-fA-F]{64}$/.test(threadId)) {
+    tags.push(["e", threadId]);
+  } else {
+    // For non-standard IDs, use a custom tag
+    tags.push(["thread_id", threadId]);
+  }
+  
+  // Add post reference if available with validation
+  if (postId && /^[0-9a-fA-F]{64}$/.test(postId)) {
+    tags.push(["e", postId, "", "mention"]);
+  } else if (postId) {
+    tags.push(["post_id", postId]);
   }
   
   return await createEvent(KIND.NOTIFICATION, notificationContent, tags, identity);
