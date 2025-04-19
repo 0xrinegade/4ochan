@@ -9,6 +9,7 @@ import { useBoards } from "@/hooks/useBoards";
 import { CreateThreadModal } from "@/components/CreateThreadModal";
 import { formatPubkey } from "@/lib/nostr";
 import { useToast } from "@/hooks/use-toast";
+import { navigateWithoutReload } from "@/App";
 import { Thread } from "@/types";
 
 // Interface for user replies
@@ -224,7 +225,14 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
                           <ul className="text-xs md:list-disc md:pl-4">
                             {userCreatedThreads.slice(0, 3).map(thread => (
                               <li key={thread.id} className="mb-0.5 truncate">
-                                <a href={`/thread/${thread.id}`} className="text-primary underline">
+                                <a 
+                                  href={`/thread/${thread.id}`} 
+                                  className="text-primary underline"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    navigateWithoutReload(`/thread/${thread.id}`);
+                                  }}
+                                >
                                   {thread.title || "Untitled Thread"}
                                 </a>
                               </li>
@@ -247,7 +255,14 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
                           <ul className="text-xs md:list-disc md:pl-4">
                             {userReplies.slice(0, 3).map(reply => (
                               <li key={reply.id} className="mb-0.5 truncate">
-                                <a href={`/thread/${reply.threadId}`} className="text-primary underline">
+                                <a 
+                                  href={`/thread/${reply.threadId}`} 
+                                  className="text-primary underline"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    navigateWithoutReload(`/thread/${reply.threadId}`);
+                                  }}
+                                >
                                   {reply.content.substring(0, 30)}...
                                 </a>
                               </li>
@@ -362,13 +377,41 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
                 <span className="text-primary">◆</span> 
                 <span>4ochan.org © 2025</span> 
                 <span className="text-primary">◆</span> 
-                <a href="#" className="text-primary underline">About</a> 
+                <a 
+                  href="#" 
+                  className="text-primary underline"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // navigateWithoutReload(`/about`);
+                  }}
+                >About</a> 
                 <span className="text-primary">◆</span> 
-                <a href="#" className="text-primary underline">Terms</a> 
+                <a 
+                  href="#" 
+                  className="text-primary underline"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // navigateWithoutReload(`/terms`);
+                  }}
+                >Terms</a> 
                 <span className="text-primary">◆</span> 
-                <a href="#" className="text-primary underline">Privacy</a>
+                <a 
+                  href="#" 
+                  className="text-primary underline"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // navigateWithoutReload(`/privacy`);
+                  }}
+                >Privacy</a>
                 <span className="text-primary">◆</span>
-                <a href="/design" className="text-primary underline">Design</a>
+                <a 
+                  href="/design" 
+                  className="text-primary underline"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigateWithoutReload(`/design`);
+                  }}
+                >Design</a>
                 <span className="text-primary">◆</span>
               </p>
               <p className="text-[10px] mt-1.5 italic">Best viewed with Netscape Navigator</p>
