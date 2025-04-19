@@ -182,75 +182,15 @@ export const Header: React.FC = () => {
               {/* Always show notification bell */}
               <NotificationBell />
 
-              {/* Theme Dropdown */}
-              <div className="relative" ref={themeDropdownRef}>
+              {/* Profile Button */}
+              <div className="relative">
                 <button 
-                  onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
+                  onClick={() => navigateTo('/profile')}
                   className="text-xs bg-gray-200 text-black font-bold py-0.5 px-2 border-2 border-black"
                   style={{ boxShadow: "2px 2px 0 #000" }}
                 >
-                  Theme
+                  Profile
                 </button>
-                
-                {themeDropdownOpen && (
-                  <div className="absolute right-0 mt-1 bg-white border-2 border-black z-50 w-40">
-                    <div className="bg-primary text-white text-xs font-bold py-0.5 px-2">
-                      SELECT THEME
-                    </div>
-                    <div className="p-1">
-                      {themes.map((theme) => {
-                        // Get friendly names for themes
-                        let displayName = '';
-                        let themeColor = '';
-                        
-                        switch(theme) {
-                          case 'light':
-                            displayName = 'Light';
-                            themeColor = '#0066B8';
-                            break;
-                          case 'dark':
-                            displayName = 'Dark';
-                            themeColor = '#0098FF';
-                            break;
-                          case 'highcontrast':
-                            displayName = 'High Contrast';
-                            themeColor = '#FFFF00';
-                            break;
-                          case 'retro':
-                            displayName = 'Retro';
-                            themeColor = '#000080';
-                            break;
-                          case 'sepia':
-                            displayName = 'Sepia';
-                            themeColor = '#8B4000';
-                            break;
-                          default:
-                            displayName = String(theme).charAt(0).toUpperCase() + String(theme).slice(1);
-                        }
-                        
-                        return (
-                          <button
-                            key={theme}
-                            onClick={() => {
-                              setTheme(theme);
-                              setThemeDropdownOpen(false);
-                            }}
-                            className={`w-full text-left py-1 px-1 mb-1 last:mb-0 flex items-center ${
-                              currentTheme === theme ? 'bg-gray-100' : 'hover:bg-gray-100'
-                            }`}
-                          >
-                            <div 
-                              className="w-3 h-3 mr-1 border border-black inline-block"
-                              style={{ backgroundColor: themeColor }}
-                            ></div>
-                            <span className="text-xs">{displayName}</span>
-                            {currentTheme === theme && <span className="ml-auto text-xs">✓</span>}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
               </div>
               
               <button 
@@ -311,60 +251,17 @@ export const Header: React.FC = () => {
                 <NotificationBell />
               </div>
               
-              {/* Mobile Theme Selector */}
-              <div className="mt-2">
-                <div className="bg-primary text-white text-xs font-bold py-0.5 px-2 mb-1">
-                  SELECT THEME
-                </div>
-                <div className="border border-black p-1 bg-white">
-                  {themes.map((theme) => {
-                    // Get friendly names for themes
-                    let displayName = '';
-                    let themeColor = '';
-                    
-                    switch(theme) {
-                      case 'light':
-                        displayName = 'Light';
-                        themeColor = '#0066B8';
-                        break;
-                      case 'dark':
-                        displayName = 'Dark';
-                        themeColor = '#0098FF';
-                        break;
-                      case 'highcontrast':
-                        displayName = 'High Contrast';
-                        themeColor = '#FFFF00';
-                        break;
-                      case 'retro':
-                        displayName = 'Retro';
-                        themeColor = '#000080';
-                        break;
-                      case 'sepia':
-                        displayName = 'Sepia';
-                        themeColor = '#8B4000';
-                        break;
-                      default:
-                        displayName = String(theme).charAt(0).toUpperCase() + String(theme).slice(1);
-                    }
-                    
-                    return (
-                      <button
-                        key={theme}
-                        onClick={() => setTheme(theme)}
-                        className={`w-full text-left py-1 px-1 mb-1 last:mb-0 flex items-center ${
-                          currentTheme === theme ? 'bg-gray-100' : 'hover:bg-gray-100'
-                        }`}
-                      >
-                        <div 
-                          className="w-3 h-3 mr-1 border border-black inline-block"
-                          style={{ backgroundColor: themeColor }}
-                        ></div>
-                        <span className="text-xs">{displayName}</span>
-                        {currentTheme === theme && <span className="ml-auto text-xs">✓</span>}
-                      </button>
-                    );
-                  })}
-                </div>
+              <div className="flex justify-between mt-2">
+                <button 
+                  onClick={() => {
+                    navigateTo('/profile');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-xs bg-gray-200 text-black font-bold py-0.5 px-2 border-2 border-black"
+                  style={{ boxShadow: "2px 2px 0 #000" }}
+                >
+                  Profile
+                </button>
               </div>
               
               <div className="text-xs mt-2">

@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'wouter';
 import { useNostr } from '@/hooks/useNostr';
 import { Header } from '@/components/Header';
 import { UserProfile } from '@/components/UserProfile';
 import { ReputationDisplay } from '@/components/ReputationDisplay';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from '@/context/ThemeContext';
 
 const UserProfilePage: React.FC<{ id?: string }> = ({ id: propId }) => {
   const { toast } = useToast();
   const { id: paramId } = useParams<{ id?: string }>();
   const { identity, connectedRelays } = useNostr();
+  const { currentTheme, setTheme, themes } = useTheme();
   
   // Use the prop ID, URL parameter, or the current user's pubkey (in that order of precedence)
   const id = propId || paramId;
@@ -84,6 +86,64 @@ const UserProfilePage: React.FC<{ id?: string }> = ({ id: propId }) => {
                   )}
                 </div>
               </div>
+              
+              {/* Theme Settings */}
+              {isCurrentUser && (
+                <div className="thread-container mb-4">
+                  <div className="section-header">theme settings</div>
+                  <div className="p-3">
+                    <div className="bg-white">
+                      {themes.map((theme) => {
+                        // Get friendly names for themes
+                        let displayName = '';
+                        let themeColor = '';
+                        
+                        switch(theme) {
+                          case 'light':
+                            displayName = 'Light';
+                            themeColor = '#0066B8';
+                            break;
+                          case 'dark':
+                            displayName = 'Dark';
+                            themeColor = '#0098FF';
+                            break;
+                          case 'highcontrast':
+                            displayName = 'High Contrast';
+                            themeColor = '#FFFF00';
+                            break;
+                          case 'retro':
+                            displayName = 'Retro';
+                            themeColor = '#000080';
+                            break;
+                          case 'sepia':
+                            displayName = 'Sepia';
+                            themeColor = '#8B4000';
+                            break;
+                          default:
+                            displayName = String(theme).charAt(0).toUpperCase() + String(theme).slice(1);
+                        }
+                        
+                        return (
+                          <button
+                            key={theme}
+                            onClick={() => setTheme(theme)}
+                            className={`w-full text-left py-1 px-1 mb-1 last:mb-0 flex items-center ${
+                              currentTheme === theme ? 'bg-gray-100' : 'hover:bg-gray-100'
+                            }`}
+                          >
+                            <div 
+                              className="w-3 h-3 mr-1 border border-black inline-block"
+                              style={{ backgroundColor: themeColor }}
+                            ></div>
+                            <span className="text-xs">{displayName}</span>
+                            {currentTheme === theme && <span className="ml-auto text-xs">✓</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {/* Tips for profile */}
               <div className="thread-container">
