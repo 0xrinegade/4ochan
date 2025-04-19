@@ -357,20 +357,24 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       throw new Error("Not connected to any relays");
     }
     
-    // Check cache first
-    const cachedThreads = localCache.getThreadsByBoard(boardId);
-    if (cachedThreads.length > 0) {
-      return cachedThreads;
-    }
+    // Always clear the cache to get fresh data
+    localCache.clearThreadsByBoard(boardId);
+    
+    console.log(`Fetching threads for board: ${boardId}`);
     
     // Fetch thread events from relays - updated for nostr-tools v2.x
     const filter: Filter = {
       kinds: [KIND.THREAD],
-      '#board': [boardId]
+      '#board': [boardId],
+      // Set limit to ensure we get latest threads
+      limit: 50
     };
     
     const relayUrls = relays.filter(r => r.status === 'connected' && r.read).map(r => r.url);
+    console.log(`Querying ${relayUrls.length} relays for threads...`);
+    
     const events = await pool.querySync(relayUrls, filter);
+    console.log(`Retrieved ${events.length} thread events from relays`);
     
     // Parse thread events
     const threads: Thread[] = [];
@@ -399,6 +403,8 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     }
     
+    console.log(`Successfully parsed ${threads.length} threads`);
+    
     // Fetch reply counts
     for (const thread of threads) {
       const replies = await getPostsByThread(thread.id);
@@ -410,9 +416,13 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       localCache.addThread(thread);
     }
     
-    return threads.sort((a, b) => 
+    // Sort by creation time to show newest threads first
+    const sortedThreads = threads.sort((a, b) => 
       (b.lastReplyTime || b.createdAt) - (a.lastReplyTime || a.createdAt)
     );
+    
+    console.log(`Returning ${sortedThreads.length} sorted threads`);
+    return sortedThreads;
   }, [pool, relays]);
 
   // Get a specific thread

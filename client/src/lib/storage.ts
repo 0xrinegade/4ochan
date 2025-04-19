@@ -194,7 +194,28 @@ class LocalCache {
     return Array.from(this.notifications.values()).filter(n => !n.read).length;
   }
   
-  // Clear caches
+  // Clear threads for a specific board
+  clearThreadsByBoard(boardId: string): void {
+    // Get thread IDs for this board
+    const threadIds = this.threadsByBoard.get(boardId) || [];
+    
+    // Remove threads from the threads map
+    threadIds.forEach(threadId => {
+      this.threads.delete(threadId);
+      
+      // Also clear associated posts
+      const postIds = this.postsByThread.get(threadId) || [];
+      postIds.forEach(postId => this.posts.delete(postId));
+      this.postsByThread.delete(threadId);
+    });
+    
+    // Clear the board's thread list
+    this.threadsByBoard.delete(boardId);
+    
+    console.log(`Cleared cache for board ${boardId}: removed ${threadIds.length} threads`);
+  }
+  
+  // Clear all caches
   clearCache(): void {
     this.boards.clear();
     this.threads.clear();

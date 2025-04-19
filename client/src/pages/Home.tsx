@@ -187,6 +187,20 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
                   });
                   
                   setShowCreateModal(false);
+                  
+                  // Force reload the page to refresh threads
+                  console.log("Thread created successfully, reloading to show new content");
+                  setTimeout(() => {
+                    // Navigate to the board page where the thread was created
+                    if (boardId) {
+                      window.location.href = `/board/${boardId}`;
+                    } else if (currentBoard?.shortName) {
+                      window.location.href = `/board/${currentBoard.shortName}`;
+                    } else {
+                      window.location.reload();
+                    }
+                  }, 1000);
+                  
                   return Promise.resolve();
                 } catch (error: any) {
                   console.error("Error creating thread:", error);

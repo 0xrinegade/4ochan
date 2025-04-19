@@ -19,8 +19,22 @@ export const ThreadList: React.FC<ThreadListProps> = ({
   boardShortName = "",
   boardDescription = ""
 }) => {
-  const { threads, loading, error, createThread } = useThreads(boardId);
+  const { threads, loading, error, createThread, refreshThreads } = useThreads(boardId);
   const [isCreateThreadModalOpen, setIsCreateThreadModalOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    refreshThreads()
+      .then(() => {
+        console.log("Manually refreshed threads");
+        setTimeout(() => setRefreshing(false), 500);
+      })
+      .catch(err => {
+        console.error("Error refreshing threads:", err);
+        setRefreshing(false);
+      });
+  };
 
   const handleCreateThread = async (
     title: string,
@@ -29,6 +43,8 @@ export const ThreadList: React.FC<ThreadListProps> = ({
   ) => {
     await createThread(title, content, imageUrls);
     setIsCreateThreadModalOpen(false);
+    // Refresh threads after creating a new one
+    setTimeout(handleRefresh, 1000);
   };
 
   return (
@@ -45,13 +61,23 @@ export const ThreadList: React.FC<ThreadListProps> = ({
                 </h2>
                 <p className="text-xs text-gray-600 mb-2 sm:mb-0">{boardDescription}</p>
               </div>
-              <button 
-                onClick={() => setIsCreateThreadModalOpen(true)}
-                className="bg-gray-200 text-black font-bold py-0.5 px-2 border-2 border-black text-xs"
-                style={{ boxShadow: "2px 2px 0 #000" }}
-              >
-                Create Thread
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={handleRefresh}
+                  disabled={loading || refreshing}
+                  className={`bg-gray-200 text-black font-bold py-0.5 px-2 border-2 border-black text-xs ${(loading || refreshing) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  style={{ boxShadow: "2px 2px 0 #000" }}
+                >
+                  {refreshing ? 'Refreshing...' : 'Refresh'}
+                </button>
+                <button 
+                  onClick={() => setIsCreateThreadModalOpen(true)}
+                  className="bg-gray-200 text-black font-bold py-0.5 px-2 border-2 border-black text-xs"
+                  style={{ boxShadow: "2px 2px 0 #000" }}
+                >
+                  Create Thread
+                </button>
+              </div>
             </div>
           </div>
         </div>
