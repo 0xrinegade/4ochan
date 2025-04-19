@@ -25,36 +25,37 @@ interface ThemeContextType {
 // Theme configuration from theme.json
 const themeSettings: ThemeSettings = {
   crimson: {
-    primary: '#8B0000',   // Dark red primary
-    background: '#F5F5DC', // Beige background
-    buttonBackground: '#D3D3D3', // Light gray buttons
-    buttonText: '#000000'   // Black text on buttons
+    primary: '#8B0000',     // Dark red primary
+    background: '#F8F5E6',  // Soft beige background
+    buttonBackground: '#E8E8E8', // Light gray buttons
+    buttonText: '#000000',  // Black text on buttons
+    text: '#333333'         // Dark gray for main text
   },
   hotdogstand: {
-    primary: '#FF0000',    // Bright red
-    background: '#FFFF00',  // Bright yellow
-    buttonBackground: '#FF0000', // Red buttons
-    buttonText: '#FFFF00',  // Yellow text on buttons
-    text: '#000000'         // Black for main text
+    primary: '#D82C20',     // Softer red (less harsh)
+    background: '#FFF8E1',  // Cream yellow (less bright)
+    buttonBackground: '#D82C20', // Red buttons
+    buttonText: '#FFFFFF',  // White text on buttons (better contrast)
+    text: '#333333'         // Dark gray for main text
   },
   windows95: {
-    primary: '#000080',    // Classic Windows 95 blue
-    background: '#C0C0C0',  // Windows 95 gray
-    buttonBackground: '#C0C0C0', // Gray buttons
+    primary: '#000080',     // Classic Windows 95 blue
+    background: '#E6E6E6',  // Lighter gray (more modern)
+    buttonBackground: '#D4D0C8', // Classic Win95 button color
     buttonText: '#000000',  // Black text on buttons
-    text: '#000000'         // Black text
+    text: '#333333'         // Dark gray text
   },
   vaporwave: {
-    primary: '#FF00FF',    // Magenta/pink
-    background: '#00FFFF',  // Cyan
-    buttonBackground: '#FF00FF', // Pink buttons
+    primary: '#FF00CC',     // More pastel pink
+    background: '#F5F5FF',  // Very light blue
+    buttonBackground: '#7B68EE', // Medium slate blue (softer)
     buttonText: '#FFFFFF',  // White text on buttons
-    text: '#000080'         // Navy blue text
+    text: '#333333'         // Normal dark text
   },
   matrix: {
-    primary: '#00FF00',    // Bright matrix green
-    background: '#000000',  // Black background
-    text: '#00FF00',        // Green text
+    primary: '#00CC00',     // Softer green (less harsh)
+    background: '#0A0A0A',  // Very dark gray (not pure black)
+    text: '#33FF33',        // Brighter green text
     buttonBackground: '#003300', // Dark green buttons
     buttonText: '#00FF00'   // Green text on buttons
   }

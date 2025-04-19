@@ -84,50 +84,62 @@
     --ring: 120 100% 50%;
   }
   
-  /* Matrix theme special effects */
+  /* Matrix theme special effects - more subtle */
   .theme-matrix a,
   .theme-matrix .post-num,
   .theme-matrix .thread-title,
   .theme-matrix .reply-link,
   .theme-matrix .section-header {
-    text-shadow: 0 0 5px #00FF00;
+    text-shadow: 0 0 2px #00FF00;
   }
   
   .theme-matrix button:not(.unstyled) {
-    text-shadow: 0 0 5px #00FF00;
-    border-color: #00FF00;
-    box-shadow: 0 0 5px #00FF00, 2px 2px 0px #003300;
+    border-color: #00CC00;
+    box-shadow: 0 0 3px #00CC00, 1px 1px 0px #003300;
   }
   
   .theme-matrix input,
   .theme-matrix textarea,
   .theme-matrix select {
-    background-color: #000;
-    color: #00FF00;
-    border-color: #00FF00;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #33FF33;
+    border-color: #33CC33;
   }
   
   .theme-matrix button:not(.unstyled):active {
-    box-shadow: 0 0 5px #00FF00, 1px 1px 0px #003300;
+    box-shadow: 0 0 3px #00CC00, 1px 1px 0px #003300;
   }
   
-  /* Override core elements for better theme visibility */
+  /* Thread containers and posts for different themes */
+  .theme-crimson .thread-container,
+  .theme-crimson .post {
+    background-color: #FFFFFF;
+    border-color: #8B0000;
+  }
+  
   .theme-hotdogstand .thread-container,
-  .theme-hotdogstand .post,
-  .theme-vaporwave .thread-container,
-  .theme-vaporwave .post,
-  .theme-windows95 .thread-container,
-  .theme-windows95 .post,
-  .theme-matrix .thread-container,
-  .theme-matrix .post {
-    background-color: rgba(255, 255, 255, 0.85);
+  .theme-hotdogstand .post {
+    background-color: #FFFFFF;
+    border-color: #D82C20;
   }
   
-  /* Override for Matrix theme */
+  .theme-windows95 .thread-container,
+  .theme-windows95 .post {
+    background-color: #FFFFFF;
+    border-color: #000080;
+  }
+  
+  .theme-vaporwave .thread-container,
+  .theme-vaporwave .post {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-color: #7B68EE;
+  }
+  
   .theme-matrix .thread-container,
   .theme-matrix .post {
-    background-color: rgba(0, 0, 0, 0.85);
-    color: #00FF00;
+    background-color: rgba(10, 10, 10, 0.9);
+    border-color: #00CC00;
+    color: #33FF33;
   }
   
   /* Ensure all buttons match their theme */
@@ -155,18 +167,23 @@
     background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23cccccc' fill-opacity='0.3' fill-rule='evenodd'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
   }
   
-  /* Vaporwave theme special effects */
+  /* Vaporwave theme special effects - more subtle */
   .theme-vaporwave {
-    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23ff00ff' fill-opacity='0.15'%3E%3Cpath d='M50 0v100h50V0H50zM0 0v100h25V0H0z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%237B68EE' fill-opacity='0.1'%3E%3Cpath d='M60 0v120h60V0H60zM0 0v120h30V0H0z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
   
-  .theme-vaporwave a,
+  .theme-vaporwave .post-num {
+    color: #7B68EE;
+  }
+  
   .theme-vaporwave .thread-title {
-    background: linear-gradient(to right, #ff00ff, #00ffff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: none;
+    color: #FF00CC;
     font-weight: bold;
+  }
+  
+  .theme-vaporwave a {
+    color: #7B68EE;
+    text-decoration: underline;
   }
   
   /* Basic HTML elements like in the 90s web */
@@ -269,27 +286,96 @@
   }
   
   .quote-text {
-    @apply text-green-700 italic;
+    @apply italic;
+    color: #2E8B57; /* Sea Green by default */
+  }
+  
+  /* Theme-specific quote text */
+  .theme-hotdogstand .quote-text {
+    color: #D82C20; /* Match theme primary */
+  }
+  
+  .theme-windows95 .quote-text {
+    color: #000080; /* Match theme primary */
+  }
+  
+  .theme-vaporwave .quote-text {
+    color: #9370DB; /* Medium purple */
+  }
+  
+  .theme-matrix .quote-text {
+    color: #00FF00; /* Bright green */
   }
   
   /* 90s-style buttons */
   button:not(.unstyled) {
     @apply bg-secondary border-2 border-border px-2 py-1 font-bold text-secondary-foreground;
-    box-shadow: 2px 2px 0px #000;
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+    transition: all 0.1s ease;
   }
   
   button:not(.unstyled):hover {
-    filter: brightness(90%);
+    filter: brightness(95%);
+    transform: translateY(-1px);
+    box-shadow: 2px 3px 0px rgba(0, 0, 0, 0.5);
   }
   
   button:not(.unstyled):active {
     transform: translate(1px, 1px);
-    box-shadow: 1px 1px 0px #000;
+    box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Theme-specific button improvements */
+  .theme-crimson button:not(.unstyled) {
+    border-color: #8B0000;
+  }
+  
+  .theme-windows95 button:not(.unstyled) {
+    box-shadow: inset 1px 1px 0px #FFFFFF, 2px 2px 0px rgba(0, 0, 0, 0.5);
+  }
+  
+  .theme-hotdogstand button:not(.unstyled) {
+    border-color: #000000;
   }
   
   /* 90s-style inputs */
   input, textarea, select {
     @apply border-2 border-black bg-white px-2 py-1;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  input:focus, textarea:focus, select:focus {
+    @apply outline-none;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Theme-specific input styles */
+  .theme-crimson input:focus, 
+  .theme-crimson textarea:focus, 
+  .theme-crimson select:focus {
+    border-color: #8B0000;
+    box-shadow: 0 0 0 2px rgba(139, 0, 0, 0.2);
+  }
+  
+  .theme-hotdogstand input:focus, 
+  .theme-hotdogstand textarea:focus, 
+  .theme-hotdogstand select:focus {
+    border-color: #D82C20;
+    box-shadow: 0 0 0 2px rgba(216, 44, 32, 0.2);
+  }
+  
+  .theme-windows95 input:focus, 
+  .theme-windows95 textarea:focus, 
+  .theme-windows95 select:focus {
+    border-color: #000080;
+    box-shadow: 0 0 0 2px rgba(0, 0, 128, 0.2);
+  }
+  
+  .theme-vaporwave input:focus, 
+  .theme-vaporwave textarea:focus, 
+  .theme-vaporwave select:focus {
+    border-color: #7B68EE;
+    box-shadow: 0 0 0 2px rgba(123, 104, 238, 0.2);
   }
   
   /* Blink effect for new content - very 90s web */
