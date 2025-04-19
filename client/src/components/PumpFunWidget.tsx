@@ -196,7 +196,7 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center">
           Token Analysis
-          {tokenData?.priceChange24h !== undefined && (
+          {tokenData?.priceChange24h !== undefined && typeof tokenData.priceChange24h === 'number' && (
             <Badge className={`ml-2 ${tokenData.priceChange24h >= 0 ? 'bg-green-600' : 'bg-red-600'}`}>
               {tokenData.priceChange24h >= 0 ? (
                 <ArrowUpRight className="h-3 w-3 mr-1" />
@@ -304,7 +304,7 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
                         </div>
                       )}
                       
-                      {tokenData.volumeChange24h !== undefined && (
+                      {tokenData.volumeChange24h !== undefined && typeof tokenData.volumeChange24h === 'number' && (
                         <div className="bg-white p-2 rounded border">
                           <div className="text-xs text-gray-500 flex items-center">
                             <Activity className="h-3 w-3 mr-1" /> 24h Volume
@@ -357,10 +357,13 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
                             <XAxis dataKey="date" />
                             <YAxis 
                               domain={['auto', 'auto']}
-                              tickFormatter={(value) => `$${value.toFixed(6)}`}
+                              tickFormatter={(value) => typeof value === 'number' ? `$${value.toFixed(6)}` : `$${value}`}
                             />
                             <Tooltip 
-                              formatter={(value) => [`$${Number(value).toFixed(6)}`, 'Price']}
+                              formatter={(value) => {
+                                const numValue = Number(value);
+                                return isNaN(numValue) ? [`$${value}`, 'Price'] : [`$${numValue.toFixed(6)}`, 'Price'];
+                              }}
                               labelFormatter={(label) => `Date: ${label}`}
                             />
                             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
