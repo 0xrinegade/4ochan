@@ -5,6 +5,385 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vs, vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import mermaid from 'mermaid';
 
+// TypeScript declaration for Vivliostyle
+declare module '@vivliostyle/viewer';
+import * as Vivliostyle from '@vivliostyle/viewer';
+
+// TypstVivliostyleViewer component
+interface TypstVivliostyleViewerProps {
+  content: string;
+  isDarkMode: boolean;
+}
+
+const TypstVivliostyleViewer: React.FC<TypstVivliostyleViewerProps> = ({ content, isDarkMode }) => {
+  const viewerRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (!viewerRef.current) return;
+    
+    setIsLoading(true);
+    
+    try {
+      // Convert Typst to HTML structure
+      const typstHtml = convertTypstToHTML(content);
+      
+      // Create a blob URL for the HTML content
+      const blob = new Blob([typstHtml], { type: 'text/html' });
+      const blobUrl = URL.createObjectURL(blob);
+      
+      // Set up Vivliostyle viewer
+      const viewerOptions = {
+        viewportElement: viewerRef.current,
+        userStylesheet: [
+          {
+            text: generateTypstStyles(isDarkMode),
+            type: 'text/css'
+          }
+        ]
+      };
+      
+      // Initialize the viewer with the typst content
+      setTimeout(() => {
+        try {
+          // Clear any previous content
+          if (viewerRef.current) {
+            viewerRef.current.innerHTML = '';
+            
+            // Create an iframe for the Vivliostyle viewer
+            const iframe = document.createElement('iframe');
+            iframe.className = 'typst-vivliostyle-frame';
+            iframe.src = blobUrl;
+            iframe.title = 'Typst Document Preview';
+            iframe.onload = () => {
+              setIsLoading(false);
+            };
+            
+            viewerRef.current.appendChild(iframe);
+          }
+        } catch (err: any) {
+          console.error('Error initializing Vivliostyle:', err);
+          setError(err.message || 'Failed to initialize document viewer');
+          setIsLoading(false);
+        }
+      }, 100);
+      
+      return () => {
+        URL.revokeObjectURL(blobUrl);
+      };
+      
+    } catch (err: any) {
+      console.error('Error in Vivliostyle Typst renderer:', err);
+      setError(err.message || 'Failed to render document');
+      setIsLoading(false);
+    }
+  }, [content, isDarkMode]);
+  
+  // Convert Typst syntax to simplified HTML
+  const convertTypstToHTML = (typstContent: string): string => {
+    const lines = typstContent.split('\n');
+    let html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Typst Document</title>
+        <style>
+          body { 
+            font-family: 'Libertarian', serif;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+            color: ${isDarkMode ? '#ddd' : '#333'};
+            background-color: ${isDarkMode ? '#1a1a1a' : '#fff'};
+          }
+          .title { 
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-weight: bold;
+          }
+          .author {
+            text-align: center;
+            font-style: italic;
+            margin-bottom: 30px;
+          }
+          h1, h2, h3 { 
+            color: ${isDarkMode ? '#fff' : '#000'};
+          }
+          code {
+            background-color: ${isDarkMode ? '#333' : '#f5f5f5'};
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+          }
+          pre {
+            background-color: ${isDarkMode ? '#333' : '#f5f5f5'};
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+          }
+          .math {
+            font-style: italic;
+            font-family: 'Times New Roman', serif;
+          }
+          .figure {
+            text-align: center;
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid ${isDarkMode ? '#444' : '#ddd'};
+          }
+          .equation-block {
+            text-align: center;
+            margin: 15px 0;
+            font-style: italic;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="typst-document">
+    `;
+    
+    // Parse for title and author
+    let title = "Untitled Document";
+    let author = "";
+    let hasTitle = false;
+    
+    for (let i = 0; i < Math.min(lines.length, 10); i++) {
+      const line = lines[i];
+      
+      // Look for #set document(title: "Title")
+      if (line.includes('#set document') && line.includes('title:')) {
+        const titleMatch = line.match(/title:\s*"([^"]+)"/);
+        if (titleMatch && titleMatch[1]) {
+          title = titleMatch[1];
+          hasTitle = true;
+        }
+      }
+      
+      // Look for #set document(author: "Author")
+      if (line.includes('#set document') && line.includes('author:')) {
+        const authorMatch = line.match(/author:\s*"([^"]+)"/);
+        if (authorMatch && authorMatch[1]) {
+          author = authorMatch[1];
+        }
+      }
+      
+      // Alternative: = Title
+      if (!hasTitle && line.trim().startsWith('= ')) {
+        title = line.trim().substring(2);
+        hasTitle = true;
+      }
+    }
+    
+    html += `<div class="title">${title}</div>`;
+    if (author) {
+      html += `<div class="author">by ${author}</div>`;
+    }
+    
+    let inCodeBlock = false;
+    let codeContent = '';
+    let inListBlock = false;
+    
+    for (const line of lines) {
+      // Skip document setting lines
+      if (line.trim().startsWith('#set')) {
+        continue;
+      }
+      
+      // Handle code blocks
+      if (line.trim().startsWith('#raw(') || line.trim() === '```') {
+        if (!inCodeBlock) {
+          inCodeBlock = true;
+          html += '<pre><code>';
+          continue;
+        } else {
+          inCodeBlock = false;
+          html += `${escapeHtml(codeContent)}</code></pre>`;
+          codeContent = '';
+          continue;
+        }
+      }
+      
+      if (inCodeBlock) {
+        codeContent += line + '\n';
+        continue;
+      }
+      
+      // Headings
+      if (line.trim().startsWith('= ')) {
+        html += `<h1>${escapeHtml(line.trim().substring(2))}</h1>`;
+        continue;
+      }
+      
+      if (line.trim().startsWith('== ')) {
+        html += `<h2>${escapeHtml(line.trim().substring(3))}</h2>`;
+        continue;
+      }
+      
+      if (line.trim().startsWith('=== ')) {
+        html += `<h3>${escapeHtml(line.trim().substring(4))}</h3>`;
+        continue;
+      }
+      
+      // Lists
+      if (line.trim().startsWith('- ')) {
+        if (!inListBlock) {
+          inListBlock = true;
+          html += '<ul>';
+        }
+        const listContent = formatInlineMarkup(line.trim().substring(2));
+        html += `<li>${listContent}</li>`;
+        continue;
+      } else if (inListBlock) {
+        inListBlock = false;
+        html += '</ul>';
+      }
+      
+      // Block elements like figures, equations, etc.
+      if (line.trim().startsWith('#')) {
+        const blockMatch = line.match(/#([a-zA-Z]+)(\(.*?\))?\s*{?(.*)?$/);
+        if (blockMatch) {
+          const blockType = blockMatch[1];
+          const blockContent = blockMatch[3] || '';
+          
+          switch(blockType) {
+            case 'figure':
+              html += `<div class="figure">${formatInlineMarkup(blockContent)}<div class="caption">Figure</div></div>`;
+              break;
+            case 'equation':
+              html += `<div class="equation-block">${formatInlineMarkup(blockContent)}</div>`;
+              break;
+            default:
+              html += `<div class="block block-${blockType}">${formatInlineMarkup(blockContent)}</div>`;
+          }
+          continue;
+        }
+      }
+      
+      // Regular paragraph
+      if (line.trim() !== '') {
+        html += `<p>${formatInlineMarkup(line)}</p>`;
+      } else {
+        html += '<div class="spacer"></div>';
+      }
+    }
+    
+    // Close any open list
+    if (inListBlock) {
+      html += '</ul>';
+    }
+    
+    html += `
+        </div>
+      </body>
+      </html>
+    `;
+    
+    return html;
+  };
+  
+  // Format inline markup (bold, italic, etc.)
+  const formatInlineMarkup = (text: string): string => {
+    let result = escapeHtml(text);
+    
+    // Bold: *text*
+    result = result.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+    
+    // Italic: _text_
+    result = result.replace(/_(.*?)_/g, '<em>$1</em>');
+    
+    // Code: `code`
+    result = result.replace(/`(.*?)`/g, '<code>$1</code>');
+    
+    // Math: $x = y$
+    result = result.replace(/\$(.*?)\$/g, '<span class="math">$1</span>');
+    
+    return result;
+  };
+  
+  // Escape HTML special characters
+  const escapeHtml = (text: string): string => {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+  
+  // Generate CSS for the Typst document
+  const generateTypstStyles = (isDarkMode: boolean): string => {
+    return `
+      @font-face {
+        font-family: 'Libertarian';
+        src: url('/fonts/Libertarian.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+      }
+      
+      body {
+        background-color: ${isDarkMode ? '#1a1a1a' : '#ffffff'};
+        color: ${isDarkMode ? '#ddd' : '#333'};
+      }
+      
+      .typst-document {
+        font-family: 'Libertarian', serif;
+        line-height: 1.6;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      
+      h1, h2, h3 {
+        color: ${isDarkMode ? '#fff' : '#000'};
+      }
+      
+      code {
+        font-family: monospace;
+        background-color: ${isDarkMode ? '#333' : '#f5f5f5'};
+        color: ${isDarkMode ? '#ff7b72' : '#d63384'};
+      }
+      
+      ul {
+        padding-left: 20px;
+      }
+      
+      .block {
+        margin: 15px 0;
+        padding: 10px;
+        border-left: 3px solid ${isDarkMode ? '#555' : '#333'};
+        background-color: ${isDarkMode ? '#2a2a2a' : '#f8f8f8'};
+      }
+    `;
+  };
+  
+  return (
+    <div className="typst-vivliostyle-container">
+      {isLoading && (
+        <div className="typst-loading">
+          <div className="typst-loading-spinner"></div>
+          <p>Preparing document...</p>
+        </div>
+      )}
+      
+      {error && (
+        <div className="typst-error">
+          <p>Error rendering document:</p>
+          <pre>{error}</pre>
+        </div>
+      )}
+      
+      <div 
+        ref={viewerRef} 
+        className={`typst-vivliostyle-viewer ${isLoading ? 'loading' : ''}`}
+        style={{ height: '500px', width: '100%' }}
+      ></div>
+    </div>
+  );
+};
+
 interface MarkdownContentProps {
   content: string;
   className?: string;
@@ -257,10 +636,10 @@ const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element =>
           <div className="typst-render">
             <div className="typst-heading">
               <h3>Document Preview</h3>
-              <p>Formatted for better readability</p>
+              <p>Formatted with Vivliostyle</p>
             </div>
             <div className="typst-content">
-              {processContent()}
+              <TypstVivliostyleViewer content={content} isDarkMode={isDarkMode} />
             </div>
           </div>
         </div>
