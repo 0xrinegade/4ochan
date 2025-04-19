@@ -48,6 +48,9 @@ interface NostrContextType {
   unlikePost: (postId: string) => Promise<void>;
   getPostLikes: (postId: string) => Promise<number>;
   isPostLikedByUser: (postId: string) => Promise<boolean>;
+  // Thread stats
+  getThreadStats: (threadId: string) => Promise<{ viewCount: number, engagement: number } | null>;
+  getTotalViewCount: () => Promise<number>;
   // Thread subscriptions
   subscribeToThread: (threadId: string, notifyOnReplies?: boolean, notifyOnMentions?: boolean) => Promise<ThreadSubscription>;
   unsubscribeFromThread: (subscriptionId: string) => Promise<void>;
@@ -1601,6 +1604,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   
   // Thread statistics cache to avoid excessive relay queries
   const threadStatsCache = React.useRef<Record<string, { viewCount: number, engagement: number, lastUpdated: number }>>({});
+  const totalViewsCache = React.useRef<{ count: number, lastUpdated: number } | null>(null);
   
   // Get thread statistics (views, engagement)
   const getThreadStats = useCallback(async (threadId: string): Promise<{ viewCount: number, engagement: number } | null> => {
@@ -1678,6 +1682,86 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } catch (error) {
       console.error("Error fetching thread stats:", error);
       return { viewCount: 0, engagement: 0 };
+    }
+  }, [pool, relays]);
+  
+  // Get total view count across all threads on the platform
+  const getTotalViewCount = useCallback(async (): Promise<number> => {
+    // Check if we have a recent cache (less than 5 minutes old)
+    if (totalViewsCache.current) {
+      const now = Date.now();
+      if (now - totalViewsCache.current.lastUpdated < 300000) { // 5 minutes
+        return totalViewsCache.current.count;
+      }
+    }
+    
+    try {
+      if (!pool) return 0;
+      
+      // Use connected relays to fetch stats
+      const relayUrls = relays
+        .filter(r => r.status === 'connected' && r.read)
+        .map(r => r.url);
+      
+      if (relayUrls.length === 0) {
+        console.log("No connected relays to fetch view stats");
+        return 0;
+      }
+
+      // Fetch all thread stats events (limited to the latest 50)
+      const filter: Filter = {
+        kinds: [KIND.THREAD_STATS],
+        limit: 50
+      };
+      
+      const allStatsEvents = await pool.querySync(relayUrls, filter);
+      console.log(`Fetched ${allStatsEvents.length} thread stats events`);
+      
+      if (allStatsEvents.length === 0) {
+        totalViewsCache.current = { count: 0, lastUpdated: Date.now() };
+        return 0;
+      }
+      
+      // Group events by thread ID (using the e tag)
+      const threadStatsMap: Record<string, { viewCount: number, engagement: number }> = {};
+      
+      for (const event of allStatsEvents) {
+        try {
+          // Extract the thread ID from the event tags
+          const threadTag = event.tags.find((tag: string[]) => tag[0] === 'e');
+          if (!threadTag || !threadTag[1]) continue;
+          
+          const threadId = threadTag[1];
+          const data = JSON.parse(event.content);
+          
+          // Only process if viewCount is present and is a number
+          if (typeof data.viewCount !== 'number') continue;
+          
+          // For each thread, keep the highest view count found
+          if (!threadStatsMap[threadId] || data.viewCount > threadStatsMap[threadId].viewCount) {
+            threadStatsMap[threadId] = {
+              viewCount: data.viewCount,
+              engagement: typeof data.engagement === 'number' ? data.engagement : 0
+            };
+          }
+        } catch (error) {
+          console.error("Error parsing view stats event:", error);
+        }
+      }
+      
+      // Calculate total views across all threads
+      const totalViews = Object.values(threadStatsMap).reduce(
+        (sum, stats) => sum + stats.viewCount, 
+        0
+      );
+      
+      // Update cache
+      totalViewsCache.current = { count: totalViews, lastUpdated: Date.now() };
+      
+      return totalViews;
+    } catch (error) {
+      console.error("Error fetching total view count:", error);
+      return 0;
     }
   }, [pool, relays]);
 
