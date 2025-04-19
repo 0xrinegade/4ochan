@@ -59,12 +59,25 @@ interface TokenMetrics {
   priceChange24h?: number;
 }
 
+interface BondingInfo {
+  bondingStatus: 'bonding' | 'graduated' | 'new';
+  bondingCurve?: {
+    reserveToken: string;
+    reserveBalance: string;
+    supplyBalance: string;
+  };
+  createdAt: number;
+  updatedAt: number;
+}
+
 interface TokenAnalysisResponse {
   metadata?: TokenMetadata;
   price?: TokenPrice;
   priceHistory?: TokenPriceHistory[];
   metrics?: TokenMetrics;
+  bondingInfo?: BondingInfo;
   error?: string;
+  address?: string;  // Include contract address in the response
 }
 
 /**
@@ -197,6 +210,325 @@ export const getTokenAnalysis = async (address: string): Promise<TokenAnalysisRe
  * @param address Solana token mint address
  * @returns Token metadata and price information
  */
+// Define interfaces for the new pump.fun token APIs
+interface PumpFunToken {
+  address: string;
+  name: string;
+  symbol: string;
+  logo?: string;
+  decimals: number;
+  price?: number;
+  priceChange24h?: number;
+  volume24h?: number;
+  marketCap?: number;
+  totalSupply?: string;
+  createdAt: number;
+}
+
+interface PumpFunTokenBondingStatus {
+  address: string;
+  name: string;
+  symbol: string;
+  status: 'bonding' | 'graduated' | 'new';
+  bondingCurve?: {
+    reserveToken: string;
+    reserveBalance: string;
+    supplyBalance: string;
+  };
+  createdAt: number;
+  updatedAt: number;
+}
+
+interface PumpFunTokensResponse {
+  tokens: PumpFunToken[];
+  total: number;
+  page: number;
+  pageSize: number;
+  error?: string;
+}
+
+interface PumpFunTokenBondingResponse {
+  token: PumpFunTokenBondingStatus;
+  error?: string;
+}
+
+/**
+ * Get new tokens listed on a specific exchange
+ * @param exchange The exchange name (e.g., 'jupiter', 'raydium')
+ * @returns List of new tokens
+ */
+export const getNewTokensByExchange = async (exchange: string): Promise<PumpFunTokensResponse> => {
+  try {
+    await initMoralis();
+    
+    if (!process.env.MORALIS_API_KEY) {
+      return {
+        tokens: [],
+        total: 0,
+        page: 1,
+        pageSize: 0,
+        error: 'Moralis API key is not configured'
+      };
+    }
+    
+    try {
+      // Moralis API endpoint structure for getting new tokens
+      const response = await fetch(
+        `https://solana-gateway.moralis.io/token/mainnet/exchange/${exchange}/new`, 
+        {
+          headers: {
+            'Accept': 'application/json',
+            'X-API-Key': process.env.MORALIS_API_KEY
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to fetch new tokens for ${exchange}`);
+      }
+      
+      const data = await response.json();
+      return {
+        tokens: data.tokens || [],
+        total: data.total || 0,
+        page: data.page || 1,
+        pageSize: data.pageSize || 0
+      };
+    } catch (error) {
+      console.error(`Error fetching new tokens for ${exchange}:`, error);
+      return {
+        tokens: [],
+        total: 0,
+        page: 1,
+        pageSize: 0,
+        error: (error as Error).message || `Failed to fetch new tokens for ${exchange}`
+      };
+    }
+  } catch (error) {
+    console.error(`Error in getNewTokensByExchange for ${exchange}:`, error);
+    return {
+      tokens: [],
+      total: 0,
+      page: 1,
+      pageSize: 0,
+      error: (error as Error).message || `Failed to fetch new tokens for ${exchange}`
+    };
+  }
+};
+
+/**
+ * Get tokens in bonding phase on a specific exchange
+ * @param exchange The exchange name (e.g., 'jupiter', 'raydium')
+ * @returns List of tokens in bonding phase
+ */
+export const getBondingTokensByExchange = async (exchange: string): Promise<PumpFunTokensResponse> => {
+  try {
+    await initMoralis();
+    
+    if (!process.env.MORALIS_API_KEY) {
+      return {
+        tokens: [],
+        total: 0,
+        page: 1,
+        pageSize: 0,
+        error: 'Moralis API key is not configured'
+      };
+    }
+    
+    try {
+      // Moralis API endpoint structure for getting bonding tokens
+      const response = await fetch(
+        `https://solana-gateway.moralis.io/token/mainnet/exchange/${exchange}/bonding`, 
+        {
+          headers: {
+            'Accept': 'application/json',
+            'X-API-Key': process.env.MORALIS_API_KEY
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to fetch bonding tokens for ${exchange}`);
+      }
+      
+      const data = await response.json();
+      return {
+        tokens: data.tokens || [],
+        total: data.total || 0,
+        page: data.page || 1,
+        pageSize: data.pageSize || 0
+      };
+    } catch (error) {
+      console.error(`Error fetching bonding tokens for ${exchange}:`, error);
+      return {
+        tokens: [],
+        total: 0,
+        page: 1,
+        pageSize: 0,
+        error: (error as Error).message || `Failed to fetch bonding tokens for ${exchange}`
+      };
+    }
+  } catch (error) {
+    console.error(`Error in getBondingTokensByExchange for ${exchange}:`, error);
+    return {
+      tokens: [],
+      total: 0,
+      page: 1,
+      pageSize: 0,
+      error: (error as Error).message || `Failed to fetch bonding tokens for ${exchange}`
+    };
+  }
+};
+
+/**
+ * Get graduated tokens on a specific exchange
+ * @param exchange The exchange name (e.g., 'jupiter', 'raydium')
+ * @returns List of graduated tokens
+ */
+export const getGraduatedTokensByExchange = async (exchange: string): Promise<PumpFunTokensResponse> => {
+  try {
+    await initMoralis();
+    
+    if (!process.env.MORALIS_API_KEY) {
+      return {
+        tokens: [],
+        total: 0,
+        page: 1,
+        pageSize: 0,
+        error: 'Moralis API key is not configured'
+      };
+    }
+    
+    try {
+      // Moralis API endpoint structure for getting graduated tokens
+      const response = await fetch(
+        `https://solana-gateway.moralis.io/token/mainnet/exchange/${exchange}/graduated`, 
+        {
+          headers: {
+            'Accept': 'application/json',
+            'X-API-Key': process.env.MORALIS_API_KEY
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to fetch graduated tokens for ${exchange}`);
+      }
+      
+      const data = await response.json();
+      return {
+        tokens: data.tokens || [],
+        total: data.total || 0,
+        page: data.page || 1,
+        pageSize: data.pageSize || 0
+      };
+    } catch (error) {
+      console.error(`Error fetching graduated tokens for ${exchange}:`, error);
+      return {
+        tokens: [],
+        total: 0,
+        page: 1,
+        pageSize: 0,
+        error: (error as Error).message || `Failed to fetch graduated tokens for ${exchange}`
+      };
+    }
+  } catch (error) {
+    console.error(`Error in getGraduatedTokensByExchange for ${exchange}:`, error);
+    return {
+      tokens: [],
+      total: 0,
+      page: 1,
+      pageSize: 0,
+      error: (error as Error).message || `Failed to fetch graduated tokens for ${exchange}`
+    };
+  }
+};
+
+/**
+ * Get bonding status for a specific token address
+ * @param tokenAddress The Solana token address
+ * @returns Bonding status information
+ */
+export const getTokenBondingStatus = async (tokenAddress: string): Promise<PumpFunTokenBondingResponse> => {
+  try {
+    await initMoralis();
+    
+    if (!process.env.MORALIS_API_KEY) {
+      return {
+        token: {
+          address: tokenAddress,
+          name: 'Unknown Token',
+          symbol: 'UNKNOWN',
+          status: 'new',
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        },
+        error: 'Moralis API key is not configured'
+      };
+    }
+    
+    try {
+      // Moralis API endpoint structure for getting token bonding status
+      const response = await fetch(
+        `https://solana-gateway.moralis.io/token/mainnet/${tokenAddress}/bonding-status`, 
+        {
+          headers: {
+            'Accept': 'application/json',
+            'X-API-Key': process.env.MORALIS_API_KEY
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to fetch bonding status for ${tokenAddress}`);
+      }
+      
+      const data = await response.json();
+      return {
+        token: {
+          address: tokenAddress,
+          name: data.name || 'Unknown Token',
+          symbol: data.symbol || 'UNKNOWN',
+          status: data.status || 'new',
+          bondingCurve: data.bondingCurve,
+          createdAt: data.createdAt || Date.now(),
+          updatedAt: data.updatedAt || Date.now()
+        }
+      };
+    } catch (error) {
+      console.error(`Error fetching bonding status for ${tokenAddress}:`, error);
+      return {
+        token: {
+          address: tokenAddress,
+          name: 'Unknown Token',
+          symbol: 'UNKNOWN',
+          status: 'new',
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        },
+        error: (error as Error).message || `Failed to fetch bonding status for ${tokenAddress}`
+      };
+    }
+  } catch (error) {
+    console.error(`Error in getTokenBondingStatus for ${tokenAddress}:`, error);
+    return {
+      token: {
+        address: tokenAddress,
+        name: 'Unknown Token',
+        symbol: 'UNKNOWN',
+        status: 'new',
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      },
+      error: (error as Error).message || `Failed to fetch bonding status for ${tokenAddress}`
+    };
+  }
+};
+
 export const getSolanaTokenAnalysis = async (address: string): Promise<TokenAnalysisResponse> => {
   try {
     await initMoralis();
@@ -230,9 +562,16 @@ export const getSolanaTokenAnalysis = async (address: string): Promise<TokenAnal
         return null;
       });
       
+      // Get token bonding status (new pump.fun data)
+      const bondingResponse = await getTokenBondingStatus(address).catch(error => {
+        console.log(`Token bonding status fetch error for ${address}: ${error.message}`);
+        return null;
+      });
+      
       // Extract data from responses
       const metadata = metadataResponse?.toJSON();
       const price = priceResponse?.toJSON();
+      const bondingStatus = bondingResponse?.token;
       
       // Generate simulated price history
       let priceHistory: TokenPriceHistory[] = [];
@@ -309,8 +648,8 @@ export const getSolanaTokenAnalysis = async (address: string): Promise<TokenAnal
       // Construct TokenMetadata from Solana data
       const solMetadata: TokenMetadata = {
         address: address,
-        name: metadata?.name || 'Unknown Solana Token',
-        symbol: metadata?.symbol || 'UNKNOWN',
+        name: metadata?.name || bondingStatus?.name || 'Unknown Solana Token',
+        symbol: metadata?.symbol || bondingStatus?.symbol || 'UNKNOWN',
         decimals: metadata?.decimals?.toString() || '9',
         logo: metadata?.logo || undefined,
         thumbnail: metadata?.thumbnail || undefined
@@ -319,8 +658,8 @@ export const getSolanaTokenAnalysis = async (address: string): Promise<TokenAnal
       // Construct TokenPrice from Solana data
       const solPrice: TokenPrice | undefined = price ? {
         tokenAddress: address,
-        tokenName: metadata?.name || 'Unknown Solana Token',
-        tokenSymbol: metadata?.symbol || 'UNKNOWN',
+        tokenName: metadata?.name || bondingStatus?.name || 'Unknown Solana Token',
+        tokenSymbol: metadata?.symbol || bondingStatus?.symbol || 'UNKNOWN',
         usdPrice: price.usdPrice,
         nativePrice: {
           value: price.nativePrice?.value || '0',
@@ -330,11 +669,20 @@ export const getSolanaTokenAnalysis = async (address: string): Promise<TokenAnal
         }
       } : undefined;
       
+      // Add bonding status information if available
+      const bondingInfo = bondingStatus ? {
+        bondingStatus: bondingStatus.status,
+        bondingCurve: bondingStatus.bondingCurve,
+        createdAt: bondingStatus.createdAt,
+        updatedAt: bondingStatus.updatedAt
+      } : undefined;
+      
       return {
         metadata: solMetadata,
         price: solPrice,
         priceHistory,
         metrics,
+        bondingInfo,
         address
       };
     } catch (error) {
