@@ -41,10 +41,14 @@ export const ThreadList: React.FC<ThreadListProps> = ({
     content: string,
     imageUrls: string[]
   ) => {
-    await createThread(title, content, imageUrls);
+    const newThread = await createThread(title, content, imageUrls);
     setIsCreateThreadModalOpen(false);
-    // Refresh threads after creating a new one
-    setTimeout(handleRefresh, 1000);
+    
+    // Navigate to the thread page
+    console.log("Thread created successfully, navigating to thread:", newThread.id);
+    setTimeout(() => {
+      window.location.href = `/thread/${newThread.id}`;
+    }, 1000);
   };
 
   return (
