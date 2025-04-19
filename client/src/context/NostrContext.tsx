@@ -362,67 +362,167 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     console.log(`Fetching threads for board: ${boardId}`);
     
-    // Fetch thread events from relays - updated for nostr-tools v2.x
+    // Try a broader approach - fetch all thread events and filter locally
+    // This addresses the "unindexed tag filter" error from relays
     const filter: Filter = {
       kinds: [KIND.THREAD],
-      '#board': [boardId],
-      // Set limit to ensure we get latest threads
-      limit: 50
+      limit: 100, // Fetch more threads to ensure we get all for this board
+      since: Math.floor(Date.now() / 1000) - 60 * 60 * 24 * 30, // Last 30 days
     };
     
     const relayUrls = relays.filter(r => r.status === 'connected' && r.read).map(r => r.url);
     console.log(`Querying ${relayUrls.length} relays for threads...`);
     
-    const events = await pool.querySync(relayUrls, filter);
-    console.log(`Retrieved ${events.length} thread events from relays`);
-    
-    // Parse thread events
-    const threads: Thread[] = [];
-    
-    for (const event of events) {
-      try {
-        const threadData = JSON.parse(event.content);
-        
-        const thread: Thread = {
-          id: event.id,
-          boardId,
-          title: threadData.title,
-          content: threadData.content,
-          images: threadData.images || [],
-          media: threadData.media || [],
-          authorPubkey: event.pubkey,
-          createdAt: event.created_at,
-          replyCount: 0,
-          lastReplyTime: event.created_at
+    try {
+      // Get all thread events
+      const events = await pool.querySync(relayUrls, filter);
+      console.log(`Retrieved ${events.length} total thread events from relays`);
+      
+      // Filter events locally for the target board
+      const boardEvents = events.filter(event => {
+        const boardTag = event.tags.find((tag: string[]) => 
+          tag[0] === 'board' && tag[1] === boardId
+        );
+        return !!boardTag;
+      });
+      
+      console.log(`Found ${boardEvents.length} events for board ${boardId}`);
+      
+      // Parse thread events
+      const threads: Thread[] = [];
+      
+      for (const event of boardEvents) {
+        try {
+          const threadData = JSON.parse(event.content);
+          
+          const thread: Thread = {
+            id: event.id,
+            boardId,
+            title: threadData.title,
+            content: threadData.content,
+            images: threadData.images || [],
+            media: threadData.media || [],
+            authorPubkey: event.pubkey,
+            createdAt: event.created_at,
+            replyCount: 0,
+            lastReplyTime: event.created_at
+          };
+          
+          threads.push(thread);
+          localCache.addThread(thread);
+        } catch (error) {
+          console.error("Failed to parse thread event", event, error);
+        }
+      }
+      
+      console.log(`Successfully parsed ${threads.length} threads`);
+      
+      // Also try to fetch specifically created threads from our user
+      if (threads.length === 0) {
+        console.log("No threads found, trying to fetch user's own threads...");
+        const userFilter: Filter = {
+          kinds: [KIND.THREAD],
+          authors: [identity.pubkey],
+          limit: 50
         };
         
-        threads.push(thread);
-        localCache.addThread(thread);
-      } catch (error) {
-        console.error("Failed to parse thread event", event, error);
+        const userEvents = await pool.querySync(relayUrls, userFilter);
+        console.log(`Found ${userEvents.length} threads created by user`);
+        
+        // Filter user events for this board
+        const userBoardEvents = userEvents.filter(event => {
+          const boardTag = event.tags.find((tag: string[]) => 
+            tag[0] === 'board' && tag[1] === boardId
+          );
+          return !!boardTag;
+        });
+        
+        console.log(`Found ${userBoardEvents.length} user threads for board ${boardId}`);
+        
+        for (const event of userBoardEvents) {
+          try {
+            const threadData = JSON.parse(event.content);
+            
+            const thread: Thread = {
+              id: event.id,
+              boardId,
+              title: threadData.title,
+              content: threadData.content,
+              images: threadData.images || [],
+              media: threadData.media || [],
+              authorPubkey: event.pubkey,
+              createdAt: event.created_at,
+              replyCount: 0,
+              lastReplyTime: event.created_at
+            };
+            
+            // Ensure no duplicates
+            if (!threads.some(t => t.id === thread.id)) {
+              threads.push(thread);
+              localCache.addThread(thread);
+            }
+          } catch (error) {
+            console.error("Failed to parse user thread event", event, error);
+          }
+        }
       }
-    }
-    
-    console.log(`Successfully parsed ${threads.length} threads`);
-    
-    // Fetch reply counts
-    for (const thread of threads) {
-      const replies = await getPostsByThread(thread.id);
-      thread.replyCount = replies.length;
-      thread.lastReplyTime = replies.length > 0 
-        ? Math.max(...replies.map(r => r.createdAt))
-        : thread.createdAt;
       
-      localCache.addThread(thread);
+      // As a last resort, check all threads in localStorage
+      if (threads.length === 0) {
+        console.log("Still no threads found, checking local storage...");
+        // Try to load thread from local storage
+        const savedThread = localStorage.getItem(`thread-${boardId}`);
+        if (savedThread) {
+          try {
+            const threadList = JSON.parse(savedThread);
+            threads.push(...threadList);
+            console.log(`Loaded ${threadList.length} threads from localStorage`);
+          } catch (e) {
+            console.error("Failed to parse saved threads", e);
+          }
+        }
+      }
+      
+      // Fetch reply counts for threads we found
+      for (const thread of threads) {
+        const replies = await getPostsByThread(thread.id);
+        thread.replyCount = replies.length;
+        thread.lastReplyTime = replies.length > 0 
+          ? Math.max(...replies.map(r => r.createdAt))
+          : thread.createdAt;
+        
+        localCache.addThread(thread);
+      }
+      
+      // Sort by creation time to show newest threads first
+      const sortedThreads = threads.sort((a, b) => 
+        (b.lastReplyTime || b.createdAt) - (a.lastReplyTime || a.createdAt)
+      );
+      
+      // Save to localStorage for backup
+      try {
+        localStorage.setItem(`thread-${boardId}`, JSON.stringify(sortedThreads));
+      } catch (e) {
+        console.error("Failed to save threads to localStorage", e);
+      }
+      
+      console.log(`Returning ${sortedThreads.length} sorted threads`);
+      return sortedThreads;
+    } catch (error) {
+      console.error("Error querying threads:", error);
+      // Try to get from localStorage as fallback
+      try {
+        const savedThread = localStorage.getItem(`thread-${boardId}`);
+        if (savedThread) {
+          const threadList = JSON.parse(savedThread);
+          console.log(`Loaded ${threadList.length} threads from localStorage as fallback`);
+          return threadList;
+        }
+      } catch (e) {
+        console.error("Failed to parse saved threads", e);
+      }
+      return [];
     }
-    
-    // Sort by creation time to show newest threads first
-    const sortedThreads = threads.sort((a, b) => 
-      (b.lastReplyTime || b.createdAt) - (a.lastReplyTime || a.createdAt)
-    );
-    
-    console.log(`Returning ${sortedThreads.length} sorted threads`);
-    return sortedThreads;
   }, [pool, relays]);
 
   // Get a specific thread
@@ -660,6 +760,40 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     // Add to local cache
     localCache.addThread(thread);
+    
+    // Save to localStorage for improved thread discovery
+    try {
+      // Get existing threads for this board
+      const savedThreadsStr = localStorage.getItem(`thread-${boardId}`);
+      let savedThreads: Thread[] = [];
+      
+      if (savedThreadsStr) {
+        try {
+          savedThreads = JSON.parse(savedThreadsStr);
+        } catch (e) {
+          console.error("Failed to parse saved threads", e);
+        }
+      }
+      
+      // Add new thread to the array
+      savedThreads = [thread, ...savedThreads];
+      
+      // Save back to localStorage
+      localStorage.setItem(`thread-${boardId}`, JSON.stringify(savedThreads));
+      console.log(`Saved thread to localStorage for board ${boardId}`);
+      
+      // Also save the thread ID separately for easier lookup
+      const threadIdsStr = localStorage.getItem('created-thread-ids') || '[]';
+      try {
+        const threadIds = JSON.parse(threadIdsStr);
+        threadIds.push(thread.id);
+        localStorage.setItem('created-thread-ids', JSON.stringify(threadIds));
+      } catch (e) {
+        console.error("Failed to save thread ID to localStorage", e);
+      }
+    } catch (error) {
+      console.error("Error saving thread to localStorage:", error);
+    }
     
     // Increment thread count for board
     const board = localCache.getBoard(boardId);
