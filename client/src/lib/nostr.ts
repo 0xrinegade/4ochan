@@ -46,20 +46,51 @@ export const getOrCreateIdentity = (): NostrIdentity => {
       const parsed = JSON.parse(savedIdentity);
       
       // Check if we have a private key in the parsed identity
-      if (parsed.privkey && typeof parsed.privkey === 'string') {
-        // Keep the private key as a hex string - do not convert to Uint8Array
-        // This is necessary because finalizeEvent in nostr-tools is actually expecting
-        // a hex string even though the TypeScript type says Uint8Array
-        return parsed;
+      if (parsed.privkey) {
+        if (typeof parsed.privkey === 'string') {
+          // Hex string format - this is what we want
+          // Validate that it's actually a valid hex string
+          if (/^[0-9a-fA-F]{64}$/.test(parsed.privkey)) {
+            console.log("Found valid hex private key");
+            return parsed;
+          } else {
+            console.warn("Invalid hex string format for private key, regenerating");
+          }
+        } else if (parsed.privkey instanceof Uint8Array || typeof parsed.privkey === 'object') {
+          // Convert the object to a hex string
+          try {
+            // Try to convert to Uint8Array first if it's an object
+            let bytes: Uint8Array;
+            if (parsed.privkey instanceof Uint8Array) {
+              bytes = parsed.privkey;
+            } else {
+              bytes = new Uint8Array(parsed.privkey as any);
+            }
+            
+            // Convert to hex string
+            const hexPrivkey = Array.from(bytes)
+              .map(b => b.toString(16).padStart(2, '0'))
+              .join('');
+            
+            // Return with converted privkey
+            return {
+              ...parsed,
+              privkey: hexPrivkey
+            };
+          } catch (error) {
+            console.error("Failed to convert object privkey to hex", error);
+            // We'll fall through and generate a new identity
+          }
+        } else {
+          console.warn("Unrecognized private key format:", typeof parsed.privkey);
+          // We'll fall through and generate a new identity
+        }
       }
       
-      // If privkey is missing, we'll generate a new identity
+      // If privkey is missing but we have a pubkey
       if (!parsed.privkey && parsed.pubkey) {
         console.warn("Identity has pubkey but no privkey, generating new identity");
         // Fall through to generate a new identity
-      } else {
-        // If the privkey is already a Uint8Array or doesn't exist (legacy), return as is
-        return parsed;
       }
     } catch (error) {
       console.error("Failed to parse saved identity", error);
@@ -94,18 +125,81 @@ export const saveIdentity = (identity: NostrIdentity) => {
   let storedIdentity = { ...identity };
   
   if (identity.privkey) {
-    if (identity.privkey instanceof Uint8Array) {
+    if (typeof identity.privkey === 'string') {
+      // Validate that it's a proper hex string
+      if (!/^[0-9a-fA-F]{64}$/.test(identity.privkey)) {
+        console.warn("Invalid hex string format in saveIdentity, attempting to normalize");
+        try {
+          // Try to parse it as a hex string anyway - clean any non-hex characters
+          const cleanedHex = identity.privkey.replace(/[^0-9a-fA-F]/g, '');
+          if (cleanedHex.length === 64) {
+            storedIdentity.privkey = cleanedHex;
+          } else {
+            throw new Error("Cleaned hex string is not 64 characters");
+          }
+        } catch (error) {
+          console.error("Failed to normalize hex string:", error);
+          // Generate a new key as fallback
+          const newPrivkey = generateSecretKey();
+          const privkeyHex = Array.from(newPrivkey)
+            .map((b: number) => b.toString(16).padStart(2, '0'))
+            .join('');
+            
+          storedIdentity.privkey = privkeyHex;
+          storedIdentity.pubkey = getPublicKey(newPrivkey);
+          
+          console.warn("Generated new key pair in saveIdentity due to invalid format");
+        }
+      }
+      // If it's already a valid hex string, we can store it directly
+    } else if (identity.privkey instanceof Uint8Array) {
       // Convert Uint8Array to hex string
       const privkeyHex = Array.from(identity.privkey)
         .map((b: number) => b.toString(16).padStart(2, '0'))
         .join('');
       
       storedIdentity.privkey = privkeyHex;
+    } else if (typeof identity.privkey === 'object') {
+      // Try to convert the object to a hex string
+      try {
+        const bytes = new Uint8Array(identity.privkey as any);
+        const privkeyHex = Array.from(bytes)
+          .map((b: number) => b.toString(16).padStart(2, '0'))
+          .join('');
+          
+        storedIdentity.privkey = privkeyHex;
+      } catch (error) {
+        console.error("Failed to convert object privkey in saveIdentity:", error);
+        // Generate a new key as fallback
+        const newPrivkey = generateSecretKey();
+        const privkeyHex = Array.from(newPrivkey)
+          .map((b: number) => b.toString(16).padStart(2, '0'))
+          .join('');
+          
+        storedIdentity.privkey = privkeyHex;
+        storedIdentity.pubkey = getPublicKey(newPrivkey);
+        
+        console.warn("Generated new key pair in saveIdentity due to invalid format");
+      }
+    } else {
+      console.error("Unhandled private key format in saveIdentity:", typeof identity.privkey);
+      // Generate a new key as fallback
+      const newPrivkey = generateSecretKey();
+      const privkeyHex = Array.from(newPrivkey)
+        .map((b: number) => b.toString(16).padStart(2, '0'))
+        .join('');
+        
+      storedIdentity.privkey = privkeyHex;
+      storedIdentity.pubkey = getPublicKey(newPrivkey);
+      
+      console.warn("Generated new key pair in saveIdentity due to invalid format");
     }
-    // If it's already a string, we can store it directly
   }
   
   localStorage.setItem("nostr-identity", JSON.stringify(storedIdentity));
+  
+  // Also return the updated identity so that it can be used immediately
+  return storedIdentity;
 };
 
 // Load saved relays or use defaults with reliability check
@@ -183,21 +277,55 @@ export const createEvent = async (
       tagsCount: tags.length
     });
     
-    // nostr-tools can actually accept a hex string for the private key
-    // but let's handle both formats to be safe
+    // nostr-tools can accept a hex string for the private key
+    // Handle all possible formats to ensure it works consistently
     let privateKey: any;
     
     if (typeof identity.privkey === 'string') {
       // If already a hex string, use it directly
-      // The library implementation accepts hex strings even though the
-      // TypeScript type definition expects Uint8Array
       privateKey = identity.privkey;
     } else if (identity.privkey instanceof Uint8Array) {
       // Convert Uint8Array to hex string
       privateKey = Array.from(identity.privkey)
         .map(b => b.toString(16).padStart(2, '0'))
         .join('');
+    } else if (typeof identity.privkey === 'object') {
+      // Handle the case where privkey might be stored as an object with hex values
+      try {
+        // Try to extract raw bytes from the object and convert to hex string
+        console.log("Attempting to convert object privateKey to hex");
+        
+        // Try to convert ArrayBuffer or other array-like object to Uint8Array first
+        const bytes = new Uint8Array(identity.privkey as any);
+        privateKey = Array.from(bytes)
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('');
+          
+        console.log("Successfully converted object privateKey to hex:", 
+          privateKey.substring(0, 10) + '...');
+      } catch (error) {
+        console.error("Failed to convert object privateKey:", error);
+        
+        // Fallback: regenerate a new key
+        console.warn("Generating new private key as fallback");
+        const newPrivkey = generateSecretKey();
+        
+        // Convert to hex string
+        privateKey = Array.from(newPrivkey)
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('');
+          
+        // Update the identity for future use
+        identity.privkey = privateKey;
+        identity.pubkey = getPublicKey(newPrivkey);
+        
+        // Save the updated identity
+        saveIdentity(identity);
+        
+        console.log("Generated new private key as fallback");
+      }
     } else {
+      console.error("Unhandled private key format:", typeof identity.privkey);
       throw new Error("Invalid private key format");
     }
     

@@ -192,8 +192,10 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Update user identity
   const updateIdentity = useCallback((newIdentity: NostrIdentity) => {
-    setIdentity(newIdentity);
-    saveIdentity(newIdentity);
+    // Save identity and get back the normalized version (with consistent privkey format)
+    const normalizedIdentity = saveIdentity(newIdentity);
+    // Update state with the normalized identity
+    setIdentity(normalizedIdentity);
   }, []);
 
   // Add a new relay
