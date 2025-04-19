@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vs, vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import mermaid from 'mermaid';
+import { PostReference } from './PostReference';
 
 // TypeScript declaration for Vivliostyle
 declare module '@vivliostyle/viewer';
@@ -387,6 +388,7 @@ const TypstVivliostyleViewer: React.FC<TypstVivliostyleViewerProps> = ({ content
 interface MarkdownContentProps {
   content: string;
   className?: string;
+  threadId?: string;
 }
 
 // Initialize mermaid
@@ -730,7 +732,7 @@ const MermaidDiagram: React.FC<{ chart: string, isDarkMode: boolean }> = ({ char
   );
 };
 
-export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, className = '' }) => {
+export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, className = '', threadId }) => {
   // Create a state for tracking dark mode instead of reading DOM directly
   const [isDarkMode, setIsDarkMode] = useState(false);
   
@@ -755,11 +757,37 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, class
     return () => observer.disconnect();
   }, []);
   
+  // Process post references in the content (>>postID format)
+  const processedContent = React.useMemo(() => {
+    if (!content) return '';
+    
+    // Replace >>postID with a special marker that ReactMarkdown won't mess with
+    return content.replace(/>>([\w-]+)/g, (match, postId) => {
+      return `[${match}](#__POSTREFERENCE__${postId}__)`;
+    });
+  }, [content]);
+  
   return (
     <div className={`markdown-content ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
+          // Handle special link format for post references
+          a({ node, href, children, ...props }) {
+            // Check if this is a post reference link
+            const refMatch = href?.match(/#__POSTREFERENCE__([\w-]+)__/);
+            
+            if (refMatch && refMatch[1] && threadId) {
+              const postId = refMatch[1];
+              return (
+                <PostReference postId={postId} threadId={threadId} />
+              );
+            }
+            
+            // Regular link
+            return <a href={href} {...props}>{children}</a>;
+          },
+          
           code({className, children, ...props}) {
             const match = /language-(\w+)/.exec(className || '');
             const isInline = !match && (props as any).inline;
@@ -800,7 +828,7 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, class
           }
         }}
       >
-        {content}
+        {processedContent}
       </ReactMarkdown>
     </div>
   );
