@@ -958,6 +958,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ error: "Failed to fetch Solana token data" });
     }
   });
+  
+  // Get token bonding status
+  app.get("/api/pump-fun/token/:address/bonding-status", async (req, res) => {
+    try {
+      const { address } = req.params;
+      
+      // Validate Solana address format
+      if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)) {
+        return res.status(400).json({ error: "Invalid Solana address format" });
+      }
+      
+      // Call API to get token bonding status
+      const bondingStatus = await getTokenBondingStatus(address);
+      
+      if (bondingStatus.error) {
+        return res.status(404).json({ error: bondingStatus.error });
+      }
+      
+      return res.json(bondingStatus);
+    } catch (error) {
+      console.error("Error fetching token bonding status:", error);
+      return res.status(500).json({ error: "Failed to fetch token bonding status" });
+    }
+  });
+  
+  // Get new tokens by exchange
+  app.get("/api/pump-fun/new-tokens/:exchange", async (req, res) => {
+    try {
+      const { exchange } = req.params;
+      
+      // Validate exchange parameter
+      if (!exchange || !['jupiter', 'raydium', 'orca', 'meteora'].includes(exchange.toLowerCase())) {
+        return res.status(400).json({ error: "Invalid exchange. Must be one of: jupiter, raydium, orca, meteora" });
+      }
+      
+      // Call API to get new tokens for exchange
+      const newTokens = await getNewTokensByExchange(exchange.toLowerCase());
+      
+      if (newTokens.error) {
+        return res.status(404).json({ error: newTokens.error });
+      }
+      
+      return res.json(newTokens);
+    } catch (error) {
+      console.error("Error fetching new tokens:", error);
+      return res.status(500).json({ error: "Failed to fetch new tokens" });
+    }
+  });
+  
+  // Get bonding tokens by exchange
+  app.get("/api/pump-fun/bonding-tokens/:exchange", async (req, res) => {
+    try {
+      const { exchange } = req.params;
+      
+      // Validate exchange parameter
+      if (!exchange || !['jupiter', 'raydium', 'orca', 'meteora'].includes(exchange.toLowerCase())) {
+        return res.status(400).json({ error: "Invalid exchange. Must be one of: jupiter, raydium, orca, meteora" });
+      }
+      
+      // Call API to get bonding tokens for exchange
+      const bondingTokens = await getBondingTokensByExchange(exchange.toLowerCase());
+      
+      if (bondingTokens.error) {
+        return res.status(404).json({ error: bondingTokens.error });
+      }
+      
+      return res.json(bondingTokens);
+    } catch (error) {
+      console.error("Error fetching bonding tokens:", error);
+      return res.status(500).json({ error: "Failed to fetch bonding tokens" });
+    }
+  });
+  
+  // Get graduated tokens by exchange
+  app.get("/api/pump-fun/graduated-tokens/:exchange", async (req, res) => {
+    try {
+      const { exchange } = req.params;
+      
+      // Validate exchange parameter
+      if (!exchange || !['jupiter', 'raydium', 'orca', 'meteora'].includes(exchange.toLowerCase())) {
+        return res.status(400).json({ error: "Invalid exchange. Must be one of: jupiter, raydium, orca, meteora" });
+      }
+      
+      // Call API to get graduated tokens for exchange
+      const graduatedTokens = await getGraduatedTokensByExchange(exchange.toLowerCase());
+      
+      if (graduatedTokens.error) {
+        return res.status(404).json({ error: graduatedTokens.error });
+      }
+      
+      return res.json(graduatedTokens);
+    } catch (error) {
+      console.error("Error fetching graduated tokens:", error);
+      return res.status(500).json({ error: "Failed to fetch graduated tokens" });
+    }
+  });
 
   // Setup WebSocket server for real-time notifications
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });

@@ -231,6 +231,17 @@ const calculateCirculationPercentage = (circulating: string | undefined, total: 
   }
 };
 
+interface TokenBondingInfo {
+  bondingStatus?: 'bonding' | 'graduated' | 'new';
+  bondingCurve?: {
+    reserveToken: string;
+    reserveBalance: string;
+    supplyBalance: string;
+  };
+  createdAt?: number;
+  updatedAt?: number;
+}
+
 interface TokenData {
   name?: string;
   symbol?: string;
@@ -243,6 +254,7 @@ interface TokenData {
   logo?: string;
   priceHistory?: TokenPriceHistory[];
   address?: string; // Contract address (needed for symbol tokens)
+  bondingInfo?: TokenBondingInfo;
   error?: string;
 }
 
