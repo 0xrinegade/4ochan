@@ -256,7 +256,15 @@ export const createEvent = async (
   tags: string[][] = [],
   identity: NostrIdentity
 ): Promise<NostrEvent> => {
+  console.log("Creating event with identity:", {
+    hasPrivkey: !!identity.privkey,
+    privkeyType: typeof identity.privkey,
+    privkeyEmpty: typeof identity.privkey === 'string' ? identity.privkey.length === 0 : false,
+    pubkey: identity.pubkey
+  });
+  
   if (!identity.privkey) {
+    console.error("Missing private key in identity:", identity);
     throw new Error("Private key required to create an event");
   }
   

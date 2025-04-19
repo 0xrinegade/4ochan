@@ -557,9 +557,49 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       identityType: {
         pubkey: identity.pubkey,
         privkeyType: typeof identity.privkey,
-        isUint8Array: identity.privkey instanceof Uint8Array
+        isUint8Array: identity.privkey instanceof Uint8Array,
+        privkeyEmpty: typeof identity.privkey === 'string' ? identity.privkey.length === 0 : false
       }
     });
+    
+    // Check if we have a valid identity with a private key
+    // If not, regenerate it before proceeding
+    let currentIdentity = {...identity};
+    
+    if (!currentIdentity.privkey || 
+        (typeof currentIdentity.privkey === 'string' && currentIdentity.privkey.length === 0)) {
+      console.warn("Identity missing private key, regenerating...");
+      
+      // Import necessary functions from nostr-tools
+      const { generateSecretKey, getPublicKey } = await import("nostr-tools");
+      
+      // Generate a new key pair
+      const newPrivkey = generateSecretKey();
+      const pubkey = getPublicKey(newPrivkey);
+      
+      // Convert private key to hex string for storage
+      const privkeyHex = Array.from(newPrivkey)
+        .map((b: number) => b.toString(16).padStart(2, '0'))
+        .join('');
+      
+      // Create new identity
+      currentIdentity = {
+        pubkey,
+        privkey: privkeyHex,
+        profile: { name: "Anonymous" }
+      };
+      
+      // Save the new identity and update state
+      await import("../lib/nostr").then(({ saveIdentity }) => {
+        const savedIdentity = saveIdentity(currentIdentity);
+        updateIdentity(savedIdentity);
+      });
+      
+      console.log("Regenerated identity:", {
+        pubkey: pubkey,
+        privkeyLength: privkeyHex.length
+      });
+    }
     
     // Create and publish thread event
     let createdEvent: NostrEvent;
@@ -572,7 +612,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         title, 
         content, 
         imageUrls, 
-        identity, 
+        currentIdentity, // Use the potentially regenerated identity
         media as any
       );
       
@@ -638,6 +678,60 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       throw new Error("Not connected to any relays");
     }
     
+    console.log("Creating post with:", {
+      threadId,
+      contentLength: content.length,
+      replyCount: replyToIds.length,
+      imageCount: imageUrls.length,
+      mediaCount: media?.length || 0,
+      identityExists: !!identity,
+      identityType: {
+        pubkey: identity.pubkey,
+        privkeyType: typeof identity.privkey,
+        isUint8Array: identity.privkey instanceof Uint8Array,
+        privkeyEmpty: typeof identity.privkey === 'string' ? identity.privkey.length === 0 : false
+      }
+    });
+    
+    // Check if we have a valid identity with a private key
+    // If not, regenerate it before proceeding
+    let currentIdentity = {...identity};
+    
+    if (!currentIdentity.privkey || 
+        (typeof currentIdentity.privkey === 'string' && currentIdentity.privkey.length === 0)) {
+      console.warn("Identity missing private key, regenerating...");
+      
+      // Import necessary functions from nostr-tools
+      const { generateSecretKey, getPublicKey } = await import("nostr-tools");
+      
+      // Generate a new key pair
+      const newPrivkey = generateSecretKey();
+      const pubkey = getPublicKey(newPrivkey);
+      
+      // Convert private key to hex string for storage
+      const privkeyHex = Array.from(newPrivkey)
+        .map((b: number) => b.toString(16).padStart(2, '0'))
+        .join('');
+      
+      // Create new identity
+      currentIdentity = {
+        pubkey,
+        privkey: privkeyHex,
+        profile: { name: "Anonymous" }
+      };
+      
+      // Save the new identity and update state
+      await import("../lib/nostr").then(({ saveIdentity }) => {
+        const savedIdentity = saveIdentity(currentIdentity);
+        updateIdentity(savedIdentity);
+      });
+      
+      console.log("Regenerated identity:", {
+        pubkey: pubkey,
+        privkeyLength: privkeyHex.length
+      });
+    }
+    
     // Create and publish post event
     let createdEvent: NostrEvent;
     try {
@@ -647,7 +741,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         content, 
         replyToIds, 
         imageUrls, 
-        identity, 
+        currentIdentity, // Use the potentially regenerated identity 
         media as any
       );
       
@@ -835,8 +929,60 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return localCache.getUnreadNotificationCount();
   }, []);
 
-  // Auto-connect on mount
+  // Initialize and validate identity on mount
   useEffect(() => {
+    // Check if we have a valid identity with a private key
+    console.log("Checking identity on app mount:", {
+      hasPrivkey: !!identity.privkey,
+      privkeyType: typeof identity.privkey,
+      privkeyEmpty: typeof identity.privkey === 'string' ? identity.privkey.length === 0 : false,
+      pubkey: identity.pubkey
+    });
+    
+    // If privkey is missing or empty, regenerate it immediately
+    if (!identity.privkey || 
+        (typeof identity.privkey === 'string' && identity.privkey.length === 0)) {
+      console.warn("Identity missing private key on app mount, regenerating...");
+      
+      // Use an IIFE to avoid top-level await
+      (async () => {
+        try {
+          // Import necessary functions from nostr-tools
+          const { generateSecretKey, getPublicKey } = await import("nostr-tools");
+          
+          // Generate a new key pair
+          const newPrivkey = generateSecretKey();
+          const pubkey = getPublicKey(newPrivkey);
+          
+          // Convert private key to hex string for storage
+          const privkeyHex = Array.from(newPrivkey)
+            .map((b: number) => b.toString(16).padStart(2, '0'))
+            .join('');
+          
+          // Create new identity
+          const newIdentity = {
+            pubkey,
+            privkey: privkeyHex,
+            profile: { name: "Anonymous" }
+          };
+          
+          // Save and update identity
+          await import("../lib/nostr").then(({ saveIdentity }) => {
+            const savedIdentity = saveIdentity(newIdentity);
+            setIdentity(savedIdentity);
+          });
+          
+          console.log("Regenerated identity on app mount:", {
+            pubkey: pubkey,
+            privkeyLength: privkeyHex.length
+          });
+        } catch (error) {
+          console.error("Error regenerating identity on app mount:", error);
+        }
+      })();
+    }
+    
+    // Auto-connect to relays if enabled
     if (autoConnect && !pool && !isConnecting && relays.length > 0) {
       connect();
     }
