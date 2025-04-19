@@ -214,7 +214,7 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
           onChange={(e) => {
             setReplyText(e.target.value);
           }}
-          placeholder="What's your response?"
+          placeholder="What's your response? Markdown and Mermaid diagrams supported."
           rows={3}
           className="w-full p-2 border border-black rounded-none bg-background text-foreground text-sm font-mono"
           disabled={isSubmitting || isProcessing}

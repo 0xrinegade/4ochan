@@ -244,7 +244,7 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                         <span className="ml-2 post-num">#{post.id.substring(0, 6)}</span>
                         <span className="ml-2 timestamp">{formatDate(post.createdAt)}</span>
                       </div>
-                      <div className="text-sm mb-2 whitespace-pre-line">
+                      <div className="text-sm mb-2">
                         {/* Show references to other posts */}
                         {post.references && post.references.length > 0 && post.references.some(ref => ref !== threadId) && (
                           <div className="mb-2">
@@ -255,7 +255,7 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                             ))}
                           </div>
                         )}
-                        {post.content}
+                        <MarkdownContent content={post.content} />
                       </div>
                       
                       <div className="flex mt-2">

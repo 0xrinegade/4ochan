@@ -240,7 +240,7 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
                 onChange={(e) => {
                   setContent(e.target.value);
                 }}
-                placeholder="What do you want to discuss?"
+                placeholder="What do you want to discuss? Markdown and Mermaid diagrams supported."
                 rows={4}
                 className="mt-1 border-black rounded-none bg-white font-mono text-sm p-2"
                 required
@@ -249,7 +249,7 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
             </div>
             
             <div>
-              <Label htmlFor="image" className="font-bold text-black">Image</Label>
+              <Label htmlFor="image" className="font-bold text-foreground">Image</Label>
               <div className="flex items-center mt-1">
                 <Button
                   type="button"
@@ -266,14 +266,14 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
                   className="hidden"
                   onChange={handleFileChange}
                 />
-                <span className="ml-3 text-xs text-gray-700">
+                <span className="ml-3 text-xs text-muted-foreground">
                   {selectedFile ? selectedFile.name : "No file selected"}
                 </span>
               </div>
             </div>
             
             <div className="flex justify-between pt-2 border-t border-gray-300">
-              <div className="text-xs text-gray-700 italic max-w-xs">
+              <div className="text-xs text-muted-foreground italic max-w-xs">
                 A title may be suggested based on your message content if you leave the subject field empty.
               </div>
               
