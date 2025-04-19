@@ -2,6 +2,113 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Accessibility Modes */
+/* High Contrast Mode */
+html.high-contrast {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+  --primary: 0 0% 0%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 90%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 0 0% 85%;
+  --muted-foreground: 0 0% 0%;
+  --accent: 240 100% 50%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 100% 30%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 0%;
+  --input: 0 0% 0%;
+  --ring: 0 0% 0%;
+  --radius: 0rem;
+}
+
+html.high-contrast * {
+  border-color: black !important;
+}
+
+html.high-contrast a {
+  text-decoration: underline !important;
+  color: blue !important;
+}
+
+html.high-contrast button,
+html.high-contrast .button {
+  background-color: black !important;
+  color: white !important;
+  border: 2px solid black !important;
+  font-weight: bold !important;
+}
+
+/* Larger Text Mode */
+html.larger-text {
+  font-size: 120% !important;
+}
+
+html.larger-text button,
+html.larger-text input,
+html.larger-text .button {
+  font-size: 110% !important;
+  padding: 0.5rem 1rem !important;
+}
+
+html.larger-text .post-reference {
+  font-size: 110% !important;
+}
+
+/* Reduced Animations */
+html.reduce-animations *,
+html.reduce-animations *::before,
+html.reduce-animations *::after {
+  animation-duration: 0.001s !important;
+  animation-delay: 0.001s !important;
+  transition-duration: 0.001s !important;
+  transition-delay: 0.001s !important;
+}
+
+/* Dyslexia-friendly mode */
+html[data-accessibility-mode="dyslexia-friendly"] {
+  --font-sans: 'OpenDyslexic', sans-serif;
+  letter-spacing: 0.05em;
+  word-spacing: 0.1em;
+  line-height: 1.5;
+}
+
+html[data-accessibility-mode="dyslexia-friendly"] * {
+  font-family: 'OpenDyslexic', sans-serif !important;
+}
+
+html[data-accessibility-mode="dyslexia-friendly"] pre,
+html[data-accessibility-mode="dyslexia-friendly"] code {
+  font-family: 'OpenDyslexic Mono', monospace !important;
+}
+
+/* Simplified mode */
+html[data-accessibility-mode="simplified"] .markdown-content img,
+html[data-accessibility-mode="simplified"] .post-preview-images {
+  display: none !important;
+}
+
+html[data-accessibility-mode="simplified"] {
+  --radius: 0rem;
+}
+
+html[data-accessibility-mode="simplified"] * {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-accessibility-mode="simplified"] button,
+html[data-accessibility-mode="simplified"] .button,
+html[data-accessibility-mode="simplified"] input {
+  padding: 0.75rem 1.5rem !important;
+  margin: 0.5rem 0 !important;
+}
+
 /* Markdown and Mermaid styling */
 .markdown-content {
   width: 100%;
@@ -216,6 +323,23 @@
   src: url('@assets/Libertarian.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
+}
+
+/* OpenDyslexic font for accessibility */
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic-Bold.otf') format('opentype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
 }
 
 @layer base {

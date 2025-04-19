@@ -14,10 +14,12 @@ import FAQ from "./pages/FAQ";
 import { NostrProvider } from "./context/NostrContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { NavigationProvider } from "./context/NavigationContext";
+import { AccessibilityProvider } from "./context/AccessibilityContext";
 import PageTransition from "./components/PageTransition";
 import FloatingNavigation from "./components/FloatingNavigation";
 import PwaInstallBanner from "./components/PwaInstallBanner";
 import PwaOnboardingTour from "./components/PwaOnboardingTour";
+import { AccessibilityButton } from "./components/AccessibilityButton";
 import { useEffect, useState, useCallback } from "react";
 
 // Create a module-level variable to hold the navigate function
@@ -156,11 +158,14 @@ function App() {
       <ThemeProvider>
         <NostrProvider>
           <NavigationProvider>
-            <AppRouter />
-            <FloatingNavigation />
-            <PwaInstallBanner />
-            <PwaOnboardingTour />
-            <Toaster />
+            <AccessibilityProvider>
+              <AppRouter />
+              <FloatingNavigation />
+              <PwaInstallBanner />
+              <PwaOnboardingTour />
+              <AccessibilityButton />
+              <Toaster />
+            </AccessibilityProvider>
           </NavigationProvider>
         </NostrProvider>
       </ThemeProvider>
