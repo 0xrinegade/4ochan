@@ -445,244 +445,173 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                   <ThreadContextVisualization threadId={threadId} highlightedPostId={selectedPostId} />
                 </TabsContent>
               </Tabs>
-              
-              {/* Replies */}
-              <div className="border-t border-gray-200">
-                {loading && posts.length === 0 ? (
-                  // Loading skeletons for replies
-                  Array(3).fill(0).map((_, index) => (
-                    <div className="post p-4" key={index}>
-                      <div className="flex items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center mb-1">
-                            <Skeleton className="h-4 w-24" />
-                            <Skeleton className="h-4 w-12 ml-2" />
-                            <Skeleton className="h-4 w-32 ml-2" />
-                          </div>
-                          <Skeleton className="h-4 w-full mb-1" />
-                          <Skeleton className="h-4 w-full mb-1" />
-                          <Skeleton className="h-4 w-3/4 mb-1" />
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : posts.length === 0 && thread ? (
-                  <div className="post p-8 text-center text-gray-500">
-                    No replies yet. Be the first to respond!
                   </div>
-                ) : (
-                  // Actual replies
-                  posts.map(post => (
-                    <div id={`post-${post.id}`} className="post p-4" key={post.id}>
-                      <div className="flex items-start">
-                        {/* Display post media */}
-                        {post.media && post.media.length > 0 ? (
-                          <div className="flex-shrink-0 mr-4">
-                            <MediaGallery mediaList={post.media} size="small" />
-                          </div>
-                        ) : post.images && post.images.length > 0 && (
-                          <div className="flex-shrink-0 mr-4">
-                            <img 
-                              src={post.images[0]} 
-                              alt="Post attachment" 
-                              className="post-image rounded"
-                            />
+                  
+                  <div className="flex mt-2 space-x-2">
+                    <Button
+                      onClick={() => handleQuotePost(thread.id)}
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-gray-500"
+                    >
+                      <i className="fas fa-reply mr-1"></i> Reply
+                    </Button>
+                    
+                    <Button
+                      onClick={() => handleLikePost(thread.id)}
+                      variant="ghost"
+                      size="sm"
+                      className={`text-xs ${likedPosts[thread.id] ? 'text-accent' : 'text-gray-500'}`}
+                      title={likedPosts[thread.id] ? "Unlike this post" : "Like this post"}
+                    >
+                      {likedPosts[thread.id] ? <ThumbsUp size={14} className="mr-1" /> : <ThumbsUp size={14} className="mr-1" />}
+                      {postLikes[thread.id] > 0 && <span>{postLikes[thread.id]}</span>}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+          
+          {/* Replies */}
+          <div className="border-t border-gray-200">
+            {loading && posts.length === 0 ? (
+              // Loading skeletons for replies
+              Array(3).fill(0).map((_, index) => (
+                <div className="post p-4" key={index}>
+                  <div className="flex items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center mb-1">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-12 ml-2" />
+                        <Skeleton className="h-4 w-32 ml-2" />
+                      </div>
+                      <Skeleton className="h-4 w-full mb-1" />
+                      <Skeleton className="h-4 w-full mb-1" />
+                      <Skeleton className="h-4 w-3/4 mb-1" />
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : posts.length === 0 && thread ? (
+              <div className="post p-8 text-center text-gray-500">
+                No replies yet. Be the first to respond!
+              </div>
+            ) : (
+              // Actual replies
+              posts.map(post => (
+                <div id={`post-${post.id}`} className="post p-4" key={post.id}>
+                  <div className="flex items-start">
+                    {/* Display post media */}
+                    {post.media && post.media.length > 0 ? (
+                      <div className="flex-shrink-0 mr-4">
+                        <MediaGallery mediaList={post.media} size="small" />
+                      </div>
+                    ) : post.images && post.images.length > 0 && (
+                      <div className="flex-shrink-0 mr-4">
+                        <img 
+                          src={post.images[0]} 
+                          alt="Post attachment" 
+                          className="post-image rounded"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-center mb-1">
+                        <span className="font-bold text-primary">Anonymous</span>
+                        <span className="ml-2 post-num">#{post.id.substring(0, 6)}</span>
+                        <span className="ml-2 timestamp">{formatDate(post.createdAt)}</span>
+                      </div>
+                      <div className="text-sm mb-2">
+                        {/* Show references to other posts */}
+                        {post.references && post.references.length > 0 && post.references.some(ref => ref !== threadId) && (
+                          <div className="mb-2">
+                            {post.references.filter(ref => ref !== threadId).map(ref => (
+                              <div key={ref} className="text-accent">
+                                &gt;&gt;{ref.substring(0, 6)}
+                              </div>
+                            ))}
                           </div>
                         )}
-                        <div className="flex-1">
-                          <div className="flex items-center mb-1">
-                            <span className="font-bold text-primary">Anonymous</span>
-                            <span className="ml-2 post-num">#{post.id.substring(0, 6)}</span>
-                            <span className="ml-2 timestamp">{formatDate(post.createdAt)}</span>
-                          </div>
-                          <div className="text-sm mb-2">
-                            {/* Show references to other posts */}
-                            {post.references && post.references.length > 0 && post.references.some(ref => ref !== threadId) && (
-                              <div className="mb-2">
-                                {post.references.filter(ref => ref !== threadId).map(ref => (
-                                  <div key={ref} className="text-accent">
-                                    &gt;&gt;{ref.substring(0, 6)}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            <MarkdownContent content={post.content} />
-                            
-                            {/* Check if this is the crypto board */}
-                            {thread && thread.boardId === 'crypto' && post.content && (
-                              <PumpFunWidget content={post.content} />
-                            )}
-                          </div>
-                          
-                          <div className="flex mt-2 space-x-2">
-                            <Button
-                              onClick={() => handleQuotePost(post.id)}
-                              variant="ghost"
-                              size="sm"
-                              className="text-xs text-gray-500"
-                            >
-                              <i className="fas fa-reply mr-1"></i> Reply
-                            </Button>
-                            
-                            <Button
-                              onClick={() => handleLikePost(post.id)}
-                              variant="ghost"
-                              size="sm"
-                              className={`text-xs ${likedPosts[post.id] ? 'text-accent' : 'text-gray-500'}`}
-                              title={likedPosts[post.id] ? "Unlike this post" : "Like this post"}
-                            >
-                              {likedPosts[post.id] ? <ThumbsUp size={14} className="mr-1" /> : <ThumbsUp size={14} className="mr-1" />}
-                              {postLikes[post.id] > 0 && <span>{postLikes[post.id]}</span>}
-                            </Button>
-                          </div>
-                        </div>
+                        <MarkdownContent content={post.content} />
+                        
+                        {/* Check if this is the crypto board */}
+                        {thread && thread.boardId === 'crypto' && post.content && (
+                          <PumpFunWidget content={post.content} />
+                        )}
+                      </div>
+                      
+                      <div className="flex mt-2 space-x-2">
+                        <Button
+                          onClick={() => handleQuotePost(post.id)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs text-gray-500"
+                        >
+                          <i className="fas fa-reply mr-1"></i> Reply
+                        </Button>
+                        
+                        <Button
+                          onClick={() => handleLikePost(post.id)}
+                          variant="ghost"
+                          size="sm"
+                          className={`text-xs ${likedPosts[post.id] ? 'text-accent' : 'text-gray-500'}`}
+                          title={likedPosts[post.id] ? "Unlike this post" : "Like this post"}
+                        >
+                          {likedPosts[post.id] ? <ThumbsUp size={14} className="mr-1" /> : <ThumbsUp size={14} className="mr-1" />}
+                          {postLikes[post.id] > 0 && <span>{postLikes[post.id]}</span>}
+                        </Button>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
-              
-              {/* Reply Form */}
-              <div id="reply-form" className="p-4 bg-gray-50 border-t border-gray-200">
-                <h3 className="text-sm font-bold mb-4 uppercase text-gray-600">Post Reply</h3>
-                
-                {selectedPostId && (
-                  <div className="mb-4 p-2 bg-gray-100 border-l-4 border-accent">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-accent">
-                        Replying to #{selectedPostId.substring(0, 6)}
-                      </span>
-                      <Button
-                        onClick={() => setSelectedPostId(null)}
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                      >
-                        <i className="fas fa-times"></i>
-                      </Button>
-                    </div>
                   </div>
-                )}
-                
-                <PostReplyForm onSubmitReply={handleSubmitReply} threadId={threadId} />
+                </div>
+              ))
+            )}
+          </div>
+          
+          {/* Thread Visualization */}
+          {thread && posts.length > 0 && (
+            <div className="mb-4">
+              <ThreadTree 
+                posts={posts} 
+                threadId={threadId} 
+                selectedPostId={selectedPostId}
+                onSelectPost={(postId) => {
+                  setSelectedPostId(postId);
+                  document.getElementById('reply-form')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              />
+            </div>
+          )}
+          
+          {/* Reply Form */}
+          <div id="reply-form" className="p-4 bg-gray-50 border-t border-gray-200">
+            <h3 className="text-sm font-bold mb-4 uppercase text-gray-600">Post Reply</h3>
+            
+            {selectedPostId && (
+              <div className="mb-4 p-2 bg-gray-100 border-l-4 border-accent">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-accent">
+                    Replying to #{selectedPostId.substring(0, 6)}
+                  </span>
+                  <Button
+                    onClick={() => setSelectedPostId(null)}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                  >
+                    <i className="fas fa-times"></i>
+                  </Button>
+                </div>
               </div>
-            </>
-          ) : null}
+            )}
+            
+            <PostReplyForm onSubmitReply={handleSubmitReply} threadId={threadId} />
+          </div>
         </div>
       </div>
       
-      {/* Floating navigation */}
-      <div className="fixed bottom-20 right-6 flex flex-col gap-2">
-        <Button
-          onClick={scrollToTop}
-          size="sm"
-          variant="outline"
-          className="rounded-full h-10 w-10 p-0 bg-primary text-white shadow-md"
-        >
-          <ArrowUp className="h-5 w-5" />
-        </Button>
-        
-        <Button
-          onClick={scrollToBottom}
-          size="sm"
-          variant="outline"
-          className="rounded-full h-10 w-10 p-0 bg-primary text-white shadow-md"
-        >
-          <ArrowDown className="h-5 w-5" />
-        </Button>
-        
-        <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-          <DialogTrigger asChild>
-            <Button
-              size="sm"
-              variant="outline"
-              className="rounded-full h-10 w-10 p-0 bg-primary text-white shadow-md"
-            >
-              <Search className="h-5 w-5" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="w-full max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Search Thread</DialogTitle>
-              <DialogDescription>
-                Find text within this thread and all its replies.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="flex gap-2 items-center mt-2">
-              <Input
-                placeholder="Search for..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    performSearch();
-                  }
-                }}
-                className="flex-1"
-              />
-              <Button onClick={performSearch} disabled={!searchQuery.trim()}>
-                Search
-              </Button>
-            </div>
-            
-            {searchResults.length > 0 ? (
-              <div className="mt-4">
-                <div className="flex justify-between items-center mb-2">
-                  <div className="text-sm text-gray-500">
-                    {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={prevSearchResult}
-                      variant="outline"
-                      size="sm"
-                      disabled={searchResults.length <= 1}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      onClick={nextSearchResult}
-                      variant="outline"
-                      size="sm"
-                      disabled={searchResults.length <= 1}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="border rounded-md p-2 bg-gray-50">
-                  <div className="font-medium text-sm mb-1">
-                    Result {currentSearchResult + 1} of {searchResults.length}
-                  </div>
-                  <div className="text-sm">
-                    <span className="text-accent">
-                      ...{searchResults[currentSearchResult]?.text}...
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ) : searchQuery.trim() && currentSearchResult === -1 ? (
-              <div className="mt-4 text-center text-gray-500">
-                No results found for "{searchQuery}"
-              </div>
-            ) : null}
-            
-            <DialogFooter>
-              <Button
-                onClick={() => setSearchOpen(false)}
-                variant="outline"
-                size="sm"
-              >
-                Close
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+      {/* Search functionality now moved to global FloatingNavigation component */}
     </div>
   );
 };
-
-export default ThreadView;
