@@ -1469,6 +1469,136 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return localCache.getUnreadNotificationCount();
   }, []);
   
+  // Like a post
+  const likePost = useCallback(async (postId: string): Promise<void> => {
+    if (!pool || !identity.pubkey) {
+      throw new Error("Not connected to relays or missing identity");
+    }
+    
+    try {
+      // Check if user has already liked this post
+      const relayUrls = relays
+        .filter(r => r.status === 'connected' && r.read)
+        .map(r => r.url);
+        
+      if (relayUrls.length === 0) {
+        throw new Error("No connected relays available");
+      }
+      
+      // Import the necessary functions
+      const { getLikeEventId, createPostLikeEvent } = await import("../lib/nostr");
+      
+      // Check if already liked
+      const existingLikeId = await getLikeEventId(postId, identity.pubkey, pool, relayUrls);
+      
+      if (existingLikeId) {
+        console.log(`Post ${postId} already liked with event ${existingLikeId}`);
+        return; // Already liked, do nothing
+      }
+      
+      // Create and publish like event
+      const likeEvent = await createPostLikeEvent(postId, identity);
+      await publishEvent(likeEvent);
+      
+      console.log(`Successfully liked post ${postId} with event ${likeEvent.id}`);
+    } catch (error) {
+      console.error("Error liking post:", error);
+      throw error;
+    }
+  }, [pool, identity, relays, publishEvent]);
+  
+  // Unlike a post
+  const unlikePost = useCallback(async (postId: string): Promise<void> => {
+    if (!pool || !identity.pubkey) {
+      throw new Error("Not connected to relays or missing identity");
+    }
+    
+    try {
+      // Get connected relays
+      const relayUrls = relays
+        .filter(r => r.status === 'connected' && r.read)
+        .map(r => r.url);
+        
+      if (relayUrls.length === 0) {
+        throw new Error("No connected relays available");
+      }
+      
+      // Import the necessary functions
+      const { getLikeEventId, createPostUnlikeEvent } = await import("../lib/nostr");
+      
+      // Find the original like event
+      const likeEventId = await getLikeEventId(postId, identity.pubkey, pool, relayUrls);
+      
+      if (!likeEventId) {
+        console.log(`Post ${postId} was not liked to begin with`);
+        return; // Not liked, nothing to unlike
+      }
+      
+      // Create and publish unlike (deletion) event
+      const unlikeEvent = await createPostUnlikeEvent(likeEventId, identity);
+      await publishEvent(unlikeEvent);
+      
+      console.log(`Successfully unliked post ${postId} by deleting event ${likeEventId}`);
+    } catch (error) {
+      console.error("Error unliking post:", error);
+      throw error;
+    }
+  }, [pool, identity, relays, publishEvent]);
+  
+  // Get likes count for a post
+  const getPostLikes = useCallback(async (postId: string): Promise<number> => {
+    if (!pool) {
+      return 0; // Return 0 if not connected
+    }
+    
+    try {
+      // Get connected relays
+      const relayUrls = relays
+        .filter(r => r.status === 'connected' && r.read)
+        .map(r => r.url);
+        
+      if (relayUrls.length === 0) {
+        return 0; // No connected relays
+      }
+      
+      // Import the necessary function
+      const { countPostLikes } = await import("../lib/nostr");
+      
+      // Count likes
+      return await countPostLikes(postId, pool, relayUrls);
+    } catch (error) {
+      console.error("Error getting post likes:", error);
+      return 0;
+    }
+  }, [pool, relays]);
+  
+  // Check if the current user has liked a specific post
+  const isPostLikedByUser = useCallback(async (postId: string): Promise<boolean> => {
+    if (!pool || !identity.pubkey) {
+      return false; // Return false if not connected or no identity
+    }
+    
+    try {
+      // Get connected relays
+      const relayUrls = relays
+        .filter(r => r.status === 'connected' && r.read)
+        .map(r => r.url);
+        
+      if (relayUrls.length === 0) {
+        return false; // No connected relays
+      }
+      
+      // Import the necessary function
+      const { hasUserLikedPost } = await import("../lib/nostr");
+      
+      // Check if liked
+      return await hasUserLikedPost(postId, identity.pubkey, pool, relayUrls);
+    } catch (error) {
+      console.error("Error checking if post liked by user:", error);
+      return false;
+    }
+  }, [pool, identity, relays]);
+  
   // Thread statistics cache to avoid excessive relay queries
   const threadStatsCache = React.useRef<Record<string, { viewCount: number, engagement: number, lastUpdated: number }>>({});
   
@@ -1706,6 +1836,11 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     getPostsByThread,
     createThread,
     createPost,
+    // Post likes
+    likePost,
+    unlikePost,
+    getPostLikes,
+    isPostLikedByUser,
     // Thread subscriptions
     subscribeToThread,
     unsubscribeFromThread,

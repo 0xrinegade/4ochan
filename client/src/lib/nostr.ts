@@ -24,6 +24,7 @@ export const DEFAULT_RELAYS = [
 export const KIND = {
   METADATA: 0,
   TEXT_NOTE: 1,
+  REACTION: 7, // Standard Nostr NIP-25 reaction (like)
   BOARD_DEFINITION: 9901, // Custom kind for board definition
   THREAD: 9902, // Custom kind for thread
   POST: 9903, // Custom kind for post within a thread
@@ -904,5 +905,95 @@ export const createThreadStatEvent = async (
   ];
   
   return await createEvent(KIND.THREAD_STATS, statContent, tags, identity);
+};
+
+// Create a like event for a post
+export const createPostLikeEvent = async (
+  postId: string,
+  identity: NostrIdentity
+): Promise<NostrEvent> => {
+  // Using "+" as the content for a like/positive reaction (standard for NIP-25)
+  const tags = [
+    ["e", postId] // Reference to the post being liked
+  ];
+  
+  return await createEvent(KIND.REACTION, "+", tags, identity);
+};
+
+// Get the like event ID if current user has already liked this post
+export const getLikeEventId = async (
+  postId: string,
+  pubkey: string,
+  pool: SimplePool,
+  relayUrls: string[]
+): Promise<string | null> => {
+  try {
+    // Query for reaction events (kind 7) that reference this post and are created by this user
+    const filter = {
+      kinds: [KIND.REACTION],
+      authors: [pubkey],
+      "#e": [postId],
+      limit: 1
+    };
+    
+    const events = await pool.querySync(relayUrls, filter);
+    if (events.length > 0) {
+      return events[0].id;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Error checking if user liked post:", error);
+    return null;
+  }
+};
+
+// Create an event to unlike (delete previous like)
+export const createPostUnlikeEvent = async (
+  likeEventId: string,
+  identity: NostrIdentity
+): Promise<NostrEvent> => {
+  // To unlike, we create a deletion event (kind 5) that references the original like event
+  const tags = [
+    ["e", likeEventId] // Reference to the like event being deleted
+  ];
+  
+  return await createEvent(5, "", tags, identity);
+};
+
+// Count the total number of likes for a post
+export const countPostLikes = async (
+  postId: string,
+  pool: SimplePool,
+  relayUrls: string[]
+): Promise<number> => {
+  try {
+    // Query for all reaction events (kind 7) that reference this post with "+" content
+    const filter = {
+      kinds: [KIND.REACTION],
+      "#e": [postId],
+      limit: 100 // Reasonable limit for likes on a post
+    };
+    
+    const events = await pool.querySync(relayUrls, filter);
+    
+    // Count only positive reactions (content is "+")
+    const likeCount = events.filter(event => event.content === "+").length;
+    return likeCount;
+  } catch (error) {
+    console.error("Error counting post likes:", error);
+    return 0;
+  }
+};
+
+// Check if the current user has liked a post
+export const hasUserLikedPost = async (
+  postId: string,
+  pubkey: string,
+  pool: SimplePool,
+  relayUrls: string[]
+): Promise<boolean> => {
+  const likeEventId = await getLikeEventId(postId, pubkey, pool, relayUrls);
+  return likeEventId !== null;
 };
 
