@@ -5,6 +5,7 @@ import { ArrowDown, ArrowRight, MessageSquare, Reply, CornerUpRight } from 'luci
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
+import { useThread } from '@/hooks/useThreads';
 
 interface ThreadContextVisualizationProps {
   threadId: string;
@@ -15,24 +16,23 @@ export const ThreadContextVisualization: React.FC<ThreadContextVisualizationProp
   threadId, 
   highlightedPostId 
 }) => {
-  const { getThread, getPost } = useNostr();
+  const { thread: threadData, posts: threadPosts } = useThread(threadId);
   const [thread, setThread] = useState<Thread | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
-    if (threadId) {
-      const threadData = getThread(threadId);
+    if (threadId && threadData) {
       setThread(threadData);
       
       // Auto-expand the highlighted post's context
-      if (highlightedPostId && threadData) {
+      if (highlightedPostId && threadPosts) {
         // Find the highlighted post's parent chain
         const expandParentChain = (postId: string, parentMap: Record<string, boolean> = {}) => {
-          const post = threadData.posts.find(p => p.id === postId);
-          if (post && post.replyTo) {
-            parentMap[post.replyTo] = true;
-            expandParentChain(post.replyTo, parentMap);
+          const post = threadPosts.find((p: Post) => p.id === postId);
+          if (post && post.replyToId) {
+            parentMap[post.replyToId] = true;
+            expandParentChain(post.replyToId, parentMap);
           }
           return parentMap;
         };
@@ -41,19 +41,19 @@ export const ThreadContextVisualization: React.FC<ThreadContextVisualizationProp
         setExpanded(expandedMap);
       }
     }
-  }, [threadId, highlightedPostId, getThread]);
+  }, [threadId, highlightedPostId, threadData, threadPosts]);
 
-  if (!thread) {
+  if (!thread || !threadPosts) {
     return <div className="p-4 text-center">Loading thread visualization...</div>;
   }
 
   // Build the reply tree structure
   const buildReplyTree = () => {
     // Create a map of posts by id for quick access
-    const postsById = thread.posts.reduce((acc, post) => {
-      acc[post.id] = post;
-      return acc;
-    }, {} as Record<string, Post>);
+    const postsById: Record<string, Post> = {};
+    threadPosts.forEach((post: Post) => {
+      postsById[post.id] = post;
+    });
     
     // Create a map of child posts
     const childrenMap: Record<string, Post[]> = {};
@@ -62,16 +62,16 @@ export const ThreadContextVisualization: React.FC<ThreadContextVisualizationProp
     const rootPosts: Post[] = [];
     
     // Organize posts into the tree structure
-    thread.posts.forEach(post => {
+    threadPosts.forEach((post: Post) => {
       // If the post replies to another post in the thread
-      if (post.replyTo && postsById[post.replyTo]) {
-        if (!childrenMap[post.replyTo]) {
-          childrenMap[post.replyTo] = [];
+      if (post.replyToId && postsById[post.replyToId]) {
+        if (!childrenMap[post.replyToId]) {
+          childrenMap[post.replyToId] = [];
         }
-        childrenMap[post.replyTo].push(post);
+        childrenMap[post.replyToId].push(post);
       } 
-      // If the post replies to the thread event itself or has no replyTo
-      else if (post.replyTo === thread.id || !post.replyTo) {
+      // If the post replies to the thread event itself or has no replyToId
+      else if (post.replyToId === thread.id || !post.replyToId) {
         rootPosts.push(post);
       }
     });
@@ -144,14 +144,14 @@ export const ThreadContextVisualization: React.FC<ThreadContextVisualizationProp
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-xs text-gray-500">#{post.id.substring(0, 8)}</span>
-                  <span className="font-bold">{post.author.name || post.author.pubkey.substring(0, 8)}</span>
+                  <span className="font-bold">{post.authorPubkey.substring(0, 8)}</span>
                   <span className="text-xs text-gray-500">
                     {formatDistanceToNow(post.createdAt * 1000, { addSuffix: true })}
                   </span>
-                  {post.replyTo && (
+                  {post.replyToId && (
                     <Badge variant="outline" className="text-xs">
                       <Reply className="h-3 w-3 mr-1" />
-                      Reply to #{post.replyTo.substring(0, 6)}
+                      Reply to #{post.replyToId.substring(0, 6)}
                     </Badge>
                   )}
                 </div>
@@ -209,7 +209,7 @@ export const ThreadContextVisualization: React.FC<ThreadContextVisualizationProp
       )}
       
       <div className="text-xs text-gray-500 mt-4 flex justify-between">
-        <span>Total posts: {thread.posts.length}</span>
+        <span>Total posts: {threadPosts?.length || 0}</span>
         <span>Root posts: {rootPosts.length}</span>
       </div>
     </div>
