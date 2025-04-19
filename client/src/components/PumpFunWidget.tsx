@@ -439,10 +439,13 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
                 </div>
                 
                 <Tabs defaultValue="overview" className="w-full" onValueChange={setActiveTab}>
-                  <TabsList className="grid grid-cols-3 mb-2">
+                  <TabsList className="grid grid-cols-4 mb-2">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="chart">Chart</TabsTrigger>
                     <TabsTrigger value="metrics">Metrics</TabsTrigger>
+                    <TabsTrigger value="pumpfun" className={selectedToken?.type === 'sol_address' ? '' : 'opacity-50'}>
+                      Pump.fun
+                    </TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="overview" className="min-h-[120px]">
@@ -712,6 +715,158 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
                         </div>
                       </div>
                     </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="pumpfun" className="min-h-[120px]">
+                    {selectedToken?.type !== 'sol_address' ? (
+                      <div className="text-center text-gray-500 py-4">
+                        <Info className="h-5 w-5 mx-auto mb-2" />
+                        <p>Pump.fun data is only available for Solana tokens.</p>
+                      </div>
+                    ) : (
+                      <div>
+                        {/* Bonding Status Section */}
+                        {tokenData?.bondingInfo && (
+                          <div className="mb-4">
+                            <div className="text-xs font-semibold text-gray-600 mb-2 pb-1 border-b flex items-center">
+                              <LockIcon className="h-3 w-3 mr-1" /> BONDING STATUS
+                            </div>
+                            
+                            <div className="p-3 bg-gray-50 rounded border mb-3">
+                              <div className="flex justify-between items-center mb-2">
+                                <div className="text-sm font-medium">Status:</div>
+                                <Badge 
+                                  variant="outline"
+                                  className={
+                                    tokenData.bondingInfo.bondingStatus === 'bonding' 
+                                      ? "bg-blue-50 text-blue-700 border-blue-200"
+                                      : tokenData.bondingInfo.bondingStatus === 'graduated'
+                                        ? "bg-green-50 text-green-700 border-green-200"
+                                        : "bg-yellow-50 text-yellow-700 border-yellow-200"
+                                  }
+                                >
+                                  {tokenData.bondingInfo.bondingStatus === 'bonding' 
+                                    ? <LockIcon className="h-3 w-3 mr-1" /> 
+                                    : tokenData.bondingInfo.bondingStatus === 'graduated'
+                                      ? <Maximize2 className="h-3 w-3 mr-1" />
+                                      : <Tag className="h-3 w-3 mr-1" />
+                                  }
+                                  {tokenData.bondingInfo.bondingStatus.charAt(0).toUpperCase() + tokenData.bondingInfo.bondingStatus.slice(1)}
+                                </Badge>
+                              </div>
+                              
+                              {tokenData.bondingInfo.createdAt && (
+                                <div className="flex justify-between items-center text-sm mb-1">
+                                  <div className="text-gray-500">Created:</div>
+                                  <div>{new Date(tokenData.bondingInfo.createdAt).toLocaleDateString()}</div>
+                                </div>
+                              )}
+                              
+                              {tokenData.bondingInfo.bondingStatus === 'bonding' && tokenData.bondingInfo.bondingCurve && (
+                                <div className="mt-3 pt-2 border-t">
+                                  <div className="text-xs font-semibold mb-2">Bonding Curve Details:</div>
+                                  <div className="grid grid-cols-2 gap-2 text-xs">
+                                    <div>
+                                      <div className="text-gray-500">Reserve Token:</div>
+                                      <div className="font-mono">{tokenData.bondingInfo.bondingCurve.reserveToken}</div>
+                                    </div>
+                                    <div>
+                                      <div className="text-gray-500">Reserve Balance:</div>
+                                      <div>{formatNumber(tokenData.bondingInfo.bondingCurve.reserveBalance)}</div>
+                                    </div>
+                                    <div>
+                                      <div className="text-gray-500">Supply Balance:</div>
+                                      <div>{formatNumber(tokenData.bondingInfo.bondingCurve.supplyBalance)}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Exchange Links */}
+                        <div className="mb-4">
+                          <div className="text-xs font-semibold text-gray-600 mb-2 pb-1 border-b flex items-center">
+                            <Repeat className="h-3 w-3 mr-1" /> EXCHANGES
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-xs"
+                              onClick={() => {
+                                if (selectedToken?.value) {
+                                  window.open(`https://jup.ag/swap/SOL-${selectedToken.value}`, '_blank');
+                                }
+                              }}
+                            >
+                              Jupiter <ExternalLink className="h-3 w-3 ml-1" />
+                            </Button>
+                            
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-xs"
+                              onClick={() => {
+                                if (selectedToken?.value) {
+                                  window.open(`https://raydium.io/swap/?inputCurrency=SOL&outputCurrency=${selectedToken.value}`, '_blank');
+                                }
+                              }}
+                            >
+                              Raydium <ExternalLink className="h-3 w-3 ml-1" />
+                            </Button>
+                            
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-xs"
+                              onClick={() => {
+                                if (selectedToken?.value) {
+                                  window.open(`https://www.pump.fun/token/${selectedToken.value}`, '_blank');
+                                }
+                              }}
+                            >
+                              Pump.fun <ExternalLink className="h-3 w-3 ml-1" />
+                            </Button>
+                            
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-xs"
+                              onClick={() => {
+                                if (selectedToken?.value) {
+                                  window.open(`https://solscan.io/token/${selectedToken.value}`, '_blank');
+                                }
+                              }}
+                            >
+                              SolScan <ExternalLink className="h-3 w-3 ml-1" />
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        {/* Related tokens section - we could add fetching new/bonding/graduated tokens here */}
+                        <div>
+                          <div className="text-xs font-semibold text-gray-600 mb-2 pb-1 border-b flex items-center">
+                            <Hash className="h-3 w-3 mr-1" /> SIMILAR TOKENS
+                          </div>
+                          <div className="text-center text-sm text-gray-500 py-3">
+                            <p>Check Pump.fun for similar tokens</p>
+                            <Button 
+                              variant="default" 
+                              size="sm"
+                              className="mt-2"
+                              onClick={() => {
+                                window.open('https://www.pump.fun/tokens/new', '_blank');
+                              }}
+                            >
+                              View New Tokens <ExternalLink className="h-3 w-3 ml-1" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </TabsContent>
                 </Tabs>
                 
