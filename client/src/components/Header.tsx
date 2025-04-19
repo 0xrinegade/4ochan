@@ -9,6 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useBoards } from "@/hooks/useBoards";
 import { useTheme } from "@/context/ThemeContext";
 
+// Define theme types to match ThemeContext
+type ThemeName = 'crimson' | 'hotdogstand' | 'windows95' | 'vaporwave' | 'matrix';
+
 // Board navigation tab that simply uses the shortName
 const NavBoardTab: React.FC<{ shortName: string; label: string }> = ({ shortName, label }) => {
   const [location] = useLocation();
@@ -169,25 +172,61 @@ export const Header: React.FC = () => {
                 </button>
                 
                 {themeDropdownOpen && (
-                  <div className="absolute right-0 mt-1 bg-white border-2 border-black z-50 w-32">
-                    <div className="bg-primary text-white text-xs font-bold py-0.5 px-1">
+                  <div className="absolute right-0 mt-1 bg-white border-2 border-black z-50 w-40">
+                    <div className="bg-primary text-white text-xs font-bold py-0.5 px-2">
                       SELECT THEME
                     </div>
                     <div className="p-1">
-                      {themes.map((theme) => (
-                        <button
-                          key={theme}
-                          onClick={() => {
-                            setTheme(theme);
-                            setThemeDropdownOpen(false);
-                          }}
-                          className={`w-full text-left text-xs py-0.5 px-1 mb-1 last:mb-0 ${
-                            currentTheme === theme ? 'bg-primary text-white' : 'bg-gray-200'
-                          }`}
-                        >
-                          {theme.toUpperCase()}
-                        </button>
-                      ))}
+                      {themes.map((theme) => {
+                        // Get friendly names for themes
+                        let displayName = '';
+                        let themeColor = '';
+                        
+                        switch(theme) {
+                          case 'crimson':
+                            displayName = 'Classic Red';
+                            themeColor = '#8B0000';
+                            break;
+                          case 'hotdogstand':
+                            displayName = 'Retro Red';
+                            themeColor = '#D82C20';
+                            break;
+                          case 'windows95':
+                            displayName = 'Classic Blue';
+                            themeColor = '#000080';
+                            break;
+                          case 'vaporwave':
+                            displayName = 'Lavender';
+                            themeColor = '#7B68EE';
+                            break;
+                          case 'matrix':
+                            displayName = 'Dark Mode';
+                            themeColor = '#00CC00';
+                            break;
+                          default:
+                            displayName = String(theme).charAt(0).toUpperCase() + String(theme).slice(1);
+                        }
+                        
+                        return (
+                          <button
+                            key={theme}
+                            onClick={() => {
+                              setTheme(theme);
+                              setThemeDropdownOpen(false);
+                            }}
+                            className={`w-full text-left py-1 px-1 mb-1 last:mb-0 flex items-center ${
+                              currentTheme === theme ? 'bg-gray-100' : 'hover:bg-gray-100'
+                            }`}
+                          >
+                            <div 
+                              className="w-3 h-3 mr-1 border border-black inline-block"
+                              style={{ backgroundColor: themeColor }}
+                            ></div>
+                            <span className="text-xs">{displayName}</span>
+                            {currentTheme === theme && <span className="ml-auto text-xs">✓</span>}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -240,21 +279,57 @@ export const Header: React.FC = () => {
               
               {/* Mobile Theme Selector */}
               <div className="mt-2">
-                <div className="bg-primary text-white text-xs font-bold py-0.5 px-1 mb-1">
-                  THEME
+                <div className="bg-primary text-white text-xs font-bold py-0.5 px-2 mb-1">
+                  SELECT THEME
                 </div>
-                <div className="flex flex-wrap gap-1">
-                  {themes.map((theme) => (
-                    <button
-                      key={theme}
-                      onClick={() => setTheme(theme)}
-                      className={`text-xs py-0.5 px-2 border border-black ${
-                        currentTheme === theme ? 'bg-primary text-white' : 'bg-gray-200'
-                      }`}
-                    >
-                      {theme.toUpperCase()}
-                    </button>
-                  ))}
+                <div className="border border-black p-1 bg-white">
+                  {themes.map((theme) => {
+                    // Get friendly names for themes
+                    let displayName = '';
+                    let themeColor = '';
+                    
+                    switch(theme) {
+                      case 'crimson':
+                        displayName = 'Classic Red';
+                        themeColor = '#8B0000';
+                        break;
+                      case 'hotdogstand':
+                        displayName = 'Retro Red';
+                        themeColor = '#D82C20';
+                        break;
+                      case 'windows95':
+                        displayName = 'Classic Blue';
+                        themeColor = '#000080';
+                        break;
+                      case 'vaporwave':
+                        displayName = 'Lavender';
+                        themeColor = '#7B68EE';
+                        break;
+                      case 'matrix':
+                        displayName = 'Dark Mode';
+                        themeColor = '#00CC00';
+                        break;
+                      default:
+                        displayName = String(theme).charAt(0).toUpperCase() + String(theme).slice(1);
+                    }
+                    
+                    return (
+                      <button
+                        key={theme}
+                        onClick={() => setTheme(theme)}
+                        className={`w-full text-left py-1 px-1 mb-1 last:mb-0 flex items-center ${
+                          currentTheme === theme ? 'bg-gray-100' : 'hover:bg-gray-100'
+                        }`}
+                      >
+                        <div 
+                          className="w-3 h-3 mr-1 border border-black inline-block"
+                          style={{ backgroundColor: themeColor }}
+                        ></div>
+                        <span className="text-xs">{displayName}</span>
+                        {currentTheme === theme && <span className="ml-auto text-xs">✓</span>}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               
