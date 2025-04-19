@@ -53,6 +53,9 @@ const Home: React.FC = () => {
                   </ul>
                 </div>
               </div>
+              
+              {/* Theme Switcher */}
+              <ThemeSwitcher />
             </div>
 
             <div className="w-full md:w-3/4">
