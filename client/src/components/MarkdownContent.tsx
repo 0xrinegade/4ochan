@@ -20,11 +20,6 @@ mermaid.initialize({
 
 // Function to handle Typst code blocks
 const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element => {
-  const [showSource, setShowSource] = useState(false);
-  
-  // Generate a unique ID for this Typst document
-  const typstId = `typst-${Math.random().toString(36).substr(2, 9)}`;
-  
   return (
     <div className={`typst-container ${isDarkMode ? 'typst-dark' : 'typst-light'}`}>
       <div className="typst-header">
@@ -36,13 +31,6 @@ const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element =>
             onClick={() => navigator.clipboard.writeText(content)}
           >
             Copy
-          </button>
-          <button
-            className="typst-action-button"
-            title={showSource ? "Show Preview" : "Show Source"}
-            onClick={() => setShowSource(!showSource)}
-          >
-            {showSource ? "Show Preview" : "Show Source"}
           </button>
           <a 
             href={`https://typst.app/project?snippet=${encodeURIComponent(content)}`} 
@@ -56,39 +44,13 @@ const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element =>
         </div>
       </div>
       
-      {showSource ? (
-        <SyntaxHighlighter
-          style={isDarkMode ? vscDarkPlus : vs}
-          language="rust" // Use rust highlighting as a fallback since Typst syntax is not directly supported
-          PreTag="div"
-        >
-          {content}
-        </SyntaxHighlighter>
-      ) : (
-        <div className="typst-preview">
-          <div className="typst-placeholder">
-            <h3>Typst Document Preview</h3>
-            <p>This document can be viewed directly in Typst App</p>
-            <div className="typst-preview-actions">
-              <a 
-                href={`https://typst.app/project?snippet=${encodeURIComponent(content)}`} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="typst-preview-button"
-                title="Open in Typst App"
-              >
-                Open in Typst App
-              </a>
-            </div>
-            <div className="typst-preview-sample">
-              <pre className="typst-preview-code">{content.length > 200 
-                ? content.substring(0, 200) + '...' 
-                : content}
-              </pre>
-            </div>
-          </div>
-        </div>
-      )}
+      <SyntaxHighlighter
+        style={isDarkMode ? vscDarkPlus : vs}
+        language="rust" // Use rust highlighting as a fallback since Typst syntax is not directly supported
+        PreTag="div"
+      >
+        {content}
+      </SyntaxHighlighter>
     </div>
   );
 };
