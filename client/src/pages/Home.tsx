@@ -38,6 +38,15 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto">
         <Header />
+        <div className="flex justify-center mt-2 mb-3">
+          <button 
+            onClick={() => setShowCreateModal(true)}
+            className="bg-[#8b0000] text-white font-bold py-1 px-4 border-2 border-black"
+            style={{ boxShadow: "2px 2px 0 #000" }}
+          >
+            Create New Thread
+          </button>
+        </div>
         <main className="container mx-auto px-2 sm:px-4">
           <div className="flex flex-col md:flex-row gap-2">
             <div className="w-full md:w-1/4">
@@ -73,6 +82,15 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
                   </div>
                   <div className="bg-white border border-black border-t-0 p-2">
                     <p>Select a board from the quick links to get started.</p>
+                    <div className="mt-4">
+                      <button 
+                        onClick={() => setShowCreateModal(true)}
+                        className="bg-gray-200 text-black font-bold py-1 px-3 border-2 border-black text-sm"
+                        style={{ boxShadow: "2px 2px 0 #000" }}
+                      >
+                        Create New Thread
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -99,10 +117,16 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
               <p className="text-[10px] mt-1.5 italic">Best viewed with Netscape Navigator</p>
               
               {/* Visitor counter moved from header */}
-              <div className="my-1.5">
+              <div className="my-1.5 flex flex-wrap gap-2 justify-center">
                 <span className="bg-white border border-black inline-block px-2 py-0.5 text-[10px]">
                   Relays: {relays.length} | Connected: {connectedRelays} | Boards: {nostrBoards.length}
                 </span>
+                <button 
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-primary text-white font-bold py-0.5 px-2 border border-black text-[10px] hover:bg-[#6b0000]"
+                >
+                  CREATE NEW THREAD
+                </button>
               </div>
               
               {/* Classic 90s web badges */}
