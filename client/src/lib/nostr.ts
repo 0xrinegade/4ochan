@@ -285,61 +285,66 @@ export const createEvent = async (
       tagsCount: tags.length
     });
     
+    // Debug tags to help diagnose the issue
+    console.log("Tags structure:", JSON.stringify(tags));
+    
+    // Ensure tags is an array of arrays with proper format
+    const validatedTags = tags.map(tag => {
+      // Ensure tag is array and has at least 2 elements
+      if (!Array.isArray(tag) || tag.length < 1) {
+        return ["", ""]; // Replace invalid tag with placeholder
+      }
+      
+      // Make sure first element exists and is a string
+      const tagName = typeof tag[0] === 'string' ? tag[0] : "";
+      
+      // Make sure second element exists and is a string
+      const tagValue = tag.length > 1 && typeof tag[1] === 'string' ? tag[1] : "";
+      
+      // Return a simple, validated tag with just name and value
+      return [tagName, tagValue];
+    });
+    
+    // Update unsigned event with validated tags
+    unsignedEvent.tags = validatedTags;
+    
     // nostr-tools can accept a hex string for the private key
     // Handle all possible formats to ensure it works consistently
-    let privateKey: any;
+    let privateKey: string;
     
     if (typeof identity.privkey === 'string') {
-      // If already a hex string, use it directly
-      privateKey = identity.privkey;
-    } else if (identity.privkey instanceof Uint8Array) {
-      // Convert Uint8Array to hex string
-      privateKey = Array.from(identity.privkey)
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-    } else if (typeof identity.privkey === 'object') {
-      // Handle the case where privkey might be stored as an object with hex values
-      try {
-        // Try to extract raw bytes from the object and convert to hex string
-        console.log("Attempting to convert object privateKey to hex");
-        
-        // Try to convert ArrayBuffer or other array-like object to Uint8Array first
-        const bytes = new Uint8Array(identity.privkey as any);
-        privateKey = Array.from(bytes)
-          .map(b => b.toString(16).padStart(2, '0'))
-          .join('');
-          
-        console.log("Successfully converted object privateKey to hex:", 
-          privateKey.substring(0, 10) + '...');
-      } catch (error) {
-        console.error("Failed to convert object privateKey:", error);
-        
-        // Fallback: regenerate a new key
-        console.warn("Generating new private key as fallback");
+      // If already a hex string, ensure it's valid hex
+      if (/^[0-9a-fA-F]{64}$/.test(identity.privkey)) {
+        privateKey = identity.privkey;
+      } else {
+        // Invalid hex string, generate new one
+        console.warn("Invalid hex string for private key, regenerating");
         const newPrivkey = generateSecretKey();
-        
-        // Convert to hex string
         privateKey = Array.from(newPrivkey)
           .map(b => b.toString(16).padStart(2, '0'))
           .join('');
           
-        // Update the identity for future use
+        // Update the identity with valid keys
         identity.privkey = privateKey;
         identity.pubkey = getPublicKey(newPrivkey);
-        
-        // Save the updated identity
         saveIdentity(identity);
-        
-        console.log("Generated new private key as fallback");
       }
     } else {
-      console.error("Unhandled private key format:", typeof identity.privkey);
-      throw new Error("Invalid private key format");
+      // For any other format, just generate a new key to be safe
+      console.warn("Non-string private key format, regenerating");
+      const newPrivkey = generateSecretKey();
+      privateKey = Array.from(newPrivkey)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+        
+      // Update the identity for future use
+      identity.privkey = privateKey;
+      identity.pubkey = getPublicKey(newPrivkey);
+      saveIdentity(identity);
     }
     
-    // Sign and finalize the event
-    // Use "as any" to bypass TypeScript's type checking
-    const event = finalizeEvent(unsignedEvent, privateKey as any);
+    // Sign and finalize the event using a hex string key
+    const event = finalizeEvent(unsignedEvent, privateKey);
     
     console.log("Event created successfully:", {
       id: event.id,
