@@ -10,6 +10,7 @@ import DesignSystem from "@/pages/DesignSystem";
 import { TestPage } from "./pages/TestPage";
 import { SubscriptionsPage } from "./pages/Subscriptions";
 import TokenTestPage from "./pages/TokenTestPage";
+import FAQ from "./pages/FAQ";
 import { NostrProvider } from "./context/NostrContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { NavigationProvider } from "./context/NavigationContext";
@@ -130,6 +131,9 @@ function AppRouter() {
         </Route>
         <Route path="/token-test">
           <TokenTestPage />
+        </Route>
+        <Route path="/faq">
+          <FAQ />
         </Route>
         <Route>
           <NotFound />
