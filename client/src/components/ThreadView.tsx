@@ -15,7 +15,9 @@ import {
   ArrowUp, 
   ArrowDown, 
   Search, 
-  X 
+  X,
+  ThumbsUp,
+  ThumbsDown
 } from "lucide-react";
 import { 
   Dialog, 
@@ -35,13 +37,54 @@ interface ThreadViewProps {
 export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
   const { thread, posts, loading, error, refreshThread, createPost } = useThread(threadId);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
-  const { identity, publishEvent, getThreadStats } = useNostr();
+  const { identity, publishEvent, getThreadStats, likePost, unlikePost, getPostLikes, isPostLikedByUser } = useNostr();
+  
+  // State to track post likes
+  const [postLikes, setPostLikes] = useState<Record<string, number>>({});
+  const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({});
   const [viewTracked, setViewTracked] = useState(false);
   const threadContainerRef = useRef<HTMLDivElement>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{index: number, text: string, id: string}[]>([]);
   const [currentSearchResult, setCurrentSearchResult] = useState(-1);
+  
+  // Load post likes data
+  useEffect(() => {
+    if (posts.length > 0 && identity) {
+      const loadLikesData = async () => {
+        try {
+          // Create a new object to store likes count for each post
+          const likesData: Record<string, number> = {};
+          // Create a new object to track which posts the user has liked
+          const userLikedData: Record<string, boolean> = {};
+          
+          // Load likes data for each post
+          for (const post of posts) {
+            try {
+              // Get likes count
+              const likesCount = await getPostLikes(post.id);
+              likesData[post.id] = likesCount;
+              
+              // Check if user has liked this post
+              const hasLiked = await isPostLikedByUser(post.id);
+              userLikedData[post.id] = hasLiked;
+            } catch (error) {
+              console.error(`Failed to load likes data for post ${post.id}:`, error);
+            }
+          }
+          
+          // Update state with likes data
+          setPostLikes(likesData);
+          setLikedPosts(userLikedData);
+        } catch (error) {
+          console.error("Failed to load likes data:", error);
+        }
+      };
+      
+      loadLikesData();
+    }
+  }, [posts, identity, getPostLikes, isPostLikedByUser]);
   
   // Track thread view and update thread statistics
   useEffect(() => {
@@ -192,6 +235,48 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
     document.getElementById('reply-form')?.scrollIntoView({ behavior: 'smooth' });
   };
   
+  // Handle liking a post
+  const handleLikePost = async (postId: string) => {
+    if (!identity) return;
+    
+    try {
+      // If post is already liked, unlike it
+      if (likedPosts[postId]) {
+        await unlikePost(postId);
+        
+        // Update like status in state
+        setLikedPosts(prev => ({
+          ...prev,
+          [postId]: false
+        }));
+        
+        // Update likes count in state
+        setPostLikes(prev => ({
+          ...prev,
+          [postId]: Math.max(0, (prev[postId] || 0) - 1)
+        }));
+      } 
+      // Otherwise, like the post
+      else {
+        await likePost(postId);
+        
+        // Update like status in state
+        setLikedPosts(prev => ({
+          ...prev,
+          [postId]: true
+        }));
+        
+        // Update likes count in state
+        setPostLikes(prev => ({
+          ...prev,
+          [postId]: (prev[postId] || 0) + 1
+        }));
+      }
+    } catch (error) {
+      console.error(`Failed to ${likedPosts[postId] ? 'unlike' : 'like'} post:`, error);
+    }
+  };
+  
   const handleSubmitReply = async (
     content: string, 
     imageUrls: string[] = [], 
@@ -312,7 +397,7 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                     )}
                   </div>
                   
-                  <div className="flex mt-2">
+                  <div className="flex mt-2 space-x-2">
                     <Button
                       onClick={() => handleQuotePost(thread.id)}
                       variant="ghost"
@@ -320,6 +405,17 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                       className="text-xs text-gray-500"
                     >
                       <i className="fas fa-reply mr-1"></i> Reply
+                    </Button>
+                    
+                    <Button
+                      onClick={() => handleLikePost(thread.id)}
+                      variant="ghost"
+                      size="sm"
+                      className={`text-xs ${likedPosts[thread.id] ? 'text-accent' : 'text-gray-500'}`}
+                      title={likedPosts[thread.id] ? "Unlike this post" : "Like this post"}
+                    >
+                      {likedPosts[thread.id] ? <ThumbsUp size={14} className="mr-1" /> : <ThumbsUp size={14} className="mr-1" />}
+                      {postLikes[thread.id] > 0 && <span>{postLikes[thread.id]}</span>}
                     </Button>
                   </div>
                 </div>
@@ -395,7 +491,7 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                         )}
                       </div>
                       
-                      <div className="flex mt-2">
+                      <div className="flex mt-2 space-x-2">
                         <Button
                           onClick={() => handleQuotePost(post.id)}
                           variant="ghost"
@@ -403,6 +499,17 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                           className="text-xs text-gray-500"
                         >
                           <i className="fas fa-reply mr-1"></i> Reply
+                        </Button>
+                        
+                        <Button
+                          onClick={() => handleLikePost(post.id)}
+                          variant="ghost"
+                          size="sm"
+                          className={`text-xs ${likedPosts[post.id] ? 'text-accent' : 'text-gray-500'}`}
+                          title={likedPosts[post.id] ? "Unlike this post" : "Like this post"}
+                        >
+                          {likedPosts[post.id] ? <ThumbsUp size={14} className="mr-1" /> : <ThumbsUp size={14} className="mr-1" />}
+                          {postLikes[post.id] > 0 && <span>{postLikes[post.id]}</span>}
                         </Button>
                       </div>
                     </div>
