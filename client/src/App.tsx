@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -12,70 +12,108 @@ import { NostrProvider } from "./context/NostrContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { NavigationProvider } from "./context/NavigationContext";
 import PageTransition from "./components/PageTransition";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
-function AppRouter() {
-  // Get the current path from the window location
-  const [currentPath, setCurrentPath] = useState(window.location.pathname);
-  
-  // Update the current path when it changes
-  useEffect(() => {
-    const handleLocationChange = () => {
-      setCurrentPath(window.location.pathname);
-    };
+// Create a module-level variable to hold the navigate function
+let globalNavigate: (to: string) => void;
+
+// Global function to navigate without page reload
+// We'll use this to override normal anchor clicks
+export const navigateWithoutReload = (href: string) => {
+  if (globalNavigate) {
+    globalNavigate(href);
+  } else {
+    console.error("Navigation function not initialized");
+    window.location.href = href; // Fallback
+  }
+  return false; // Prevent default behavior
+};
+
+// Link interceptor to handle clicks on regular <a> elements
+const setupLinkInterceptor = (navigate: (to: string) => void) => {
+  document.addEventListener('click', (e) => {
+    // Cast target to HTMLElement
+    const target = e.target as HTMLElement;
     
-    window.addEventListener('popstate', handleLocationChange);
+    // Find the closest anchor element
+    const anchor = target.closest('a');
     
-    return () => {
-      window.removeEventListener('popstate', handleLocationChange);
-    };
-  }, []);
-  
-  // Determine which component to render based on the current path
-  const renderComponent = () => {
-    // Parse the path to determine the route
-    if (currentPath === "/") {
-      return <Home />;
+    // If there's no anchor or it's an external link, let the default behavior happen
+    if (!anchor || !anchor.href || anchor.target === '_blank' || 
+        anchor.getAttribute('rel') === 'external' ||
+        anchor.href.startsWith('http')) {
+      return;
     }
     
+    // Get the URL
+    const url = new URL(anchor.href);
+    
+    // Only intercept links to the same origin
+    if (url.origin !== window.location.origin) {
+      return;
+    }
+    
+    // Prevent default behavior
+    e.preventDefault();
+    
+    // Use wouter's navigate to go to the path
+    navigate(url.pathname);
+  });
+};
+
+function AppRouter() {
+  // Use wouter's location hook for navigation
+  const [location, setLocation] = useLocation();
+  
+  // Store the navigate function globally so it can be used by our helper
+  globalNavigate = setLocation;
+  
+  // Set up link interceptor once on mount
+  useEffect(() => {
+    setupLinkInterceptor(setLocation);
+  }, [setLocation]);
+  
+  // Memoize the parameters to avoid unnecessary re-renders
+  const getRouteParams = useCallback(() => {
     // Board routes
-    if (currentPath.startsWith("/board/")) {
-      const boardId = currentPath.split("/board/")[1];
-      return <Home id={boardId} />;
+    if (location.startsWith("/board/")) {
+      return { boardId: location.split("/board/")[1] };
     }
     
     // Thread routes
-    if (currentPath.startsWith("/thread/")) {
-      const threadId = currentPath.split("/thread/")[1];
-      return <Thread id={threadId} />;
+    if (location.startsWith("/thread/")) {
+      return { threadId: location.split("/thread/")[1] };
     }
     
-    // Profile routes
-    if (currentPath === "/profile") {
-      return <UserProfilePage />;
+    // Profile routes 
+    if (location.startsWith("/profile/")) {
+      return { userId: location.split("/profile/")[1] };
     }
     
-    if (currentPath.startsWith("/profile/")) {
-      const userId = currentPath.split("/profile/")[1];
-      return <UserProfilePage id={userId} />;
-    }
-    
-    // Other static routes
-    if (currentPath === "/design") {
-      return <DesignSystem />;
-    }
-    
-    if (currentPath === "/test") {
-      return <TestPage />;
-    }
-    
-    // Not found
-    return <NotFound />;
-  };
+    return {};
+  }, [location]);
   
+  const params = getRouteParams();
+  
+  // Render the appropriate component
   return (
     <PageTransition>
-      {renderComponent()}
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/board/:id">
+          {(params) => <Home id={params.id} key={`board-${params.id}`} />}
+        </Route>
+        <Route path="/thread/:id">
+          {(params) => <Thread id={params.id} key={`thread-${params.id}`} />}
+        </Route>
+        <Route path="/profile" component={UserProfilePage} />
+        <Route path="/profile/:id">
+          {(params) => <UserProfilePage id={params.id} key={`profile-${params.id}`} />}
+        </Route>
+        <Route path="/design" component={DesignSystem} />
+        <Route path="/test" component={TestPage} />
+        <Route component={NotFound} />
+      </Switch>
     </PageTransition>
   );
 }

@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "wouter";
+import React, { useState, useEffect, useRef } from "react";
 import { useThreads } from "@/hooks/useThreads";
-import { formatDate, formatPubkey } from "@/lib/nostr";
-import { Button } from "@/components/ui/button";
+import { formatDate } from "@/lib/nostr";
 import { CreateThreadModal } from "@/components/CreateThreadModal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { navigateWithoutReload } from "@/App";
 
 interface ThreadListProps {
   boardId: string;
@@ -22,6 +21,27 @@ export const ThreadList: React.FC<ThreadListProps> = ({
   const { threads, loading, error, createThread, refreshThreads } = useThreads(boardId);
   const [isCreateThreadModalOpen, setIsCreateThreadModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [displayedThreads, setDisplayedThreads] = useState(threads);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const prevBoardIdRef = useRef(boardId);
+  
+  // Update displayed threads when threads change, but only if
+  // we're not in a first-load situation or we're switching boards
+  useEffect(() => {
+    const isBoardChange = prevBoardIdRef.current !== boardId;
+    prevBoardIdRef.current = boardId;
+    
+    // When we get new threads data
+    if (threads.length > 0) {
+      // Only update if we have something to show (avoids flickering empty state)
+      setDisplayedThreads(threads);
+      setIsFirstLoad(false);
+    } else if (isBoardChange) {
+      // If we're switching boards, clear the display to avoid showing wrong board data
+      setDisplayedThreads([]);
+      setIsFirstLoad(true);
+    }
+  }, [threads, boardId]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -44,22 +64,25 @@ export const ThreadList: React.FC<ThreadListProps> = ({
     const newThread = await createThread(title, content, imageUrls);
     setIsCreateThreadModalOpen(false);
     
-    // Navigate to the thread page
+    // Navigate to the thread page using our custom navigation
     console.log("Thread created successfully, navigating to thread:", newThread.id);
     setTimeout(() => {
-      window.location.href = `/thread/${newThread.id}`;
+      navigateWithoutReload(`/thread/${newThread.id}`);
     }, 1000);
   };
 
-  // Immediately perform a refresh when component mounts
+  // Immediately perform a refresh when component mounts, but avoid multiple rapid refreshes
   useEffect(() => {
-    // Give a slight delay to allow UI to render first
-    const timer = setTimeout(() => {
-      handleRefresh();
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, [boardId]); // Re-trigger when board changes
+    // Only refresh if this is the first load or if we're switching boards
+    if (isFirstLoad) {
+      // Give a slight delay to allow UI to render first
+      const timer = setTimeout(() => {
+        handleRefresh();
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [boardId, isFirstLoad]);
 
   return (
     <div className="flex-1 overflow-y-auto p-2 sm:p-4 bg-background">
@@ -106,9 +129,9 @@ export const ThreadList: React.FC<ThreadListProps> = ({
           </div>
           
           {/* Try to show threads even while loading if we have them */}
-          {threads.length > 0 ? (
+          {displayedThreads.length > 0 ? (
             // Thread List
-            threads.map(thread => (
+            displayedThreads.map(thread => (
               <a href={`/thread/${thread.id}`} key={thread.id}>
                 <div className="mb-4 bg-white border border-black cursor-pointer hover:border-primary">
                   <div className="p-2 sm:p-4">

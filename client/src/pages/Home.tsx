@@ -54,7 +54,8 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
   
   // Load user activity data
   useEffect(() => {
-    if (!identity?.pubkey) return;
+    // If not connected to Nostr, don't try to fetch
+    if (!identity?.pubkey || !nostr) return;
     
     const fetchUserActivity = async () => {
       try {
@@ -69,8 +70,24 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
         // Save current visit time
         localStorage.setItem('last-visit-time', currentTime.toString());
         
-        // Fetch user created threads
-        if (nostr.pool && connectedRelays > 0) {
+        // Don't proceed if we don't have the required connections
+        if (!nostr.pool || connectedRelays <= 0) {
+          console.log("No pool available to fetch user activity");
+          return;
+        }
+        
+        // Get relay URLs that are actually connected for reading
+        const relayUrls = relays
+          .filter(r => r.status === 'connected' && r.read)
+          .map(r => r.url);
+          
+        if (relayUrls.length === 0) {
+          console.log("No connected read relays available");
+          return;
+        }
+        
+        // First fetch threads
+        try {
           // Get all threads created by this user
           const filter = {
             kinds: [nostr.KIND.THREAD],
@@ -78,104 +95,114 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
             limit: 10
           };
           
-          const relayUrls = relays
-            .filter(r => r.status === 'connected' && r.read)
-            .map(r => r.url);
-            
-          if (relayUrls.length > 0 && nostr.pool) {
-            // Get thread events from all connected relays
-            const events = await nostr.pool.querySync(relayUrls, filter);
-            console.log(`Found ${events.length} threads created by user`);
-            
-            // Parse thread events into Thread objects
-            const threads: Thread[] = [];
-            
-            for (const event of events) {
-              try {
-                const threadData = JSON.parse(event.content);
+          // Get thread events from all connected relays
+          const events = await nostr.pool.querySync(relayUrls, filter);
+          
+          // Parse thread events into Thread objects
+          const threads: Thread[] = [];
+          
+          for (const event of events) {
+            try {
+              const threadData = JSON.parse(event.content);
+              
+              const thread: Thread = {
+                id: event.id,
+                boardId: threadData.boardId || 'unknown',
+                title: threadData.title || 'Untitled',
+                content: threadData.content,
+                images: threadData.images || [],
+                authorPubkey: event.pubkey,
+                createdAt: event.created_at,
+                replyCount: 0,
+                lastReplyTime: event.created_at
+              };
+              
+              threads.push(thread);
+            } catch (parseError) {
+              console.error("Failed to parse user thread event", parseError);
+            }
+          }
+          
+          // Sort by creation time (newest first)
+          const sortedThreads = threads.sort((a, b) => b.createdAt - a.createdAt);
+          setUserCreatedThreads(sortedThreads);
+        } catch (threadError) {
+          console.error("Error fetching user threads:", threadError);
+        }
+        
+        // Then fetch replies in a separate try/catch block
+        try {
+          // Fetch user's replies
+          const replyFilter = {
+            kinds: [nostr.KIND.POST],
+            authors: [identity.pubkey],
+            limit: 20
+          };
+          
+          const replyEvents = await nostr.pool.querySync(relayUrls, replyFilter);
+          
+          // Parse reply events
+          const replies: UserReply[] = [];
+          let newRepliesCounter = 0;
+          
+          for (const event of replyEvents) {
+            try {
+              // Find thread ID from tags
+              const threadTag = event.tags.find((tag: string[]) => tag[0] === 'e');
+              if (threadTag && threadTag[1]) {
+                const threadId = threadTag[1];
                 
-                const thread: Thread = {
+                const reply: UserReply = {
                   id: event.id,
-                  boardId: threadData.boardId || 'unknown',
-                  title: threadData.title || 'Untitled',
-                  content: threadData.content,
-                  images: threadData.images || [],
-                  authorPubkey: event.pubkey,
-                  createdAt: event.created_at,
-                  replyCount: 0,
-                  lastReplyTime: event.created_at
+                  threadId,
+                  content: event.content,
+                  createdAt: event.created_at
                 };
                 
-                threads.push(thread);
-              } catch (error) {
-                console.error("Failed to parse user thread event", event, error);
-              }
-            }
-            
-            // Sort by creation time (newest first)
-            const sortedThreads = threads.sort((a, b) => b.createdAt - a.createdAt);
-            setUserCreatedThreads(sortedThreads);
-            
-            // Fetch user's replies
-            const replyFilter = {
-              kinds: [nostr.KIND.POST],
-              authors: [identity.pubkey],
-              limit: 20
-            };
-            
-            const replyEvents = await nostr.pool.querySync(relayUrls, replyFilter);
-            console.log(`Found ${replyEvents.length} replies by user`);
-            
-            // Parse reply events
-            const replies: UserReply[] = [];
-            let newRepliesCounter = 0;
-            
-            for (const event of replyEvents) {
-              try {
-                // Find thread ID from tags
-                const threadTag = event.tags.find((tag: string[]) => tag[0] === 'e');
-                if (threadTag && threadTag[1]) {
-                  const threadId = threadTag[1];
-                  
-                  const reply: UserReply = {
-                    id: event.id,
-                    threadId,
-                    content: event.content,
-                    createdAt: event.created_at
-                  };
-                  
-                  replies.push(reply);
-                  
-                  // Count new replies since last visit
-                  if (lastVisitData && event.created_at > parseInt(lastVisitData, 10) && event.pubkey !== identity.pubkey) {
-                    newRepliesCounter++;
-                  }
+                replies.push(reply);
+                
+                // Count new replies since last visit
+                if (lastVisitData && event.created_at > parseInt(lastVisitData, 10) && event.pubkey !== identity.pubkey) {
+                  newRepliesCounter++;
                 }
-              } catch (error) {
-                console.error("Failed to parse user reply event", event, error);
               }
+            } catch (parseError) {
+              console.error("Failed to parse user reply event", parseError);
             }
-            
-            // Sort by creation time (newest first)
-            const sortedReplies = replies.sort((a, b) => b.createdAt - a.createdAt);
-            setUserReplies(sortedReplies);
-            setNewRepliesCount(newRepliesCounter);
           }
+          
+          // Sort by creation time (newest first)
+          const sortedReplies = replies.sort((a, b) => b.createdAt - a.createdAt);
+          setUserReplies(sortedReplies);
+          setNewRepliesCount(newRepliesCounter);
+        } catch (replyError) {
+          console.error("Error fetching user replies:", replyError);
         }
+        
       } catch (error) {
-        console.error("Error fetching user activity:", error);
+        console.error("Error in user activity process:", error);
       }
     };
     
+    // Initial fetch
     fetchUserActivity();
     
-    // Set up an interval to check for new activity every minute
-    const intervalId = setInterval(fetchUserActivity, 60000);
+    // Set up an interval to check for new activity every minute, but only if we're connected
+    // We'll use a shorter interval (15 seconds) for the first check to make sure data appears quickly
+    const quickCheckId = setTimeout(() => {
+      if (connectedRelays > 0) fetchUserActivity();
+    }, 15000);
+    
+    // Then set up the regular interval
+    const intervalId = setInterval(() => {
+      if (connectedRelays > 0) fetchUserActivity();
+    }, 60000);
     
     return () => {
+      clearTimeout(quickCheckId);
       clearInterval(intervalId);
     };
-  }, [identity, connectedRelays, nostr, relays]);
+  }, [identity?.pubkey, connectedRelays]);
 
   return (
     <div className="min-h-screen bg-background">
