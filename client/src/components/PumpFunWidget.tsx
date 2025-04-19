@@ -19,7 +19,18 @@ import {
   Users, 
   BarChart4, 
   Database, 
-  Activity 
+  Activity,
+  CreditCard,
+  TrendingUp,
+  TrendingDown,
+  Tag,
+  Layers,
+  Maximize2,
+  Repeat,
+  Percent,
+  Info,
+  Lock,
+  Hash
 } from 'lucide-react';
 import {
   LineChart,
@@ -134,6 +145,25 @@ const formatNumber = (num: number | string | undefined): string => {
 const formatDate = (timestamp: number): string => {
   const date = new Date(timestamp * 1000);
   return `${date.getMonth() + 1}/${date.getDate()}`;
+};
+
+// Calculate circulation percentage
+const calculateCirculationPercentage = (circulating: string | undefined, total: string | undefined): number => {
+  if (!circulating || !total) return 0;
+  
+  try {
+    // Handle scientific notation strings or regular numbers
+    const circulatingNum = parseFloat(circulating);
+    const totalNum = parseFloat(total);
+    
+    if (isNaN(circulatingNum) || isNaN(totalNum) || totalNum === 0) return 0;
+    
+    const percentage = (circulatingNum / totalNum) * 100;
+    return Math.min(100, Math.round(percentage * 10) / 10); // Round to 1 decimal place, cap at 100%
+  } catch (error) {
+    console.error('Error calculating circulation percentage:', error);
+    return 0;
+  }
 };
 
 interface TokenData {
@@ -334,49 +364,105 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
                   </TabsList>
                   
                   <TabsContent value="overview" className="min-h-[120px]">
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                      {tokenData.holders !== undefined && (
-                        <div className="bg-white p-2 rounded border">
-                          <div className="text-xs text-gray-500 flex items-center">
-                            <Users className="h-3 w-3 mr-1" /> Holders
+                    <div className="mb-4">
+                      {/* Price Section */}
+                      <div className="mb-3 p-2 bg-gray-50 border rounded">
+                        <div className="flex justify-between items-center mb-1">
+                          <div className="text-sm text-gray-600 font-semibold flex items-center">
+                            <CreditCard className="h-4 w-4 mr-1" /> Price
                           </div>
-                          <div className="font-bold">{formatNumber(tokenData.holders)}</div>
+                          {tokenData.priceChange24h !== undefined && typeof tokenData.priceChange24h === 'number' && (
+                            <div className={`text-xs flex items-center font-medium ${tokenData.priceChange24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {tokenData.priceChange24h >= 0 ? (
+                                <TrendingUp className="h-3 w-3 mr-1" />
+                              ) : (
+                                <TrendingDown className="h-3 w-3 mr-1" />
+                              )}
+                              {Math.abs(tokenData.priceChange24h).toFixed(2)}% (24h)
+                            </div>
+                          )}
                         </div>
-                      )}
+                        <div className="text-lg font-bold">
+                          ${typeof tokenData.price === 'number' ? tokenData.price.toFixed(6) : 'N/A'}
+                        </div>
+                      </div>
                       
-                      {tokenData.volumeChange24h !== undefined && typeof tokenData.volumeChange24h === 'number' && (
-                        <div className="bg-white p-2 rounded border">
-                          <div className="text-xs text-gray-500 flex items-center">
-                            <Activity className="h-3 w-3 mr-1" /> 24h Volume
+                      {/* Primary Metrics - 2 columns */}
+                      <div className="grid grid-cols-2 gap-2 mb-3">
+                        {tokenData.holders !== undefined && (
+                          <div className="bg-white p-2 rounded border hover:bg-gray-50 transition-colors">
+                            <div className="text-xs text-gray-500 flex items-center">
+                              <Users className="h-3 w-3 mr-1" /> Holders
+                            </div>
+                            <div className="font-bold">{formatNumber(tokenData.holders)}</div>
                           </div>
-                          <div className={`font-bold flex items-center ${tokenData.volumeChange24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {tokenData.volumeChange24h >= 0 ? (
-                              <ArrowUpRight className="h-3 w-3 mr-1" />
-                            ) : (
-                              <ArrowDownRight className="h-3 w-3 mr-1" />
-                            )}
-                            {Math.abs(tokenData.volumeChange24h).toFixed(2)}%
+                        )}
+                        
+                        {tokenData.volumeChange24h !== undefined && typeof tokenData.volumeChange24h === 'number' && (
+                          <div className="bg-white p-2 rounded border hover:bg-gray-50 transition-colors">
+                            <div className="text-xs text-gray-500 flex items-center">
+                              <Activity className="h-3 w-3 mr-1" /> 24h Volume
+                            </div>
+                            <div className={`font-bold flex items-center ${tokenData.volumeChange24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {tokenData.volumeChange24h >= 0 ? (
+                                <ArrowUpRight className="h-3 w-3 mr-1" />
+                              ) : (
+                                <ArrowDownRight className="h-3 w-3 mr-1" />
+                              )}
+                              {Math.abs(tokenData.volumeChange24h).toFixed(2)}%
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                       
-                      {tokenData.totalSupply && (
-                        <div className="bg-white p-2 rounded border">
-                          <div className="text-xs text-gray-500 flex items-center">
-                            <Database className="h-3 w-3 mr-1" /> Total Supply
-                          </div>
-                          <div className="font-bold">{formatNumber(tokenData.totalSupply)}</div>
+                      {/* Supply info section */}
+                      <div className="bg-white p-2 rounded border mb-3">
+                        <div className="text-xs text-gray-500 font-medium mb-1">Supply Information</div>
+                        <div className="grid grid-cols-2 gap-1">
+                          {tokenData.totalSupply && (
+                            <div className="flex items-center">
+                              <Database className="h-3 w-3 mr-1 text-gray-400" /> 
+                              <div className="text-xs">
+                                <span className="text-gray-500 mr-1">Total:</span>
+                                <span className="font-medium">{formatNumber(tokenData.totalSupply)}</span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {tokenData.circulatingSupply && (
+                            <div className="flex items-center">
+                              <BarChart4 className="h-3 w-3 mr-1 text-gray-400" /> 
+                              <div className="text-xs">
+                                <span className="text-gray-500 mr-1">Circ:</span>
+                                <span className="font-medium">{formatNumber(tokenData.circulatingSupply)}</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
                       
-                      {tokenData.circulatingSupply && (
-                        <div className="bg-white p-2 rounded border">
-                          <div className="text-xs text-gray-500 flex items-center">
-                            <BarChart4 className="h-3 w-3 mr-1" /> Circ. Supply
-                          </div>
-                          <div className="font-bold">{formatNumber(tokenData.circulatingSupply)}</div>
-                        </div>
-                      )}
+                      {/* Token utility and category */}
+                      <div className="flex gap-2 flex-wrap">
+                        <Badge variant="outline" className="bg-gray-50">
+                          <Tag className="h-3 w-3 mr-1" />
+                          {tokenData.symbol ? tokenData.symbol.toUpperCase() : 'UNKNOWN'}
+                        </Badge>
+                        
+                        <Badge variant="outline" className="bg-gray-50">
+                          <Layers className="h-3 w-3 mr-1" />
+                          {selectedToken?.type === 'eth_address' ? 'ERC-20' : 'SPL Token'}
+                        </Badge>
+                        
+                        {tokenData.priceChange24h !== undefined && (
+                          <Badge 
+                            variant={tokenData.priceChange24h >= 0 ? "outline" : "outline"}
+                            className={tokenData.priceChange24h >= 0 ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200"}
+                          >
+                            {tokenData.priceChange24h >= 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                            {tokenData.priceChange24h >= 0 ? 'Bullish' : 'Bearish'}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </TabsContent>
                   
@@ -425,45 +511,124 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
                   </TabsContent>
                   
                   <TabsContent value="metrics" className="min-h-[120px]">
-                    <div className="space-y-2">
-                      {tokenData.priceChange24h !== undefined && typeof tokenData.priceChange24h === 'number' && (
-                        <div className="flex justify-between border-b pb-1">
-                          <span className="text-sm">24h Price Change:</span>
-                          <span className={`font-medium ${tokenData.priceChange24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {tokenData.priceChange24h >= 0 ? '+' : ''}{tokenData.priceChange24h.toFixed(2)}%
-                          </span>
-                        </div>
-                      )}
+                    {/* Market Performance Section */}
+                    <div className="mb-4">
+                      <div className="text-xs font-semibold text-gray-600 mb-2 pb-1 border-b flex items-center">
+                        <Activity className="h-3 w-3 mr-1" /> MARKET PERFORMANCE
+                      </div>
                       
-                      {tokenData.volumeChange24h !== undefined && typeof tokenData.volumeChange24h === 'number' && (
-                        <div className="flex justify-between border-b pb-1">
-                          <span className="text-sm">24h Volume Change:</span>
-                          <span className={`font-medium ${tokenData.volumeChange24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {tokenData.volumeChange24h >= 0 ? '+' : ''}{tokenData.volumeChange24h.toFixed(2)}%
-                          </span>
-                        </div>
-                      )}
+                      <div className="grid grid-cols-2 gap-3">
+                        {tokenData.priceChange24h !== undefined && typeof tokenData.priceChange24h === 'number' && (
+                          <div className="p-2 bg-gray-50 rounded border">
+                            <div className="text-xs text-gray-500 mb-1">Price (24h)</div>
+                            <div className={`flex items-center text-sm font-semibold ${tokenData.priceChange24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {tokenData.priceChange24h >= 0 ? (
+                                <TrendingUp className="h-4 w-4 mr-1" />
+                              ) : (
+                                <TrendingDown className="h-4 w-4 mr-1" />
+                              )}
+                              {tokenData.priceChange24h >= 0 ? '+' : ''}{tokenData.priceChange24h.toFixed(2)}%
+                            </div>
+                          </div>
+                        )}
+                        
+                        {tokenData.volumeChange24h !== undefined && typeof tokenData.volumeChange24h === 'number' && (
+                          <div className="p-2 bg-gray-50 rounded border">
+                            <div className="text-xs text-gray-500 mb-1">Volume (24h)</div>
+                            <div className={`flex items-center text-sm font-semibold ${tokenData.volumeChange24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {tokenData.volumeChange24h >= 0 ? (
+                                <TrendingUp className="h-4 w-4 mr-1" />
+                              ) : (
+                                <TrendingDown className="h-4 w-4 mr-1" />
+                              )}
+                              {tokenData.volumeChange24h >= 0 ? '+' : ''}{tokenData.volumeChange24h.toFixed(2)}%
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Supply & Holders Section */}
+                    <div className="mb-4">
+                      <div className="text-xs font-semibold text-gray-600 mb-2 pb-1 border-b flex items-center">
+                        <Database className="h-3 w-3 mr-1" /> SUPPLY & DISTRIBUTION
+                      </div>
                       
-                      {tokenData.holders !== undefined && (
-                        <div className="flex justify-between border-b pb-1">
-                          <span className="text-sm">Total Holders:</span>
-                          <span className="font-medium">{formatNumber(tokenData.holders)}</span>
-                        </div>
-                      )}
+                      <div className="space-y-2">
+                        {tokenData.totalSupply && (
+                          <div className="flex justify-between items-center">
+                            <div className="text-sm flex items-center text-gray-700">
+                              <Maximize2 className="h-3 w-3 mr-1 text-gray-400" /> Total Supply
+                            </div>
+                            <div className="font-medium">{formatNumber(tokenData.totalSupply)}</div>
+                          </div>
+                        )}
+                        
+                        {tokenData.circulatingSupply && (
+                          <div className="flex justify-between items-center">
+                            <div className="text-sm flex items-center text-gray-700">
+                              <Repeat className="h-3 w-3 mr-1 text-gray-400" /> Circulating Supply
+                            </div>
+                            <div className="font-medium">{formatNumber(tokenData.circulatingSupply)}</div>
+                          </div>
+                        )}
+                        
+                        {tokenData.totalSupply && tokenData.circulatingSupply && (
+                          <div className="flex justify-between items-center">
+                            <div className="text-sm flex items-center text-gray-700">
+                              <Percent className="h-3 w-3 mr-1 text-gray-400" /> Circulation Ratio
+                            </div>
+                            <div className="font-medium">
+                              {calculateCirculationPercentage(tokenData.circulatingSupply, tokenData.totalSupply)}%
+                            </div>
+                          </div>
+                        )}
+                        
+                        {tokenData.holders !== undefined && (
+                          <div className="flex justify-between items-center">
+                            <div className="text-sm flex items-center text-gray-700">
+                              <Users className="h-3 w-3 mr-1 text-gray-400" /> Holders
+                            </div>
+                            <div className="font-medium">{formatNumber(tokenData.holders)}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Token Details Section */}
+                    <div>
+                      <div className="text-xs font-semibold text-gray-600 mb-2 pb-1 border-b flex items-center">
+                        <Info className="h-3 w-3 mr-1" /> TOKEN DETAILS
+                      </div>
                       
-                      {tokenData.totalSupply && (
-                        <div className="flex justify-between border-b pb-1">
-                          <span className="text-sm">Total Supply:</span>
-                          <span className="font-medium">{formatNumber(tokenData.totalSupply)}</span>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <div className="text-sm flex items-center text-gray-700">
+                            <Hash className="h-3 w-3 mr-1 text-gray-400" /> Token Type
+                          </div>
+                          <div className="font-medium">
+                            {selectedToken?.type === 'eth_address' ? 'ERC-20' : 'SPL Token'}
+                          </div>
                         </div>
-                      )}
-                      
-                      {tokenData.circulatingSupply && (
-                        <div className="flex justify-between border-b pb-1">
-                          <span className="text-sm">Circulating Supply:</span>
-                          <span className="font-medium">{formatNumber(tokenData.circulatingSupply)}</span>
+                        
+                        <div className="flex justify-between items-center">
+                          <div className="text-sm flex items-center text-gray-700">
+                            <Tag className="h-3 w-3 mr-1 text-gray-400" /> Symbol
+                          </div>
+                          <div className="font-medium">
+                            {tokenData.symbol ? tokenData.symbol.toUpperCase() : 'UNKNOWN'}
+                          </div>
                         </div>
-                      )}
+                        
+                        <div className="flex justify-between items-center">
+                          <div className="text-sm flex items-center text-gray-700">
+                            <Lock className="h-3 w-3 mr-1 text-gray-400" /> Contract
+                          </div>
+                          <div className="font-medium text-xs font-mono truncate max-w-[120px]">
+                            {selectedToken?.value ? selectedToken.value.substring(0, 8) + '...' : 'N/A'}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </TabsContent>
                 </Tabs>
