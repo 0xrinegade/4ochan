@@ -20,7 +20,9 @@ const setOpenGraphTags = (title: string, description: string, imageUrl?: string)
     { property: 'og:title', content: formattedTitle },
     { property: 'og:description', content: description },
     { property: 'og:type', content: 'website' },
-    { property: 'og:url', content: window.location.href },
+    { property: 'og:url', content: window.location.href.includes('https://') 
+      ? window.location.href 
+      : `https://4ochan.org${window.location.pathname}` },
     { property: 'og:site_name', content: '4ochan.org' },
   ];
   
@@ -33,11 +35,13 @@ const setOpenGraphTags = (title: string, description: string, imageUrl?: string)
   
   // Add image tags if provided
   if (imageUrl) {
-    metaTags.push({ property: 'og:image', content: imageUrl });
-    twitterTags.push({ name: 'twitter:image', content: imageUrl });
+    // Make sure image URL is absolute
+    const absoluteImageUrl = imageUrl.startsWith('http') ? imageUrl : `https://4ochan.org${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+    metaTags.push({ property: 'og:image', content: absoluteImageUrl });
+    twitterTags.push({ name: 'twitter:image', content: absoluteImageUrl });
   } else {
     // Add a default image tag using the official 4ochan logo
-    const defaultImage = `${window.location.origin}/images/logo-4o.png`;
+    const defaultImage = 'https://4ochan.org/images/logo-4o.png';
     metaTags.push({ property: 'og:image', content: defaultImage });
     twitterTags.push({ name: 'twitter:image', content: defaultImage });
   }
