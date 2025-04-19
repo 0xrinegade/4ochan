@@ -191,6 +191,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ error: "Internal server error" });
     }
   });
+  
+  // Get user's reputation level
+  app.get("/api/users/:id/reputation/level", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+
+      // Get user's reputation score
+      const reputationScore = await storage.getUserReputation(userId);
+      
+      // Get current level based on score
+      const currentLevel = await storage.getReputationLevelByPoints(reputationScore);
+      
+      // Get next level if it exists
+      let nextLevel = null;
+      if (currentLevel) {
+        const allLevels = await storage.getReputationLevels();
+        const currentLevelIndex = allLevels.findIndex(level => level.id === currentLevel.id);
+        
+        if (currentLevelIndex >= 0 && currentLevelIndex < allLevels.length - 1) {
+          nextLevel = allLevels[currentLevelIndex + 1];
+        }
+      }
+      
+      return res.json({ 
+        currentLevel,
+        nextLevel,
+        currentScore: reputationScore
+      });
+    } catch (error) {
+      console.error("Error fetching reputation level:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
 
   // Add reputation points (needs authorization in production)
   app.post("/api/users/:id/reputation", async (req, res) => {

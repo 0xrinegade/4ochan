@@ -1,193 +1,192 @@
-import React, { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
+import React, { useEffect, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { apiRequest } from '@/lib/queryClient';
 
-interface ReputationLog {
+interface ReputationLevel {
   id: number;
-  userId: number;
-  amount: number;
-  reason: string;
-  sourceType: string;
-  sourceId: string | null;
-  createdAt: string;
-  createdById: number | null;
+  level: number;
+  name: string;
+  description: string;
+  minPoints: number;
+  maxPoints: number | null;
+  color: string;
+  benefits: any;
+  iconUrl: string | null;
 }
 
 interface ReputationDisplayProps {
   userId: number;
-  initialScore?: number;
-  showDetails?: boolean;
+  currentScore?: number;
+  compact?: boolean;
 }
 
 export const ReputationDisplay: React.FC<ReputationDisplayProps> = ({ 
-  userId,
-  initialScore,
-  showDetails = false
+  userId, 
+  currentScore, 
+  compact = false 
 }) => {
-  const { toast } = useToast();
-  const [reputationScore, setReputationScore] = useState<number>(initialScore || 0);
-  const [logs, setLogs] = useState<ReputationLog[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(!initialScore);
-  const [showLog, setShowLog] = useState<boolean>(false);
+  const [reputationScore, setReputationScore] = useState<number>(currentScore || 0);
+  const [reputationLevel, setReputationLevel] = useState<ReputationLevel | null>(null);
+  const [nextLevel, setNextLevel] = useState<ReputationLevel | null>(null);
+  const [progress, setProgress] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
 
-  // Fetch reputation data
   useEffect(() => {
     const fetchReputationData = async () => {
-      if (!userId) return;
-      
-      setIsLoading(true);
-      setError('');
-      
       try {
-        // Fetch reputation score if not provided
-        if (!initialScore) {
-          const scoreRes = await fetch(`/api/users/${userId}/reputation`);
-          if (scoreRes.ok) {
-            const data = await scoreRes.json();
-            setReputationScore(data.reputationScore);
-          } else {
-            throw new Error('Failed to fetch reputation score');
-          }
+        // If currentScore was not provided, fetch it
+        if (currentScore === undefined) {
+          const scoreResponse = await fetch(`/api/users/${userId}/reputation`);
+          if (!scoreResponse.ok) throw new Error('Failed to fetch reputation score');
+          const scoreData = await scoreResponse.json();
+          setReputationScore(scoreData.score);
         }
         
-        // Fetch logs if showing details
-        if (showDetails) {
-          const logsRes = await fetch(`/api/users/${userId}/reputation/logs`);
-          if (logsRes.ok) {
-            const logsData = await logsRes.json();
-            setLogs(logsData);
-          } else {
-            throw new Error('Failed to fetch reputation logs');
-          }
+        // Fetch user's current reputation level
+        const levelResponse = await fetch(`/api/users/${userId}/reputation/level`);
+        if (!levelResponse.ok) throw new Error('Failed to fetch reputation level');
+        const levelData = await levelResponse.json();
+        setReputationLevel(levelData.currentLevel);
+        setNextLevel(levelData.nextLevel);
+        
+        // Calculate progress to next level
+        if (levelData.currentLevel && levelData.nextLevel) {
+          const current = reputationScore - levelData.currentLevel.minPoints;
+          const total = levelData.nextLevel.minPoints - levelData.currentLevel.minPoints;
+          const calculatedProgress = Math.min(100, Math.max(0, (current / total) * 100));
+          setProgress(calculatedProgress);
+        } else if (levelData.currentLevel && !levelData.nextLevel) {
+          // Max level reached
+          setProgress(100);
         }
       } catch (err) {
         console.error('Error fetching reputation data:', err);
         setError('Could not load reputation data');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
-    
+
     fetchReputationData();
-  }, [userId, initialScore, showDetails]);
+  }, [userId, currentScore]);
 
-  // Get color class based on reputation score
-  const getReputationColor = (score: number): string => {
-    if (score < 0) return 'text-red-700';
-    if (score < 10) return 'text-gray-700';
-    if (score < 50) return 'text-primary';
-    if (score < 100) return 'text-primary font-bold';
-    return 'text-primary font-bold blink'; // Blinking effect for high reputation
-  };
-
-  // Get rank label based on reputation score
-  const getReputationRank = (score: number): string => {
-    if (score < 0) return 'Troll';
-    if (score < 10) return 'Newbie';
-    if (score < 50) return 'Regular';
-    if (score < 100) return 'Trusted';
-    if (score < 500) return 'Elder';
-    return 'Legend';
-  };
-
-  const toggleLog = () => {
-    setShowLog(!showLog);
-  };
-
-  if (isLoading) {
-    return <span className="inline-block bg-gray-100 text-gray-700 px-1 text-sm">...</span>;
+  // Default reputation level data if server fails
+  if (error && !reputationLevel) {
+    // Create a basic level based on score
+    const defaultLevel = {
+      id: 0,
+      level: Math.floor(reputationScore / 100),
+      name: getTrustLevelName(Math.floor(reputationScore / 100)),
+      description: "User reputation level",
+      minPoints: Math.floor(reputationScore / 100) * 100,
+      maxPoints: Math.floor(reputationScore / 100) * 100 + 100,
+      color: "#888888",
+      benefits: null,
+      iconUrl: null
+    };
+    setReputationLevel(defaultLevel);
+    setProgress(((reputationScore - defaultLevel.minPoints) / 100) * 100);
+    setError('');
   }
 
-  if (error) {
-    return <span className="inline-block bg-red-100 text-red-700 px-1 text-sm">Error</span>;
+  function getTrustLevelName(level: number): string {
+    switch(level) {
+      case 0: return 'New User';
+      case 1: return 'Basic User';
+      case 2: return 'Member';
+      case 3: return 'Regular';
+      case 4: return 'Trusted';
+      case 5: return 'Elder';
+      default: return level > 5 ? 'Legend' : `Level ${level}`;
+    }
   }
 
-  // Simple compact display
-  if (!showDetails) {
+  // Show nothing while loading in compact mode
+  if (loading && compact) return null;
+
+  // Loading state
+  if (loading) {
     return (
-      <span className={`monaco ${getReputationColor(reputationScore)}`}>
-        {reputationScore}
-      </span>
+      <div className="border border-black p-2 bg-white mb-2">
+        <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+      </div>
     );
   }
 
-  // Detailed display with logs
-  return (
-    <div className="thread-container">
-      <div className="section-header">reputation profile</div>
-      
-      <div className="p-3">
-        <div className="flex items-center mb-3">
-          <div className="text-2xl font-bold mr-3 monaco">
-            <span className={getReputationColor(reputationScore)}>
-              {reputationScore}
-            </span>
-          </div>
-          
-          <div className="border border-black px-2 py-1 bg-white text-sm">
-            Rank: <span className="font-bold">{getReputationRank(reputationScore)}</span>
-          </div>
-        </div>
-        
-        <div className="mb-3">
-          <div className="w-full bg-gray-200 h-4 border border-black">
-            <div 
-              className="bg-primary h-full" 
-              style={{ 
-                width: `${Math.min(Math.max((reputationScore / 100) * 100, 0), 100)}%` 
-              }}
-            ></div>
-          </div>
-        </div>
-        
-        <Button
-          variant="outline"
-          className="border-black mb-3"
-          onClick={toggleLog}
+  // Compact view
+  if (compact) {
+    return reputationLevel ? (
+      <div className="flex items-center gap-1">
+        <Badge 
+          variant="outline" 
+          className="border-black px-2 py-0.5 text-xs font-normal bg-gray-100"
+          style={{ backgroundColor: reputationLevel.color + '20' }}
         >
-          {showLog ? 'Hide Reputation History' : 'Show Reputation History'}
-        </Button>
+          {reputationLevel.name}
+        </Badge>
+        <span className="text-xs text-gray-600">{reputationScore} points</span>
+      </div>
+    ) : null;
+  }
+
+  // Full display
+  return (
+    <div className="border border-black p-3 bg-white mb-4">
+      <div className="section-header">reputation</div>
+      <div className="p-2 border border-black border-t-0 bg-white">
+        <div className="flex justify-between items-center mb-2">
+          <div className="flex items-center">
+            {reputationLevel?.iconUrl ? (
+              <img 
+                src={reputationLevel.iconUrl} 
+                alt={reputationLevel.name} 
+                className="w-5 h-5 mr-2"
+              />
+            ) : (
+              <div 
+                className="w-5 h-5 mr-2 flex items-center justify-center font-bold text-xs rounded-full"
+                style={{ backgroundColor: reputationLevel?.color || '#888888', color: 'white' }}
+              >
+                {reputationLevel?.level}
+              </div>
+            )}
+            <span className="font-bold">{reputationLevel?.name || 'Unknown'}</span>
+          </div>
+          <span className="text-sm">{reputationScore} points</span>
+        </div>
         
-        {showLog && (
-          <div className="border border-black">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border border-black p-1 text-left">Date</th>
-                  <th className="border border-black p-1 text-left">Change</th>
-                  <th className="border border-black p-1 text-left">Reason</th>
-                </tr>
-              </thead>
-              <tbody>
-                {logs.length > 0 ? (
-                  logs.map(log => (
-                    <tr key={log.id} className="hover:bg-gray-50">
-                      <td className="border border-black p-1">
-                        {new Date(log.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className={`border border-black p-1 ${log.amount >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                        {log.amount >= 0 ? `+${log.amount}` : log.amount}
-                      </td>
-                      <td className="border border-black p-1">
-                        {log.reason}
-                        {log.sourceType && (
-                          <span className="text-xs ml-1 text-gray-500">
-                            ({log.sourceType})
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={3} className="border border-black p-2 text-center">
-                      No reputation history found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+        {nextLevel && (
+          <>
+            <Progress value={progress} className="h-2 mb-1" />
+            <div className="flex justify-between text-xs text-gray-600">
+              <span>{reputationLevel?.minPoints}</span>
+              <span>{nextLevel.minPoints} needed for {nextLevel.name}</span>
+            </div>
+          </>
+        )}
+        
+        {reputationLevel && !nextLevel && (
+          <div className="text-center text-sm mt-2 italic">
+            Maximum level reached! 🏆
+          </div>
+        )}
+        
+        {reputationLevel?.description && (
+          <div className="mt-2 text-sm">
+            {reputationLevel.description}
+          </div>
+        )}
+        
+        {reputationLevel?.benefits && (
+          <div className="mt-2">
+            <div className="text-sm font-bold">Benefits:</div>
+            <ul className="list-disc list-inside text-xs">
+              {Object.entries(reputationLevel.benefits).map(([key, value]) => (
+                <li key={key}>{key}: {String(value)}</li>
+              ))}
+            </ul>
           </div>
         )}
       </div>
