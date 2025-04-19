@@ -34,7 +34,7 @@ export const ThreadPopularityHeatmap: React.FC<ThreadPopularityHeatmapProps> = (
       const MAX_AGE = 60 * 60 * 24 * 7; // One week in seconds
       
       for (const thread of threads) {
-        // Get reply count for the thread
+        // Get reply count for the thread with safeguard for null/undefined
         const replyCount = thread.replyCount || 0;
         
         // Calculate time factor (newer = hotter)
@@ -125,14 +125,14 @@ export const ThreadPopularityHeatmap: React.FC<ThreadPopularityHeatmapProps> = (
               getHeatColor(cell.heat)
             )}
             onClick={() => onThreadSelect(cell.thread.id)}
-            title={`${cell.thread.title} - ${cell.thread.replyCount} replies - ${timeAgo(cell.thread.createdAt)}`}
+            title={`${cell.thread.title} - ${cell.thread.replyCount || 0} ${(cell.thread.replyCount === 1) ? 'reply' : 'replies'} - ${timeAgo(cell.thread.createdAt)}`}
           >
             <div className="absolute inset-0 p-1 flex flex-col text-xs">
               <div className="font-bold truncate">
                 {cell.thread.title}
               </div>
-              <div className="text-[8px] mt-auto">
-                {cell.thread.replyCount} replies
+              <div className="text-[8px] mt-auto font-bold">
+                {cell.thread.replyCount || 0} {(cell.thread.replyCount === 1) ? 'reply' : 'replies'}
               </div>
             </div>
           </div>
