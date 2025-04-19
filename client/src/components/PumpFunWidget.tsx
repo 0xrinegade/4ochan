@@ -758,14 +758,14 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
                                 </Badge>
                               </div>
                               
-                              {tokenData.bondingInfo.createdAt && (
+                              {tokenData.bondingInfo?.createdAt && (
                                 <div className="flex justify-between items-center text-sm mb-1">
                                   <div className="text-gray-500">Created:</div>
                                   <div>{new Date(tokenData.bondingInfo.createdAt).toLocaleDateString()}</div>
                                 </div>
                               )}
                               
-                              {tokenData.bondingInfo.bondingStatus === 'bonding' && tokenData.bondingInfo.bondingCurve && (
+                              {tokenData.bondingInfo?.bondingStatus === 'bonding' && tokenData.bondingInfo?.bondingCurve && (
                                 <div className="mt-3 pt-2 border-t">
                                   <div className="text-xs font-semibold mb-2">Bonding Curve Details:</div>
                                   <div className="grid grid-cols-2 gap-2 text-xs">
