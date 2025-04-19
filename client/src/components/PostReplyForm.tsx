@@ -206,7 +206,7 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
   };
 
   return (
-    <form onSubmit={handleSubmit} className="border border-black p-3 bg-[#f5f5dc]">
+    <form onSubmit={handleSubmit} className="border border-black p-3 bg-card">
       <div className="mb-2">
         <div className="text-sm font-bold mb-1 bg-primary text-white p-1">YOUR MESSAGE</div>
         <Textarea
@@ -216,7 +216,7 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
           }}
           placeholder="What's your response?"
           rows={3}
-          className="w-full p-2 border border-black rounded-none bg-white text-sm font-mono"
+          className="w-full p-2 border border-black rounded-none bg-background text-foreground text-sm font-mono"
           disabled={isSubmitting || isProcessing}
         />
       </div>
@@ -226,7 +226,7 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
         <Button
           type="button"
           variant="outline"
-          className="w-full border-black text-black hover:bg-gray-100 rounded-none text-xs"
+          className="w-full border-black text-foreground hover:bg-accent rounded-none text-xs"
           onClick={() => setShowMediaUploader(!showMediaUploader)}
           disabled={isSubmitting}
         >
@@ -236,7 +236,7 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
 
       {/* Media Uploader */}
       {showMediaUploader && (
-        <div className="mb-4 p-2 border border-black bg-white">
+        <div className="mb-4 p-2 border border-black bg-background">
           <div className="text-xs font-bold mb-2">Upload Media Files</div>
           <MediaUploader 
             onMediaUploaded={handleMediaUploaded}
@@ -253,7 +253,7 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
             type="button"
             variant="outline"
             size="sm"
-            className="flex items-center text-black hover:text-primary border-black rounded-none text-xs"
+            className="flex items-center text-foreground hover:text-primary border-black rounded-none text-xs"
             onClick={() => document.getElementById("reply-image-upload")?.click()}
             disabled={isSubmitting}
           >
@@ -267,7 +267,7 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
             onChange={handleFileChange}
             disabled={isSubmitting}
           />
-          <span className="text-xs text-gray-700 ml-2">
+          <span className="text-xs text-muted-foreground ml-2">
             {selectedFile ? selectedFile.name : ""}
           </span>
         </div>

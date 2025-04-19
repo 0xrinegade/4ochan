@@ -214,15 +214,15 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg bg-[#f5f5dc] border-2 border-black p-0 rounded-none shadow-none">
+      <DialogContent className="sm:max-w-lg bg-card border-2 border-black p-0 rounded-none shadow-none">
         <DialogHeader className="bg-primary text-white p-2 border-b-2 border-black">
           <DialogTitle className="text-base font-bold">Create New Thread in /{boardShortName}/</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="bg-[#f5f5dc]">
+        <form onSubmit={handleSubmit} className="bg-card">
           <div className="space-y-4">
             <div>
-              <Label htmlFor="title" className="font-bold text-black">Subject (optional)</Label>
+              <Label htmlFor="title" className="font-bold text-foreground">Subject (optional)</Label>
               <Input
                 id="title"
                 value={title}
@@ -233,7 +233,7 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
             </div>
             
             <div>
-              <Label htmlFor="content" className="font-bold text-black">YOUR MESSAGE</Label>
+              <Label htmlFor="content" className="font-bold text-foreground">YOUR MESSAGE</Label>
               <Textarea
                 id="content"
                 value={content}

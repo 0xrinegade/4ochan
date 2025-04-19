@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { encode } from 'gpt-tokenizer'; // For token counting
+import { encode } from "gpt-tokenizer"; // For token counting
 
 // The newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -10,7 +10,7 @@ const TOKEN_THRESHOLD = 30;
 // Utility function to select most appropriate model based on input length
 const getModelForPrompt = (prompt: string): string => {
   const tokens = encode(prompt);
-  return tokens.length < TOKEN_THRESHOLD ? 'gpt-3.5-turbo' : 'gpt-4o';
+  return tokens.length < TOKEN_THRESHOLD ? "gpt-3.5-turbo" : "gpt-4o";
 };
 
 interface AIAuthResponse {
@@ -25,8 +25,10 @@ export async function authenticateWithAI(
 ): Promise<AIAuthResponse> {
   try {
     const model = getModelForPrompt(input);
-    console.log(`Using ${model} for authentication (input length: ${input.length} chars)`);
-    
+    console.log(
+      `Using ${model} for authentication (input length: ${input.length} chars)`,
+    );
+
     const response = await openai.chat.completions.create({
       model: model,
       messages: [
@@ -67,8 +69,10 @@ export async function authenticateWithAI(
 export async function generateAIResponse(prompt: string): Promise<string> {
   try {
     const model = getModelForPrompt(prompt);
-    console.log(`Using ${model} for generateAIResponse (input length: ${prompt.length} chars)`);
-    
+    console.log(
+      `Using ${model} for generateAIResponse (input length: ${prompt.length} chars)`,
+    );
+
     const response = await openai.chat.completions.create({
       model: model,
       messages: [
@@ -103,8 +107,12 @@ interface GPTInTheMiddleResponse {
 }
 
 const buildSystemPrompt = (context?: string) => `
-You are the GPT-In-The-Middle for an anonymous messageboard. 
-Your job is to process each user message before it gets posted.
+Your job is NOT to reply to the user or act as a chatbot. You are NOT here to answer their question or help them. 
+You are here to transform their message into something that’s more expressive, detailed, or better-formed for posting to a thread.
+
+NEVER respond with “you” or speak directly to the user.
+NEVER ask clarifying questions or prompt for more context.
+Only rewrite the user’s message, as if they had expressed it more clearly or completely themselves.
 
 Your output must preserve the user's tone, mood, and style — it should feel like *they* wrote it, just more fully expressed if needed.
 
@@ -172,7 +180,9 @@ export async function processUserInput(
 
     // Select model based on prompt length
     const model = getModelForPrompt(userInput);
-    console.log(`Using ${model} for GPT-In-The-Middle (input length: ${userInput.length} chars)`);
+    console.log(
+      `Using ${model} for GPT-In-The-Middle (input length: ${userInput.length} chars)`,
+    );
 
     const response = await openai.chat.completions.create({
       model: model,
