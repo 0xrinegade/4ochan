@@ -320,10 +320,28 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId, replyId, setOp
         // Reset the copied state after a short delay
         setTimeout(() => {
           setCopiedPostId(null);
-        }, 2000);
+        }, 3000); // Increased from 2000ms to 3000ms for better visibility
       });
+      
+      // Add analytics tracking if needed
+      // trackEvent('Share', { type: 'post', id: postId });
     } catch (error) {
       console.error('Failed to copy share link:', error);
+      
+      // Fallback method for browsers that don't support clipboard API
+      const textarea = document.createElement('textarea');
+      const url = `${window.location.origin}/thread/${threadId}/reply/${postId}`;
+      textarea.value = url;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        setCopiedPostId(postId);
+        setTimeout(() => setCopiedPostId(null), 3000);
+      } catch (err) {
+        console.error('Fallback copy method failed:', err);
+      }
+      document.body.removeChild(textarea);
     }
   };
 
@@ -565,17 +583,17 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId, replyId, setOp
                           {/* Share button for thread */}
                           <Button
                             onClick={() => handleSharePost(thread.id)}
-                            variant="ghost"
+                            variant={copiedPostId === thread.id ? "secondary" : "ghost"}
                             size="sm"
-                            className="text-xs text-gray-500"
+                            className={`text-xs ${copiedPostId === thread.id ? "bg-green-100 text-green-700 border-green-300" : "text-gray-500 hover:text-accent hover:bg-amber-50"}`}
                             title="Share this thread"
                           >
                             {copiedPostId === thread.id ? (
-                              <Check size={14} className="mr-1" />
+                              <Check size={14} className="mr-1 text-green-600" />
                             ) : (
                               <Share2 size={14} className="mr-1" />
                             )}
-                            {copiedPostId === thread.id ? "Copied!" : "Share"}
+                            {copiedPostId === thread.id ? "Copied to clipboard!" : "Share link"}
                           </Button>
                         </div>
                       </div>
@@ -586,7 +604,7 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId, replyId, setOp
                 <TabsContent value="visualization" className="pt-2">
                   <ThreadContextVisualization
                     threadId={threadId}
-                    highlightedPostId={selectedPostId}
+                    highlightedPostId={selectedPostId || undefined}
                   />
                 </TabsContent>
               </Tabs>
@@ -716,17 +734,17 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId, replyId, setOp
                             {/* Share button for reply */}
                             <Button
                               onClick={() => handleSharePost(post.id)}
-                              variant="ghost"
+                              variant={copiedPostId === post.id ? "secondary" : "ghost"}
                               size="sm"
-                              className="text-xs text-gray-500"
+                              className={`text-xs ${copiedPostId === post.id ? "bg-green-100 text-green-700 border-green-300" : "text-gray-500 hover:text-accent hover:bg-amber-50"}`}
                               title="Share this reply"
                             >
                               {copiedPostId === post.id ? (
-                                <Check size={14} className="mr-1" />
+                                <Check size={14} className="mr-1 text-green-600" />
                               ) : (
                                 <Share2 size={14} className="mr-1" />
                               )}
-                              {copiedPostId === post.id ? "Copied!" : "Share"}
+                              {copiedPostId === post.id ? "Copied to clipboard!" : "Share link"}
                             </Button>
                           </div>
                         </div>

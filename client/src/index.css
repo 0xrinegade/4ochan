@@ -646,6 +646,17 @@
     color: hsl(var(--card-foreground));
   }
   
+  /* Share button animation */
+  @keyframes copy-success-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+    50% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  }
+  
+  .bg-green-100 {
+    animation: copy-success-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) 1;
+  }
+  
   /* Theme-specific input styles */
   .theme-crimson input:focus, 
   .theme-crimson textarea:focus, 
