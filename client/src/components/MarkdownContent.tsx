@@ -65,11 +65,53 @@ const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element =>
         <div className="typst-preview">
           <div className="typst-render">
             <div className="typst-heading">
-              <h3>Preview</h3>
-              <p>This is a preview of the Typst document.</p>
+              <h3>Typst Document Preview</h3>
+              <p>This document has been formatted for better readability</p>
             </div>
             <div className="typst-content">
-              <pre className="typst-formatted">{content}</pre>
+              {content.split('\n').map((line, index) => {
+                // Process Typst syntax to add formatting
+                let formattedLine = line;
+                
+                // Format headings (= Heading)
+                if (line.trim().startsWith('= ')) {
+                  return <h1 key={index} className="typst-heading-1">{line.trim().substring(2)}</h1>;
+                }
+                // Format subheadings (== Subheading)
+                else if (line.trim().startsWith('== ')) {
+                  return <h2 key={index} className="typst-heading-2">{line.trim().substring(3)}</h2>;
+                }
+                // Format subsubheadings (=== Subsubheading)
+                else if (line.trim().startsWith('=== ')) {
+                  return <h3 key={index} className="typst-heading-3">{line.trim().substring(4)}</h3>;
+                }
+                // Format bold (*bold*)
+                else if (line.includes('*') && !line.trim().startsWith('- ')) {
+                  formattedLine = formattedLine.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+                }
+                // Format italics (_italic_)
+                if (line.includes('_')) {
+                  formattedLine = formattedLine.replace(/_(.*?)_/g, '<em>$1</em>');
+                }
+                // Format code (`code`)
+                if (line.includes('`')) {
+                  formattedLine = formattedLine.replace(/`(.*?)`/g, '<code>$1</code>');
+                }
+                // Format lists
+                if (line.trim().startsWith('- ')) {
+                  return <li key={index} className="typst-list-item">{line.trim().substring(2)}</li>;
+                }
+                // Format block elements
+                if (line.trim().startsWith('#')) {
+                  return <div key={index} className="typst-block">{line}</div>;
+                }
+                
+                // Return the regular line with formatting applied
+                return (
+                  <div key={index} className="typst-line" 
+                       dangerouslySetInnerHTML={{__html: formattedLine}} />
+                );
+              })}
             </div>
           </div>
         </div>

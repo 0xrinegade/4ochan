@@ -837,6 +837,102 @@
     line-height: 1.5;
   }
   
+  /* Typst document specific elements */
+  .typst-heading-1 {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin: 1.5rem 0 1rem;
+    color: hsl(var(--primary));
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 0.5rem;
+  }
+  
+  .typst-heading-2 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 1.2rem 0 0.8rem;
+    color: hsl(var(--primary));
+  }
+  
+  .typst-heading-3 {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin: 1rem 0 0.6rem;
+    color: hsl(var(--primary));
+  }
+  
+  .typst-list-item {
+    margin: 0.25rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    list-style-type: none;
+  }
+  
+  .typst-list-item::before {
+    content: "•";
+    position: absolute;
+    left: 0.5rem;
+    color: hsl(var(--primary));
+  }
+  
+  .typst-block {
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+    background-color: #f5f5f5;
+    border-left: 3px solid hsl(var(--primary));
+    font-family: 'Monaco', 'Courier New', monospace;
+  }
+  
+  .typst-line {
+    margin: 0.25rem 0;
+    line-height: 1.6;
+  }
+  
+  .typst-line code {
+    background-color: #f0f0f0;
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.85em;
+    color: #d63384;
+  }
+  
+  .typst-line strong {
+    font-weight: bold;
+    color: #0d6efd;
+  }
+  
+  .typst-line em {
+    font-style: italic;
+    color: #6610f2;
+  }
+  
+  /* Dark mode styles for Typst elements */
+  .theme-dark .typst-heading-1,
+  .theme-dark .typst-heading-2,
+  .theme-dark .typst-heading-3 {
+    color: hsl(var(--primary));
+    border-color: #444;
+  }
+  
+  .theme-dark .typst-block {
+    background-color: #2d2d2d;
+    border-left-color: hsl(var(--primary));
+  }
+  
+  .theme-dark .typst-line code {
+    background-color: #333;
+    color: #ff7b72;
+  }
+  
+  .theme-dark .typst-line strong {
+    color: #79c0ff;
+  }
+  
+  .theme-dark .typst-line em {
+    color: #d2a8ff;
+  }
+  
   .theme-dark .typst-render {
     background-color: #1e1e1e;
   }
