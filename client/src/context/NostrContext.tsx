@@ -43,6 +43,11 @@ interface NostrContextType {
   getPostsByThread: (threadId: string) => Promise<Post[]>;
   createThread: (boardId: string, title: string, content: string, imageUrls: string[], media?: MediaContent[]) => Promise<Thread>;
   createPost: (threadId: string, content: string, replyToIds: string[], imageUrls: string[], media?: MediaContent[]) => Promise<Post>;
+  // Post likes
+  likePost: (postId: string) => Promise<void>;
+  unlikePost: (postId: string) => Promise<void>;
+  getPostLikes: (postId: string) => Promise<number>;
+  isPostLikedByUser: (postId: string) => Promise<boolean>;
   // Thread subscriptions
   subscribeToThread: (threadId: string, notifyOnReplies?: boolean, notifyOnMentions?: boolean) => Promise<ThreadSubscription>;
   unsubscribeFromThread: (subscriptionId: string) => Promise<void>;

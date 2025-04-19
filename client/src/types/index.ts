@@ -120,4 +120,6 @@ export interface Post {
   images?: string[];
   media?: MediaContent[];
   references?: string[]; // References to other posts/events
+  likes?: number; // Count of likes for this post
+  likedByUser?: boolean; // Whether the current user has liked this post
 }
