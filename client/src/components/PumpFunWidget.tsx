@@ -738,20 +738,23 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
                                 <Badge 
                                   variant="outline"
                                   className={
-                                    tokenData.bondingInfo.bondingStatus === 'bonding' 
+                                    tokenData.bondingInfo?.bondingStatus === 'bonding' 
                                       ? "bg-blue-50 text-blue-700 border-blue-200"
-                                      : tokenData.bondingInfo.bondingStatus === 'graduated'
+                                      : tokenData.bondingInfo?.bondingStatus === 'graduated'
                                         ? "bg-green-50 text-green-700 border-green-200"
                                         : "bg-yellow-50 text-yellow-700 border-yellow-200"
                                   }
                                 >
-                                  {tokenData.bondingInfo.bondingStatus === 'bonding' 
+                                  {tokenData.bondingInfo?.bondingStatus === 'bonding' 
                                     ? <LockIcon className="h-3 w-3 mr-1" /> 
-                                    : tokenData.bondingInfo.bondingStatus === 'graduated'
+                                    : tokenData.bondingInfo?.bondingStatus === 'graduated'
                                       ? <Maximize2 className="h-3 w-3 mr-1" />
                                       : <Tag className="h-3 w-3 mr-1" />
                                   }
-                                  {tokenData.bondingInfo.bondingStatus.charAt(0).toUpperCase() + tokenData.bondingInfo.bondingStatus.slice(1)}
+                                  {tokenData.bondingInfo?.bondingStatus 
+                                    ? tokenData.bondingInfo.bondingStatus.charAt(0).toUpperCase() + tokenData.bondingInfo.bondingStatus.slice(1)
+                                    : "Unknown"
+                                  }
                                 </Badge>
                               </div>
                               
@@ -846,22 +849,54 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
                           </div>
                         </div>
                         
-                        {/* Related tokens section - we could add fetching new/bonding/graduated tokens here */}
+                        {/* Related tokens section */}
                         <div>
                           <div className="text-xs font-semibold text-gray-600 mb-2 pb-1 border-b flex items-center">
                             <Hash className="h-3 w-3 mr-1" /> SIMILAR TOKENS
                           </div>
-                          <div className="text-center text-sm text-gray-500 py-3">
-                            <p>Check Pump.fun for similar tokens</p>
+                          <div className="grid grid-cols-2 gap-2">
                             <Button 
-                              variant="default" 
+                              variant="outline" 
                               size="sm"
-                              className="mt-2"
+                              className="text-xs"
                               onClick={() => {
                                 window.open('https://www.pump.fun/tokens/new', '_blank');
                               }}
                             >
-                              View New Tokens <ExternalLink className="h-3 w-3 ml-1" />
+                              New Tokens <ExternalLink className="h-3 w-3 ml-1" />
+                            </Button>
+                            
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-xs"
+                              onClick={() => {
+                                window.open('https://www.pump.fun/tokens/bonding', '_blank');
+                              }}
+                            >
+                              Bonding Tokens <ExternalLink className="h-3 w-3 ml-1" />
+                            </Button>
+                            
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-xs"
+                              onClick={() => {
+                                window.open('https://www.pump.fun/tokens/graduated', '_blank');
+                              }}
+                            >
+                              Graduated <ExternalLink className="h-3 w-3 ml-1" />
+                            </Button>
+                            
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-xs"
+                              onClick={() => {
+                                window.open('https://www.pump.fun/explorer', '_blank');
+                              }}
+                            >
+                              Explorer <ExternalLink className="h-3 w-3 ml-1" />
                             </Button>
                           </div>
                         </div>
