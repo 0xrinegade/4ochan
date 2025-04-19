@@ -116,6 +116,7 @@ export interface Post {
   replyToId?: string;
   content: string;
   authorPubkey: string;
+  authorName?: string; // Display name or username of the author
   createdAt: number;
   images?: string[];
   media?: MediaContent[];
