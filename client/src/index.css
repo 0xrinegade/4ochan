@@ -152,6 +152,65 @@
   overflow-x: auto;
 }
 
+/* Mermaid container styling */
+.mermaid-container {
+  margin: 1rem 0;
+  border: 2px solid black;
+  overflow: hidden;
+}
+
+.mermaid-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  border-bottom: 1px solid black;
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.mermaid-title {
+  font-weight: bold;
+  font-family: 'Libertarian', monospace;
+}
+
+.mermaid-action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.mermaid-action-button {
+  padding: 2px 6px;
+  border: 1px solid black;
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.mermaid-action-button:hover {
+  filter: brightness(95%);
+  text-decoration: none;
+}
+
+.mermaid-error {
+  padding: 1rem;
+  background-color: #ffebee;
+  color: #c62828;
+  border-top: 1px solid #ef9a9a;
+}
+
+.mermaid-error pre {
+  background-color: #fff;
+  padding: 0.5rem;
+  border: 1px solid #ef9a9a;
+  color: #c62828;
+  font-size: 0.8rem;
+  overflow-x: auto;
+  margin-bottom: 0.5rem;
+}
+
 @font-face {
   font-family: 'Libertarian';
   src: url('@assets/Libertarian.ttf') format('truetype');

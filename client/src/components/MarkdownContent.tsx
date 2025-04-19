@@ -1,13 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vs, vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import mermaid from 'mermaid';
 
 interface MarkdownContentProps {
   content: string;
   className?: string;
 }
+
+// Initialize mermaid
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'default',
+  securityLevel: 'loose',
+  fontFamily: 'Libertarian, monospace',
+});
 
 // Function to handle Typst code blocks
 const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element => {
@@ -40,6 +49,88 @@ const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element =>
       >
         {content}
       </SyntaxHighlighter>
+    </div>
+  );
+};
+
+// Component to render Mermaid diagrams
+const MermaidDiagram: React.FC<{ chart: string, isDarkMode: boolean }> = ({ chart, isDarkMode }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [rendered, setRendered] = useState(false);
+  
+  useEffect(() => {
+    // Initialize Mermaid with the correct theme
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: isDarkMode ? 'dark' : 'default',
+      securityLevel: 'loose',
+      fontFamily: 'Libertarian, monospace',
+    });
+    
+    if (ref.current && !rendered) {
+      try {
+        // Clear the container first
+        ref.current.innerHTML = '';
+        
+        // Generate a unique ID for this diagram
+        const id = `mermaid-diagram-${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Render the diagram
+        mermaid.render(id, chart).then(result => {
+          if (ref.current) {
+            ref.current.innerHTML = result.svg;
+            setRendered(true);
+            setError(null);
+          }
+        }).catch(err => {
+          console.error('Mermaid rendering error:', err);
+          setError(`Failed to render diagram: ${err.message}`);
+        });
+      } catch (err: any) {
+        console.error('Mermaid rendering error:', err);
+        setError(`Failed to render diagram: ${err.message}`);
+      }
+    }
+  }, [chart, isDarkMode, rendered]);
+  
+  return (
+    <div className="mermaid-container">
+      <div className="mermaid-header">
+        <div className="mermaid-title">Mermaid Diagram</div>
+        <div className="mermaid-action-buttons">
+          <button 
+            className="mermaid-action-button" 
+            title="Copy Mermaid code" 
+            onClick={() => navigator.clipboard.writeText(chart)}
+          >
+            Copy
+          </button>
+          <a 
+            href={`https://mermaid.live/edit#${encodeURIComponent(chart)}`} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="mermaid-action-button"
+          >
+            Edit Live
+          </a>
+        </div>
+      </div>
+      {error ? (
+        <div className="mermaid-error">
+          <p>Error rendering Mermaid diagram:</p>
+          <pre>{error}</pre>
+          <SyntaxHighlighter
+            style={isDarkMode ? vscDarkPlus : vs}
+            language="mermaid"
+            PreTag="div"
+          >
+            {chart}
+          </SyntaxHighlighter>
+        </div>
+      ) : (
+        <div ref={ref} className="mermaid-diagram" />
+      )}
     </div>
   );
 };
@@ -83,21 +174,26 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, class
               const language = match[1];
               const codeContent = String(children).replace(/\n$/, '');
               
-              // Special handling for Typst
-              if (language === 'typst') {
-                return processTypstBlock(codeContent, isDarkMode);
+              // Special handling for different languages
+              switch (language) {
+                case 'typst':
+                  return processTypstBlock(codeContent, isDarkMode);
+                
+                case 'mermaid':
+                  return <MermaidDiagram chart={codeContent} isDarkMode={isDarkMode} />;
+                
+                default:
+                  // Default syntax highlighting for other languages
+                  return (
+                    <SyntaxHighlighter
+                      style={isDarkMode ? vscDarkPlus : vs}
+                      language={language}
+                      PreTag="div"
+                    >
+                      {codeContent}
+                    </SyntaxHighlighter>
+                  );
               }
-              
-              // Default syntax highlighting for other languages
-              return (
-                <SyntaxHighlighter
-                  style={isDarkMode ? vscDarkPlus : vs}
-                  language={language}
-                  PreTag="div"
-                >
-                  {codeContent}
-                </SyntaxHighlighter>
-              );
             } 
             
             // Inline code
