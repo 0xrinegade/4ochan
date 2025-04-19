@@ -80,15 +80,15 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
         
         // Show success message
         toast({
-          title: "AI Processing Complete",
-          description: "Your message has been processed by GPT-4o. Review and post!",
+          title: "Message Ready",
+          description: "Your message is ready to post.",
         });
         
         return true;
       } else {
         toast({
           title: "Processing Failed",
-          description: response.message || "Failed to process your message with AI",
+          description: response.message || "Failed to process your message",
           variant: "destructive",
         });
         return false;
@@ -240,7 +240,7 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
                 onChange={(e) => {
                   setContent(e.target.value);
                 }}
-                placeholder="What do you want to discuss? (Your message will be enhanced by AI)"
+                placeholder="What do you want to discuss?"
                 rows={4}
                 className="mt-1 border-black rounded-none bg-white font-mono text-sm p-2"
                 required
@@ -274,7 +274,7 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
             
             <div className="flex justify-between pt-2 border-t border-gray-300">
               <div className="text-xs text-gray-700 italic max-w-xs">
-                Your message will be processed by GPT-4o before posting. The AI might suggest a title based on your content.
+                A title may be suggested based on your message content if you leave the subject field empty.
               </div>
               
               <div className="flex">

@@ -74,15 +74,15 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
         
         // Show success message
         toast({
-          title: "AI Processing Complete",
-          description: "Your message has been processed by GPT-4o. Review and post!",
+          title: "Message Ready",
+          description: "Your message is ready to post.",
         });
         
         return true;
       } else {
         toast({
           title: "Processing Failed",
-          description: response.message || "Failed to process your message with AI",
+          description: response.message || "Failed to process your message",
           variant: "destructive",
         });
         return false;
@@ -214,7 +214,7 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
           onChange={(e) => {
             setReplyText(e.target.value);
           }}
-          placeholder="What's your response? (Your message will be enhanced by AI)"
+          placeholder="What's your response?"
           rows={3}
           className="w-full p-2 border border-black rounded-none bg-white text-sm font-mono"
           disabled={isSubmitting || isProcessing}
@@ -286,9 +286,7 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
         </Button>
       </div>
 
-      <div className="mt-2 text-xs text-center text-gray-700 italic">
-        Your message will be processed by GPT-4o before posting. The AI will make it more engaging while preserving your intent.
-      </div>
+      
     </form>
   );
 };
