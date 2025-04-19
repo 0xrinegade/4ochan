@@ -160,6 +160,48 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Load boards after connecting
     if (connected > 0) {
       loadBoards();
+      
+      // Try to publish any saved offline events
+      try {
+        const offlineEvents = JSON.parse(localStorage.getItem("offline-events") || "[]");
+        if (offlineEvents.length > 0) {
+          console.log(`Attempting to publish ${offlineEvents.length} saved offline events`);
+          
+          // Create a copy of the array since we'll be modifying it
+          const eventsCopy = [...offlineEvents];
+          const successfulIds = [];
+          
+          // Try to publish each saved event
+          for (const event of eventsCopy) {
+            try {
+              // Need to await each one to catch individual errors
+              const writeRelays = relays
+                .filter(r => r.status === 'connected' && r.write)
+                .map(r => r.url);
+                
+              if (writeRelays.length > 0 && newPool) {
+                const pubs = newPool.publish(writeRelays, event);
+                await Promise.any(pubs);
+                successfulIds.push(event.id);
+                console.log(`Successfully published saved event ${event.id}`);
+              }
+            } catch (error) {
+              console.log(`Failed to publish saved event ${event.id}`, error);
+            }
+          }
+          
+          // Remove successful events from storage
+          if (successfulIds.length > 0) {
+            const remainingEvents = offlineEvents.filter(
+              (event: NostrEvent) => !successfulIds.includes(event.id)
+            );
+            localStorage.setItem("offline-events", JSON.stringify(remainingEvents));
+            console.log(`Published ${successfulIds.length}/${offlineEvents.length} saved events`);
+          }
+        }
+      } catch (error) {
+        console.error("Error processing offline events:", error);
+      }
     } else {
       console.error("Failed to connect to any relays");
       
@@ -238,28 +280,82 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Publish an event to connected relays
   const publishEvent = useCallback(async (event: NostrEvent) => {
     if (!pool) {
-      throw new Error("Not connected to any relays");
+      // If not connected, attempt to connect first
+      await connect();
+      
+      // If still not connected after attempting, store locally and throw error
+      if (!pool) {
+        // Store event locally for later retry
+        const offlineEvents = JSON.parse(localStorage.getItem("offline-events") || "[]");
+        offlineEvents.push(event);
+        localStorage.setItem("offline-events", JSON.stringify(offlineEvents));
+        
+        console.log("Saved event to localStorage for later publishing");
+        throw new Error("Not connected to any relays - event saved for later publishing");
+      }
     }
     
-    // Publish to all writable relays
-    const writeRelays = relays
+    // Check for write relays, use all available relays as a fallback
+    let writeRelays = relays
       .filter(r => r.status === 'connected' && r.write)
       .map(r => r.url);
     
+    // If no specific write relays, try using all connected relays
     if (writeRelays.length === 0) {
-      throw new Error("No writable relays connected");
+      writeRelays = relays
+        .filter(r => r.status === 'connected')
+        .map(r => r.url);
+        
+      // If still no relays available, save for later and throw error
+      if (writeRelays.length === 0) {
+        // Store event locally for later retry
+        const offlineEvents = JSON.parse(localStorage.getItem("offline-events") || "[]");
+        offlineEvents.push(event);
+        localStorage.setItem("offline-events", JSON.stringify(offlineEvents));
+        
+        console.log("No writable relays - saved event to localStorage for later publishing");
+        throw new Error("No writable relays connected - event saved for later publishing");
+      }
     }
     
+    console.log(`Publishing to ${writeRelays.length} relays:`, writeRelays);
     const pubs = pool.publish(writeRelays, event);
     
-    // Wait for at least one successful publish
+    // Wait for at least one successful publish with more detailed error handling
     try {
-      await Promise.any(pubs);
+      const results = await Promise.allSettled(pubs);
+      const successful = results.filter(r => r.status === 'fulfilled');
+      
+      if (successful.length > 0) {
+        console.log(`Successfully published to ${successful.length}/${writeRelays.length} relays`);
+        return;
+      } else {
+        // If all failed, throw a detailed error
+        const errors = results
+          .filter(r => r.status === 'rejected')
+          .map(r => (r as PromiseRejectedResult).reason)
+          .join(', ');
+          
+        console.error("All publish attempts failed:", errors);
+        
+        // Store event locally for later retry
+        const offlineEvents = JSON.parse(localStorage.getItem("offline-events") || "[]");
+        offlineEvents.push(event);
+        localStorage.setItem("offline-events", JSON.stringify(offlineEvents));
+        
+        throw new Error("Failed to publish to any relay - event saved for later publishing");
+      }
     } catch (error) {
       console.error("Failed to publish event", error);
-      throw new Error("Failed to publish to any relay");
+      
+      // Store event locally for later retry
+      const offlineEvents = JSON.parse(localStorage.getItem("offline-events") || "[]");
+      offlineEvents.push(event);
+      localStorage.setItem("offline-events", JSON.stringify(offlineEvents));
+      
+      throw new Error("Failed to publish to any relay - event saved for later publishing");
     }
-  }, [pool, relays]);
+  }, [pool, relays, connect]);
 
   // Load boards from relays or create initial ones if needed
   const loadBoards = useCallback(async () => {
