@@ -8,6 +8,7 @@ import Thread from "@/pages/Thread";
 import UserProfilePage from "@/pages/UserProfilePage";
 import DesignSystem from "@/pages/DesignSystem";
 import { TestPage } from "./pages/TestPage";
+import { SubscriptionsPage } from "./pages/Subscriptions";
 import { NostrProvider } from "./context/NostrContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { NavigationProvider } from "./context/NavigationContext";
@@ -112,6 +113,7 @@ function AppRouter() {
         </Route>
         <Route path="/design" component={DesignSystem} />
         <Route path="/test" component={TestPage} />
+        <Route path="/subscriptions" component={SubscriptionsPage} />
         <Route component={NotFound} />
       </Switch>
     </PageTransition>

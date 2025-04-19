@@ -3,6 +3,7 @@ import { useNostr } from '../context/NostrContext';
 import { Notification } from '../types';
 import { formatDate, timeAgo } from '../lib/nostr';
 import { useLocation } from 'wouter';
+import { navigateWithoutReload } from '../App';
 
 interface NotificationBellProps {
   className?: string;
@@ -87,7 +88,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
       
       // Navigate to the thread if thread ID exists
       if (notification.threadId) {
-        setLocation(`/thread/${notification.threadId}`);
+        navigateWithoutReload(`/thread/${notification.threadId}`);
       }
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -131,16 +132,29 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                       shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <div className="flex justify-between items-center p-2 bg-primary text-white border-b-2 border-black">
             <h3 className="font-bold uppercase">Notifications</h3>
-            {unreadCount > 0 && (
+            <div className="flex gap-1">
+              {unreadCount > 0 && (
+                <button 
+                  onClick={handleMarkAllRead}
+                  className="text-xs bg-[#c0c0c0] hover:bg-[#d0d0d0] text-black px-2 py-0.5
+                           border-t-[1px] border-l-[1px] border-[#ffffff] 
+                           border-b-[1px] border-r-[1px] border-[#808080]"
+                >
+                  MARK ALL READ
+                </button>
+              )}
               <button 
-                onClick={handleMarkAllRead}
+                onClick={() => {
+                  setIsOpen(false);
+                  navigateWithoutReload('/subscriptions');
+                }}
                 className="text-xs bg-[#c0c0c0] hover:bg-[#d0d0d0] text-black px-2 py-0.5
                          border-t-[1px] border-l-[1px] border-[#ffffff] 
                          border-b-[1px] border-r-[1px] border-[#808080]"
               >
-                MARK ALL READ
+                MANAGE
               </button>
-            )}
+            </div>
           </div>
           
           {isLoading ? (
