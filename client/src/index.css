@@ -10,79 +10,141 @@
 }
 
 @layer base {
-  /* Default Theme - Crimson */
-  :root, .theme-crimson {
-    /* Classic 90s web colors */
-    --background: 60 56% 91%; /* #F5F5DC - Classic beige background */
-    --foreground: 0 0% 0%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
-    --primary: 0 100% 27%; /* #8B0000 - Dark red for headers/accents */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 83%; /* #D3D3D3 - Light gray for buttons */
-    --secondary-foreground: 0 0% 0%;
-    --muted: 36 30% 90%;
-    --muted-foreground: 0 0% 40%;
-    --accent: 0 0% 0%; /* Black for accents */
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 0%; /* Pure black borders */
-    --input: 0 0% 100%; /* White inputs */
-    --ring: 0 100% 27%;
-    --radius: 0rem; /* No rounded corners */
+  /* Default Theme - Using the values from theme.json light theme */
+  :root {
+    /* Base colors */
+    --background: 0 0% 100%; /* #FFFFFF */
+    --foreground: 210 10% 20%; /* #333333 */
+    
+    /* UI element colors */
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 210 10% 20%; /* #333333 */
+    --popover: 0 0% 100%; /* #FFFFFF */
+    --popover-foreground: 210 10% 20%; /* #333333 */
+    
+    /* Main theme colors */
+    --primary: 210 100% 36%; /* #0066B8 */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF */
+    --secondary: 210 5% 96%; /* #F5F5F5 */
+    --secondary-foreground: 210 10% 20%; /* #333333 */
+    
+    /* Supporting colors */
+    --muted: 210 5% 96%; /* #F5F5F5 */
+    --muted-foreground: 210 10% 40%; /* #666666 */
+    --accent: 210 100% 36%; /* #0066B8 */
+    --accent-foreground: 0 0% 100%; /* #FFFFFF */
+    --destructive: 0 84% 60%; /* #EC5757 */
+    --destructive-foreground: 0 0% 100%; /* #FFFFFF */
+    
+    /* Border and form element styling */
+    --border: 220 13% 80%; /* #CCCCCC */
+    --input: 0 0% 100%; /* #FFFFFF */
+    --ring: 210 100% 36%; /* #0066B8 */
+    
+    /* Other UI properties */
+    --radius: 0rem; /* No rounded corners as specified in theme.json */
   }
-
-  /* Hot Dog Stand Theme - Red and Yellow */
-  .theme-hotdogstand {
-    --background: 60 100% 50%; /* #FFFF00 - Bright yellow */
-    --foreground: 0 0% 0%;
-    --primary: 0 100% 50%; /* #FF0000 - Bright red */
-    --primary-foreground: 60 100% 50%; /* Yellow text on red */
-    --secondary: 0 100% 50%; /* Red buttons */
-    --secondary-foreground: 60 100% 50%; /* Yellow text on buttons */
-    --accent: 0 0% 0%;
-    --border: 0 0% 0%;
+  
+  /* Dark Theme - Using values from theme.json dark theme */
+  .theme-dark {
+    --background: 0 0% 12%; /* #1E1E1E */
+    --foreground: 0 0% 83%; /* #D4D4D4 */
+    
+    --card: 0 0% 15%; /* #252526 */
+    --card-foreground: 0 0% 83%; /* #D4D4D4 */
+    --popover: 0 0% 15%; /* #252526 */
+    --popover-foreground: 0 0% 83%; /* #D4D4D4 */
+    
+    --primary: 204 100% 49%; /* #0098FF */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF */
+    --secondary: 0 0% 18%; /* #2D2D2D */
+    --secondary-foreground: 0 0% 100%; /* #FFFFFF */
+    
+    --muted: 0 0% 18%; /* #2D2D2D */
+    --muted-foreground: 0 0% 70%; /* #B3B3B3 */
+    --accent: 204 100% 49%; /* #0098FF */
+    --accent-foreground: 0 0% 100%; /* #FFFFFF */
+    
+    --border: 240 5% 24%; /* #3A3D41 */
+    --input: 240 5% 24%; /* #3A3D41 */
+    --ring: 204 100% 49%; /* #0098FF */
   }
-
-  /* Windows 95 Theme - Navy and Gray */
-  .theme-windows95 {
-    --background: 0 0% 75%; /* #C0C0C0 - Classic Windows gray */
-    --foreground: 0 0% 0%;
-    --primary: 240 100% 25%; /* #000080 - Windows 95 navy blue */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 75%; /* Gray buttons */
-    --secondary-foreground: 0 0% 0%;
-    --accent: 0 0% 0%;
-    --border: 0 0% 0%;
+  
+  /* High Contrast Theme - Using values from theme.json highcontrast theme */
+  .theme-highcontrast {
+    --background: 0 0% 0%; /* #000000 */
+    --foreground: 0 0% 100%; /* #FFFFFF */
+    
+    --card: 0 0% 0%; /* #000000 */
+    --card-foreground: 0 0% 100%; /* #FFFFFF */
+    --popover: 0 0% 0%; /* #000000 */
+    --popover-foreground: 0 0% 100%; /* #FFFFFF */
+    
+    --primary: 60 100% 50%; /* #FFFF00 */
+    --primary-foreground: 0 0% 0%; /* #000000 */
+    --secondary: 0 0% 20%; /* #333333 */
+    --secondary-foreground: 60 100% 50%; /* #FFFF00 */
+    
+    --muted: 0 0% 20%; /* #333333 */
+    --muted-foreground: 0 0% 80%; /* #CCCCCC */
+    --accent: 60 100% 50%; /* #FFFF00 */
+    --accent-foreground: 0 0% 0%; /* #000000 */
+    
+    --border: 60 100% 50%; /* #FFFF00 */
+    --input: 0 0% 0%; /* #000000 */
+    --ring: 60 100% 50%; /* #FFFF00 */
   }
-
-  /* Vaporwave Theme - Pink and Cyan */
-  .theme-vaporwave {
-    --background: 180 100% 50%; /* #00FFFF - Cyan */
-    --foreground: 0 0% 0%;
-    --primary: 300 100% 50%; /* #FF00FF - Magenta */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 300 100% 50%; /* Magenta buttons */
-    --secondary-foreground: 0 0% 100%;
-    --accent: 0 0% 0%;
-    --border: 0 0% 0%;
+  
+  /* Retro Theme - Using values from theme.json retro theme */
+  .theme-retro {
+    --background: 30 5% 83%; /* #D4D0C8 */
+    --foreground: 0 0% 0%; /* #000000 */
+    
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 0 0% 0%; /* #000000 */
+    --popover: 0 0% 100%; /* #FFFFFF */
+    --popover-foreground: 0 0% 0%; /* #000000 */
+    
+    --primary: 240 100% 25%; /* #000080 */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF */
+    --secondary: 0 0% 75%; /* #C0C0C0 */
+    --secondary-foreground: 0 0% 0%; /* #000000 */
+    
+    --muted: 0 0% 90%; /* #E5E5E5 */
+    --muted-foreground: 0 0% 45%; /* #737373 */
+    --accent: 240 100% 25%; /* #000080 */
+    --accent-foreground: 0 0% 100%; /* #FFFFFF */
+    
+    --border: 0 0% 50%; /* #808080 */
+    --input: 0 0% 100%; /* #FFFFFF */
+    --ring: 240 100% 25%; /* #000080 */
   }
-
-  /* Matrix Theme - Green and Black */
-  .theme-matrix {
-    --background: 0 0% 0%; /* #000000 - Black */
-    --foreground: 120 100% 50%; /* #00FF00 - Bright green */
-    --primary: 120 100% 50%; /* #00FF00 - Bright green */
-    --primary-foreground: 0 0% 0%;
-    --secondary: 120 100% 20%; /* Darker green buttons */
-    --secondary-foreground: 120 100% 50%; /* Bright green text */
-    --accent: 120 100% 50%;
-    --border: 120 100% 50%;
-    --ring: 120 100% 50%;
+  
+  /* Sepia Theme - Using values from theme.json sepia theme */
+  .theme-sepia {
+    --background: 39 60% 90%; /* #F4ECD8 */
+    --foreground: 25 25% 28%; /* #5B4636 */
+    
+    --card: 40 70% 97%; /* #FBF8F1 */
+    --card-foreground: 25 25% 28%; /* #5B4636 */
+    --popover: 40 70% 97%; /* #FBF8F1 */
+    --popover-foreground: 25 25% 28%; /* #5B4636 */
+    
+    --primary: 28 100% 27%; /* #8B4000 */
+    --primary-foreground: 39 60% 90%; /* #F4ECD8 */
+    --secondary: 35 50% 83%; /* #E6D9C2 */
+    --secondary-foreground: 25 25% 28%; /* #5B4636 */
+    
+    --muted: 35 50% 90%; /* #EEE5D6 */
+    --muted-foreground: 25 25% 40%; /* #7D614D */
+    --accent: 28 100% 27%; /* #8B4000 */
+    --accent-foreground: 39 60% 90%; /* #F4ECD8 */
+    
+    --border: 33 50% 57%; /* #C09465 */
+    --input: 40 70% 97%; /* #FBF8F1 */
+    --ring: 28 100% 27%; /* #8B4000 */
   }
+}
   
   /* Matrix theme special effects - more subtle */
   .theme-matrix a,
@@ -340,13 +402,39 @@
   
   /* 90s-style inputs */
   input, textarea, select {
-    @apply border-2 border-black bg-white px-2 py-1;
+    @apply border-2 border-border bg-background text-foreground px-2 py-1;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
   
   input:focus, textarea:focus, select:focus {
-    @apply outline-none;
-    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+    @apply outline-none border-primary;
+    box-shadow: 0 0 0 2px rgba(var(--primary), 0.2);
+  }
+  
+  /* Fix for shadcn popover components to inherit theme */
+  [cmdk-dialog],
+  [cmdk-input],
+  [cmdk-item],
+  [cmdk-list],
+  .cmdk-item {
+    background-color: hsl(var(--popover));
+    color: hsl(var(--popover-foreground));
+    border-color: hsl(var(--border));
+  }
+  
+  /* Fix for shadcn dialog components */
+  [role="dialog"],
+  [role="dialog"] .bg-background,
+  [data-state="open"] {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+  
+  /* Ensure all cards use theme colors */
+  .card,
+  [data-shadcn-card] {
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
   }
   
   /* Theme-specific input styles */
@@ -416,7 +504,7 @@
   /* Old-school horizontal rule */
   hr {
     height: 1px;
-    background: repeating-linear-gradient(to right, #000, #000 5px, transparent 5px, transparent 10px);
+    background: repeating-linear-gradient(to right, hsl(var(--border)), hsl(var(--border)) 5px, transparent 5px, transparent 10px);
     border: 0;
   }
   
@@ -435,7 +523,6 @@
     content: "»";
     position: absolute;
     left: 0;
-    color: var(--primary);
+    color: hsl(var(--primary));
     font-weight: bold;
   }
-}

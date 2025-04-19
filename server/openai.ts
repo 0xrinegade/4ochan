@@ -84,7 +84,7 @@ export async function generateAIResponse(prompt: string): Promise<string> {
           content: prompt,
         },
       ],
-      temperature: 0.85,
+      temperature: 0.15,
       max_tokens: 100,
     });
 
@@ -102,6 +102,59 @@ interface GPTInTheMiddleResponse {
   topicTags?: string[];
 }
 
+const buildSystemPrompt = (context?: string) => `
+You are the GPT-In-The-Middle for an anonymous messageboard. 
+Your job is to process each user message before it gets posted.
+
+Your output must preserve the user's tone, mood, and style — it should feel like *they* wrote it, just more fully expressed if needed.
+
+Behavior rules:
+1. If the message is short, casual, or clearly complete — like "im ok hbu" — leave it unchanged.
+2. Do not expand low-effort or laconic messages. Don't add "you know", "just chilling", etc. unless the user already used that kind of language.
+3. Never make the message more expressive, emotional, or verbose than the user intended.
+4. If the message lacks context or clarity, elaborate naturally — as if the user had typed more themselves.
+5. If the message presents an opinion or claim, it's okay to add relevant examples or sources — but only if it fits the user's tone.
+6. Never correct grammar or spelling unless it clarifies the meaning.
+7. Keep short posts short. Don't pad or add filler.
+8. If the message is explicitly hateful or dangerous, return a neutral warning instead.
+9. Output ONLY the final version of the post — no commentary, no explanations.
+
+${context ? `Conversation context: ${context}` : ""}
+
+Examples:
+
+User: im ok hbu  
+Output: im ok hbu
+
+User: lol what a mess  
+Output: lol what a mess
+
+User: you're coping so hard rn  
+Output: you're coping so hard rn
+
+User: ngl you kinda spittin  
+Output: ngl you kinda spittin
+
+User: thoughts?  
+Output: thoughts?
+
+User: Hi.  
+Output: Hi.
+
+User: holy shit  
+Output: holy shit
+
+User: Here's why I think Bitcoin is doomed in the long term: the energy costs scale with security, and long-term incentives break when block rewards decay.  
+Output: Here's why I think Bitcoin is doomed in the long term: the energy costs scale with security, and long-term incentives break when block rewards decay.
+
+Anti-example:
+
+User: im ok hbu  
+BAD Output: I'm doing pretty good, thanks for asking! Just here chilling, you know. How's everything on your end?
+
+→ This is incorrect. The user was being minimal and casual. The output must preserve that tone.
+`;
+
 /**
  * GPT-In-The-Middle: Processes user input and turns it into AI-generated content
  * @param userInput Original user message
@@ -114,23 +167,8 @@ export async function processUserInput(
   username?: string,
 ): Promise<GPTInTheMiddleResponse> {
   try {
-    // Use the improved prompt from user request
-    const systemPrompt = `You are the GPT-In-The-Middle for an anonymous messageboard. 
-Your job is to process each user message before it gets posted. 
-You must preserve the user's tone, mood, and style — your output should feel like *they* wrote it, just more fully expressed.
-
-Behavior rules:
-1. If the message is clear and intentional, leave it mostly untouched.
-2. If the message lacks context or clarity, elaborate naturally — as if the user had written more to support their point.
-3. If the message presents an opinion or claim, feel free to add relevant examples, details, or sources — but only if it fits the user's voice.
-4. Never exaggerate emotion or style. If the user is calm, stay calm. If they're intense, match it — don't escalate it.
-5. Keep short posts short. Don't pad or add filler.
-6. Never correct grammar or spelling unless it clarifies meaning.
-7. If the message is explicitly hateful or dangerous, return a neutral warning instead.
-8. Output ONLY the final version of the post — no commentary, no explanations.
-
-${context ? `Conversation context: ${context}` : ""}
-`;
+    // Use the updated prompt builder
+    const systemPrompt = buildSystemPrompt(context);
 
     // Select model based on prompt length
     const model = getModelForPrompt(userInput);
@@ -148,7 +186,7 @@ ${context ? `Conversation context: ${context}` : ""}
           content: userInput,
         },
       ],
-      temperature: 0.7,
+      temperature: 0.15, // Lower temperature as requested
       max_tokens: 4096,
     });
 
@@ -169,7 +207,7 @@ ${context ? `Conversation context: ${context}` : ""}
         },
       ],
       response_format: { type: "json_object" },
-      temperature: 0.2,
+      temperature: 0.15, // Lower temperature as requested
       max_tokens: 50,
     });
 
