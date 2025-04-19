@@ -66,13 +66,27 @@ const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element =>
         </SyntaxHighlighter>
       ) : (
         <div className="typst-preview">
-          <iframe
-            src={`https://typst.app/project?snippet=${encodeURIComponent(content)}&mode=view`}
-            title="Typst Document"
-            className="typst-iframe"
-            sandbox="allow-scripts allow-same-origin"
-            loading="lazy"
-          />
+          <div className="typst-placeholder">
+            <h3>Typst Document Preview</h3>
+            <p>This document can be viewed directly in Typst App</p>
+            <div className="typst-preview-actions">
+              <a 
+                href={`https://typst.app/project?snippet=${encodeURIComponent(content)}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="typst-preview-button"
+                title="Open in Typst App"
+              >
+                Open in Typst App
+              </a>
+            </div>
+            <div className="typst-preview-sample">
+              <pre className="typst-preview-code">{content.length > 200 
+                ? content.substring(0, 200) + '...' 
+                : content}
+              </pre>
+            </div>
+          </div>
         </div>
       )}
     </div>
