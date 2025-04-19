@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNostr } from "@/hooks/useNostr";
 import { Button } from "@/components/ui/button";
 import { RelayConnectionModal } from "@/components/RelayConnectionModal";
@@ -10,9 +10,6 @@ import { useTheme } from "@/context/ThemeContext";
 import { useNavigation } from "@/context/NavigationContext";
 import { getOrCreateIdentity } from "@/lib/nostr";
 import logoPath from "@/assets/logo.png";
-
-// Define theme types to match ThemeContext
-type ThemeName = 'light' | 'dark' | 'highcontrast' | 'retro' | 'sepia';
 
 // Board navigation tab that simply uses the shortName
 const NavBoardTab: React.FC<{ shortName: string; label: string }> = ({ shortName, label }) => {
@@ -44,8 +41,6 @@ export const Header: React.FC = () => {
   const { connectedRelays, relays, identity, updateIdentity } = useNostr();
   const [showConnectionModal, setShowConnectionModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
-  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
-  const themeDropdownRef = useRef<HTMLDivElement>(null);
   const { currentTheme, setTheme, themes } = useTheme();
   const { toast } = useToast();
   const { navigateTo } = useNavigation();
@@ -63,20 +58,6 @@ export const Header: React.FC = () => {
       }
     }
   }, []);
-  
-  // Handle click outside to close theme dropdown
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target as Node)) {
-        setThemeDropdownOpen(false);
-      }
-    }
-    
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [themeDropdownRef]);
 
   const toggleConnectionModal = () => {
     setShowConnectionModal(!showConnectionModal);
