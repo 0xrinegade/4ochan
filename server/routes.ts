@@ -14,6 +14,7 @@ import {
 // these backend routes handle user profiles and reputation systems
 
 import { authenticateWithAI, generateAIResponse, processUserInput } from "./openai";
+import { getTokenAnalysis } from "./moralis";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
