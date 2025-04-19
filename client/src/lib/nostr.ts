@@ -47,15 +47,10 @@ export const getOrCreateIdentity = (): NostrIdentity => {
       
       // Check if we have a private key in the parsed identity
       if (parsed.privkey && typeof parsed.privkey === 'string') {
-        // Convert the hex string back to Uint8Array
-        const privkeyBytes = new Uint8Array(
-          parsed.privkey.match(/.{1,2}/g)?.map((byte: string) => parseInt(byte, 16)) || []
-        );
-        
-        return {
-          ...parsed,
-          privkey: privkeyBytes
-        };
+        // Keep the private key as a hex string - do not convert to Uint8Array
+        // This is necessary because finalizeEvent in nostr-tools is actually expecting
+        // a hex string even though the TypeScript type says Uint8Array
+        return parsed;
       }
       
       // If privkey is missing, we'll generate a new identity

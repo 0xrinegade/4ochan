@@ -545,12 +545,51 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       throw new Error("Not connected to any relays");
     }
     
-    // Create and publish thread event
-    const event = await import("../lib/nostr").then(({ createThreadEvent }) => 
-      createThreadEvent(boardId, title, content, imageUrls, identity, media as any)
-    );
+    console.log("Creating thread with:", {
+      boardId,
+      title,
+      contentLength: content.length,
+      imageCount: imageUrls.length,
+      mediaCount: media?.length || 0,
+      identityExists: !!identity,
+      identityType: {
+        pubkey: identity.pubkey,
+        privkeyType: typeof identity.privkey,
+        isUint8Array: identity.privkey instanceof Uint8Array
+      }
+    });
     
-    await publishEvent(event);
+    // Create and publish thread event
+    try {
+      const { createThreadEvent } = await import("../lib/nostr");
+      console.log("Imported createThreadEvent function");
+      
+      const event = await createThreadEvent(
+        boardId, 
+        title, 
+        content, 
+        imageUrls, 
+        identity, 
+        media as any
+      );
+      
+      console.log("Thread event created successfully:", {
+        eventId: event.id,
+        eventKind: event.kind,
+        tagsCount: event.tags.length
+      });
+      
+      await publishEvent(event);
+      console.log("Successfully published thread event to relays");
+    } catch (error) {
+      console.error("Error in thread creation:", error);
+      // Show detailed error and stack trace
+      if (error instanceof Error) {
+        console.error("Error message:", error.message);
+        console.error("Stack trace:", error.stack);
+      }
+      throw error; // Re-throw to allow the caller to handle it
+    }
     
     // Create thread object
     const thread: Thread = {
