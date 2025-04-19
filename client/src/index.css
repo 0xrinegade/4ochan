@@ -11,26 +11,34 @@
 
 @layer base {
   :root {
-    --background: 60 80% 94%; /* More yellow-beige for 90s feel */
+    /* Classic 90s web colors */
+    --background: 60 56% 91%; /* #F5F5DC - Classic beige background */
     --foreground: 0 0% 0%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 0%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
-    --primary: 0 75% 30%; /* More saturated dark red */
+    --primary: 0 100% 27%; /* #8B0000 - Dark red for headers/accents */
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 96%;
+    --secondary: 0 0% 83%; /* #D3D3D3 - Light gray for buttons */
     --secondary-foreground: 0 0% 0%;
     --muted: 36 30% 90%;
     --muted-foreground: 0 0% 40%;
-    --accent: 195 80% 35%; /* Classic 90s web blue */
+    --accent: 0 0% 0%; /* Black for accents */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 0%; /* Pure black borders */
-    --input: 0 0% 90%;
-    --ring: 0 75% 30%;
+    --input: 0 0% 100%; /* White inputs */
+    --ring: 0 100% 27%;
     --radius: 0rem; /* No rounded corners */
+    
+    /* Additional custom 90s colors */
+    --hot-pink: 330 100% 50%; /* #FF00AA */
+    --retro-purple: 300 76% 72%; /* #DA70D6 */
+    --retro-teal: 180 100% 25%; /* #008080 - Classic 90s teal */
+    --retro-olive: 60 100% 25%; /* #808000 - Classic 90s olive */
+    --dos-blue: 240 100% 50%; /* #0000FF - Classic DOS blue */
   }
 
   * {
@@ -40,7 +48,7 @@
   body {
     font-family: 'Libertarian', Arial, sans-serif;
     @apply antialiased bg-background text-foreground;
-    background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23dddddd' fill-opacity='0.2' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3Ccircle cx='13' cy='13' r='1'/%3E%3C/g%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23cccccc' fill-opacity='0.3' fill-rule='evenodd'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
   }
   
   /* Basic HTML elements like in the 90s web */
@@ -83,17 +91,25 @@
   }
 
   .timestamp {
-    @apply text-xs text-secondary;
+    @apply text-xs text-gray-600;
   }
 
   .post-image {
     max-height: 250px;
     max-width: 250px;
-    @apply border border-black shadow-none cursor-pointer;
+    @apply border-2 border-black shadow-none cursor-pointer bg-white;
   }
 
   .thread-container {
-    @apply bg-white border border-black overflow-hidden mb-4;
+    @apply bg-white border-2 border-black overflow-hidden mb-4;
+  }
+
+  .thread-item:nth-child(even) {
+    @apply bg-gray-100;
+  }
+  
+  .thread-item:hover {
+    @apply bg-yellow-50;
   }
 
   .board-title {
@@ -106,8 +122,12 @@
   
   /* Retro style header and sections */
   .section-header {
-    @apply bg-primary text-primary-foreground px-2 py-1 font-bold;
-    text-transform: lowercase;
+    @apply bg-primary text-primary-foreground px-2 py-1 font-bold uppercase;
+  }
+  
+  /* Hot tag for active threads */
+  .hot-tag {
+    @apply bg-primary text-white text-xs px-1 py-0.5;
   }
 
   .post {
@@ -136,17 +156,20 @@
   
   /* 90s-style buttons */
   button:not(.unstyled) {
-    @apply bg-secondary border-2 border-border px-2 py-1 font-bold;
+    @apply bg-secondary border-2 border-border px-2 py-1 font-bold text-black;
     box-shadow: 2px 2px 0px #000;
+    background-image: linear-gradient(to bottom, #ffffff, #d3d3d3);
   }
   
   button:not(.unstyled):hover {
     @apply bg-white;
+    background-image: linear-gradient(to bottom, #ffffff, #e6e6e6);
   }
   
   button:not(.unstyled):active {
     transform: translate(1px, 1px);
     box-shadow: 1px 1px 0px #000;
+    background-image: linear-gradient(to bottom, #d3d3d3, #ffffff);
   }
   
   /* 90s-style inputs */

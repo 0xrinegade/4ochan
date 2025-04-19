@@ -160,7 +160,7 @@ export const ThreadList: React.FC<ThreadListProps> = ({
                           )}
                         </div>
                         <div className="flex items-center">
-                          <span className="bg-primary text-white text-xs px-1 py-0.5">
+                          <span className="hot-tag">
                             HOT
                           </span>
                           <div className="relative w-12 h-1.5 bg-gray-200 ml-1 overflow-hidden">

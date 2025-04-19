@@ -1,6 +1,6 @@
 {
   "variant": "tint",
-  "primary": "hsl(0, 59%, 30%)",
+  "primary": "#8B0000",
   "appearance": "light",
   "radius": 0,
   "colors": {
@@ -8,8 +8,18 @@
     "background": "#F5F5DC",
     "accent": "#000000",
     "text": "#000000",
-    "link": "hsl(0, 59%, 35%)",
-    "borderColor": "#000000"
+    "link": "#8B0000",
+    "borderColor": "#000000",
+    "buttonBackground": "#D3D3D3",
+    "buttonText": "#000000",
+    "buttonBorder": "#000000",
+    "headerBackground": "#8B0000",
+    "headerText": "#FFFFFF",
+    "tabActive": "#8B0000",
+    "tabInactive": "#FFFFFF",
+    "threadBorder": "#000000",
+    "threadBackground": "#FFFFFF",
+    "threadHover": "#F0F0F0"
   },
   "typography": {
     "fontFamily": "Libertarian, monospace",
