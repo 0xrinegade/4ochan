@@ -1179,6 +1179,88 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const getUnreadNotificationCount = useCallback(async (): Promise<number> => {
     return localCache.getUnreadNotificationCount();
   }, []);
+  
+  // Thread statistics cache to avoid excessive relay queries
+  const threadStatsCache = React.useRef<Record<string, { viewCount: number, engagement: number, lastUpdated: number }>>({});
+  
+  // Get thread statistics (views, engagement)
+  const getThreadStats = useCallback(async (threadId: string): Promise<{ viewCount: number, engagement: number } | null> => {
+    if (!threadId) return null;
+    
+    // Check if we have cached stats for this thread
+    if (threadStatsCache.current[threadId]) {
+      // Return cached stats if they're recent (less than 5 minutes old)
+      const stats = threadStatsCache.current[threadId];
+      const now = Date.now();
+      if (now - stats.lastUpdated < 300000) { // 5 minutes
+        return {
+          viewCount: stats.viewCount,
+          engagement: stats.engagement
+        };
+      }
+    }
+    
+    try {
+      if (!pool) return null;
+      
+      // Use connected relays to fetch stats
+      const relayUrls = relays
+        .filter(r => r.status === 'connected' && r.read)
+        .map(r => r.url);
+      
+      if (relayUrls.length === 0) {
+        console.log("No connected relays to fetch thread stats");
+        return null;
+      }
+
+      // Try to fetch view count events related to this thread
+      const filter: Filter = {
+        kinds: [KIND.THREAD_STATS],
+        '#e': [threadId],
+        limit: 10
+      };
+      
+      const viewEvents = await pool.querySync(relayUrls, filter);
+      
+      if (viewEvents.length === 0) {
+        // If no events found, create default stats and return them
+        const defaultStats = { viewCount: 0, engagement: 0 };
+        threadStatsCache.current[threadId] = { ...defaultStats, lastUpdated: Date.now() };
+        return defaultStats;
+      }
+      
+      // Process the events to calculate stats
+      let totalViews = 0;
+      let totalEngagement = 0;
+      
+      for (const event of viewEvents) {
+        try {
+          const data = JSON.parse(event.content);
+          if (typeof data.viewCount === 'number') {
+            totalViews = Math.max(totalViews, data.viewCount);
+          }
+          if (typeof data.engagement === 'number') {
+            totalEngagement = Math.max(totalEngagement, data.engagement);
+          }
+        } catch (error) {
+          console.error("Error parsing thread stats event:", error);
+        }
+      }
+      
+      // Update cache
+      const updatedStats = { 
+        viewCount: totalViews, 
+        engagement: totalEngagement 
+      };
+      threadStatsCache.current[threadId] = { ...updatedStats, lastUpdated: Date.now() };
+      
+      return updatedStats;
+      
+    } catch (error) {
+      console.error("Error fetching thread stats:", error);
+      return { viewCount: 0, engagement: 0 };
+    }
+  }, [pool, relays]);
 
   // Initialize and validate identity on mount
   useEffect(() => {
@@ -1344,7 +1426,9 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     getNotifications,
     markNotificationRead,
     markAllNotificationsRead,
-    getUnreadNotificationCount
+    getUnreadNotificationCount,
+    // Thread statistics
+    getThreadStats
   };
 
   return (

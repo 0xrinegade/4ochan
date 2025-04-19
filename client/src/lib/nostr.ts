@@ -29,6 +29,7 @@ export const KIND = {
   POST: 9903, // Custom kind for post within a thread
   SUBSCRIPTION: 9904, // Custom kind for thread subscription
   NOTIFICATION: 9905, // Custom kind for user notification
+  THREAD_STATS: 9906, // Custom kind for thread statistics (views, engagement)
 };
 
 // Create an event pool for managing relay connections
