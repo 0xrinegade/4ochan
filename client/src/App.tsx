@@ -86,9 +86,13 @@ function AppRouter() {
       return { boardId: location.split("/board/")[1] };
     }
     
-    // Thread routes
+    // Thread routes with optional replyId
     if (location.startsWith("/thread/")) {
-      return { threadId: location.split("/thread/")[1] };
+      const parts = location.split("/thread/")[1].split('/reply/');
+      if (parts.length > 1) {
+        return { threadId: parts[0], replyId: parts[1] };
+      }
+      return { threadId: parts[0] };
     }
     
     // Profile routes 
@@ -110,6 +114,9 @@ function AppRouter() {
         </Route>
         <Route path="/board/:id">
           {(params) => <Home id={params.id} key={`board-${params.id}`} />}
+        </Route>
+        <Route path="/thread/:id/reply/:replyId">
+          {(params) => <Thread id={params.id} replyId={params.replyId} key={`thread-${params.id}-reply-${params.replyId}`} />}
         </Route>
         <Route path="/thread/:id">
           {(params) => <Thread id={params.id} key={`thread-${params.id}`} />}

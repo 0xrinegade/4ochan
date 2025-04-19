@@ -13,23 +13,23 @@ import { MarkdownContent } from "@/components/MarkdownContent";
 import { PumpFunWidget } from "@/components/PumpFunWidget";
 import { ThreadTree } from "@/components/ThreadTree";
 import { ThreadContextVisualization } from "@/components/ThreadContextVisualization";
-import { 
-  ArrowUp, 
-  ArrowDown, 
-  Search, 
+import {
+  ArrowUp,
+  ArrowDown,
+  Search,
   X,
   ThumbsUp,
   ThumbsDown,
-  GitMerge
+  GitMerge,
 } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogTrigger 
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -39,20 +39,31 @@ interface ThreadViewProps {
 }
 
 export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
-  const { thread, posts, loading, error, refreshThread, createPost } = useThread(threadId);
+  const { thread, posts, loading, error, refreshThread, createPost } =
+    useThread(threadId);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
-  const { identity, publishEvent, getThreadStats, likePost, unlikePost, getPostLikes, isPostLikedByUser } = useNostr();
-  
+  const {
+    identity,
+    publishEvent,
+    getThreadStats,
+    likePost,
+    unlikePost,
+    getPostLikes,
+    isPostLikedByUser,
+  } = useNostr();
+
   // State to track post likes
   const [postLikes, setPostLikes] = useState<Record<string, number>>({});
   const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({});
   const [viewTracked, setViewTracked] = useState(false);
   const threadContainerRef = useRef<HTMLDivElement>(null);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<{index: number, text: string, id: string}[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<
+    { index: number; text: string; id: string }[]
+  >([]);
   const [currentSearchResult, setCurrentSearchResult] = useState(-1);
-  
+
   // Load post likes data
   useEffect(() => {
     if (posts.length > 0 && identity) {
@@ -62,22 +73,25 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
           const likesData: Record<string, number> = {};
           // Create a new object to track which posts the user has liked
           const userLikedData: Record<string, boolean> = {};
-          
+
           // Load likes data for each post
           for (const post of posts) {
             try {
               // Get likes count
               const likesCount = await getPostLikes(post.id);
               likesData[post.id] = likesCount;
-              
+
               // Check if user has liked this post
               const hasLiked = await isPostLikedByUser(post.id);
               userLikedData[post.id] = hasLiked;
             } catch (error) {
-              console.error(`Failed to load likes data for post ${post.id}:`, error);
+              console.error(
+                `Failed to load likes data for post ${post.id}:`,
+                error,
+              );
             }
           }
-          
+
           // Update state with likes data
           setPostLikes(likesData);
           setLikedPosts(userLikedData);
@@ -85,11 +99,11 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
           console.error("Failed to load likes data:", error);
         }
       };
-      
+
       loadLikesData();
     }
   }, [posts, identity, getPostLikes, isPostLikedByUser]);
-  
+
   // Track thread view and update thread statistics
   useEffect(() => {
     if (thread && !viewTracked && identity) {
@@ -97,45 +111,47 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
         try {
           // Get current thread stats
           const stats = await getThreadStats(threadId);
-          
+
           // Calculate new stats
           const newViewCount = (stats?.viewCount || 0) + 1;
           const newEngagement = Math.floor((stats?.engagement || 0) + 0.1); // Small engagement increment for view
-          
+
           // Create and publish thread stat event
           const statEvent = await createThreadStatEvent(
             threadId,
             newViewCount,
             newEngagement,
-            identity
+            identity,
           );
-          
+
           // Publish the stat event
           await publishEvent(statEvent);
-          
+
           // Mark as tracked to prevent multiple tracking events
           setViewTracked(true);
-          
-          console.log(`Tracked view for thread ${threadId}, views: ${newViewCount}`);
+
+          console.log(
+            `Tracked view for thread ${threadId}, views: ${newViewCount}`,
+          );
         } catch (error) {
           console.error("Failed to track thread view:", error);
         }
       };
-      
+
       trackThreadView();
     }
   }, [thread, threadId, identity, publishEvent, getThreadStats, viewTracked]);
-  
+
   // Scroll to the top of the thread
   const scrollToTop = () => {
     if (threadContainerRef.current) {
       threadContainerRef.current.parentElement?.scrollTo({
         top: 0,
-        behavior: 'smooth'
+        behavior: "smooth",
       });
     }
   };
-  
+
   // Scroll to the bottom of the thread
   const scrollToBottom = () => {
     if (threadContainerRef.current) {
@@ -143,39 +159,42 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
       if (container) {
         container.scrollTo({
           top: container.scrollHeight,
-          behavior: 'smooth'
+          behavior: "smooth",
         });
       }
     }
   };
-  
+
   // Perform search in thread content
   const performSearch = () => {
     if (!searchQuery.trim() || !thread || !posts) return;
-    
+
     const query = searchQuery.toLowerCase();
-    const results: {index: number, text: string, id: string}[] = [];
-    
+    const results: { index: number; text: string; id: string }[] = [];
+
     // Search in the thread title and content
     if (thread.title && thread.title.toLowerCase().includes(query)) {
       results.push({
         index: 0,
         text: thread.title,
-        id: thread.id
+        id: thread.id,
       });
     }
-    
+
     if (thread.content && thread.content.toLowerCase().includes(query)) {
       results.push({
         index: 0,
         text: thread.content.substring(
           Math.max(0, thread.content.toLowerCase().indexOf(query) - 20),
-          Math.min(thread.content.length, thread.content.toLowerCase().indexOf(query) + query.length + 20)
+          Math.min(
+            thread.content.length,
+            thread.content.toLowerCase().indexOf(query) + query.length + 20,
+          ),
         ),
-        id: thread.id
+        id: thread.id,
       });
     }
-    
+
     // Search in the posts content
     posts.forEach((post, index) => {
       if (post.content && post.content.toLowerCase().includes(query)) {
@@ -183,155 +202,173 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
           index: index + 1, // +1 because the thread itself is at index 0
           text: post.content.substring(
             Math.max(0, post.content.toLowerCase().indexOf(query) - 20),
-            Math.min(post.content.length, post.content.toLowerCase().indexOf(query) + query.length + 20)
+            Math.min(
+              post.content.length,
+              post.content.toLowerCase().indexOf(query) + query.length + 20,
+            ),
           ),
-          id: post.id
+          id: post.id,
         });
       }
     });
-    
+
     setSearchResults(results);
     setCurrentSearchResult(results.length > 0 ? 0 : -1);
-    
+
     // Scroll to the first result if any
     if (results.length > 0) {
       scrollToResult(results[0].id);
     }
   };
-  
+
   // Scroll to a specific search result
   const scrollToResult = (postId: string) => {
     const postElement = document.getElementById(`post-${postId}`);
     if (postElement) {
-      postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      postElement.classList.add('highlight-post');
-      
+      postElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      postElement.classList.add("highlight-post");
+
       // Remove the highlight after a brief delay
       setTimeout(() => {
-        postElement.classList.remove('highlight-post');
+        postElement.classList.remove("highlight-post");
       }, 2000);
     }
   };
-  
+
   // Navigate to the next search result
   const nextSearchResult = () => {
     if (searchResults.length === 0) return;
-    
+
     const next = (currentSearchResult + 1) % searchResults.length;
     setCurrentSearchResult(next);
     scrollToResult(searchResults[next].id);
   };
-  
+
   // Navigate to the previous search result
   const prevSearchResult = () => {
     if (searchResults.length === 0) return;
-    
-    const prev = (currentSearchResult - 1 + searchResults.length) % searchResults.length;
+
+    const prev =
+      (currentSearchResult - 1 + searchResults.length) % searchResults.length;
     setCurrentSearchResult(prev);
     scrollToResult(searchResults[prev].id);
   };
-  
+
   // Handle post being referenced for reply
   const handleQuotePost = (postId: string) => {
     setSelectedPostId(postId);
-    
+
     // Scroll to reply form
-    document.getElementById('reply-form')?.scrollIntoView({ behavior: 'smooth' });
+    document
+      .getElementById("reply-form")
+      ?.scrollIntoView({ behavior: "smooth" });
   };
-  
+
   // Handle liking a post
   const handleLikePost = async (postId: string) => {
     if (!identity) return;
-    
+
     try {
       // If post is already liked, unlike it
       if (likedPosts[postId]) {
         await unlikePost(postId);
-        
+
         // Update like status in state
-        setLikedPosts(prev => ({
+        setLikedPosts((prev) => ({
           ...prev,
-          [postId]: false
+          [postId]: false,
         }));
-        
+
         // Update likes count in state
-        setPostLikes(prev => ({
+        setPostLikes((prev) => ({
           ...prev,
-          [postId]: Math.max(0, (prev[postId] || 0) - 1)
+          [postId]: Math.max(0, (prev[postId] || 0) - 1),
         }));
-      } 
+      }
       // Otherwise, like the post
       else {
         await likePost(postId);
-        
+
         // Update like status in state
-        setLikedPosts(prev => ({
+        setLikedPosts((prev) => ({
           ...prev,
-          [postId]: true
+          [postId]: true,
         }));
-        
+
         // Update likes count in state
-        setPostLikes(prev => ({
+        setPostLikes((prev) => ({
           ...prev,
-          [postId]: (prev[postId] || 0) + 1
+          [postId]: (prev[postId] || 0) + 1,
         }));
       }
     } catch (error) {
-      console.error(`Failed to ${likedPosts[postId] ? 'unlike' : 'like'} post:`, error);
+      console.error(
+        `Failed to ${likedPosts[postId] ? "unlike" : "like"} post:`,
+        error,
+      );
     }
   };
-  
+
   const handleSubmitReply = async (
-    content: string, 
-    imageUrls: string[] = [], 
-    media?: MediaContent[]
+    content: string,
+    imageUrls: string[] = [],
+    media?: MediaContent[],
   ) => {
     const replyToIds = selectedPostId ? [threadId, selectedPostId] : [threadId];
-    
+
     // For backward compatibility, extract URLs from media objects if provided
     const allImageUrls = [...imageUrls];
     if (media && media.length > 0) {
       // Add any image URLs from the media objects
       const mediaUrls = media
-        .filter(m => m.type === 'image')
-        .map(m => m.url);
+        .filter((m) => m.type === "image")
+        .map((m) => m.url);
       allImageUrls.push(...mediaUrls);
     }
-    
+
     await createPost(content, replyToIds, allImageUrls, media);
     setSelectedPostId(null);
   };
-  
+
   return (
     <div className="flex-1 overflow-y-auto p-4 bg-background">
       <div className="container mx-auto max-w-5xl">
         <div className="flex justify-between items-center mb-4">
           <Link href={thread ? `/board/${thread.boardId}` : "/"}>
-            <Button variant="ghost" className="text-sm text-primary flex items-center">
+            <Button
+              variant="ghost"
+              className="text-sm text-primary flex items-center"
+            >
               <i className="fas fa-arrow-left mr-1"></i> Back to threads
             </Button>
           </Link>
           <div className="flex items-center space-x-2">
             {/* Only show subscribe button when thread is loaded */}
             {thread && (
-              <ThreadSubscribeButton 
-                threadId={threadId} 
+              <ThreadSubscribeButton
+                threadId={threadId}
                 threadTitle={thread.title}
               />
             )}
-            <Button 
-              onClick={() => refreshThread()} 
-              variant="ghost" 
+            <Button
+              onClick={() => refreshThread()}
+              variant="ghost"
               className="text-sm text-accent"
               disabled={loading}
             >
-              <i className={`fas fa-sync-alt mr-1 ${loading ? "animate-spin" : ""}`}></i> Refresh
+              <i
+                className={`fas fa-sync-alt mr-1 ${loading ? "animate-spin" : ""}`}
+              ></i>{" "}
+              Refresh
             </Button>
           </div>
         </div>
-        
+
         {/* Thread Container */}
-        <div ref={threadContainerRef} className="thread-container overflow-hidden">
+        <div
+          ref={threadContainerRef}
+          className="thread-container overflow-hidden"
+        >
           {loading && !thread ? (
             // Loading skeleton for thread
             <div className="p-4">
@@ -358,10 +395,7 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                 <i className="fas fa-exclamation-triangle mr-2"></i>
                 Error loading thread: {error}
               </div>
-              <Button 
-                onClick={() => refreshThread()} 
-                variant="outline"
-              >
+              <Button onClick={() => refreshThread()} variant="outline">
                 Try Again
               </Button>
             </div>
@@ -370,15 +404,21 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
               {/* Thread Tabs - Content & Visualization */}
               <Tabs defaultValue="content" className="mb-4">
                 <TabsList className="bg-gray-200 border border-black">
-                  <TabsTrigger value="content" className="px-4 data-[state=active]:bg-amber-100 data-[state=active]:border-b-2 data-[state=active]:border-black">
+                  <TabsTrigger
+                    value="content"
+                    className="px-4 data-[state=active]:bg-amber-100 data-[state=active]:border-b-2 data-[state=active]:border-black"
+                  >
                     Thread Content
                   </TabsTrigger>
-                  <TabsTrigger value="visualization" className="px-4 data-[state=active]:bg-amber-100 data-[state=active]:border-b-2 data-[state=active]:border-black">
+                  <TabsTrigger
+                    value="visualization"
+                    className="px-4 data-[state=active]:bg-amber-100 data-[state=active]:border-b-2 data-[state=active]:border-black"
+                  >
                     <GitMerge className="h-4 w-4 mr-1 inline" />
                     Thread Visualization
                   </TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="content" className="pt-2">
                   {/* Original Post */}
                   <div id={`post-${thread.id}`} className="p-4 post">
@@ -386,35 +426,49 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                       {/* Display thread media */}
                       {thread.media && thread.media.length > 0 ? (
                         <div className="flex-shrink-0 mr-4">
-                          <MediaGallery mediaList={thread.media} size="medium" />
-                        </div>
-                      ) : thread.images && thread.images.length > 0 && (
-                        <div className="flex-shrink-0 mr-4">
-                          <img 
-                            src={thread.images[0]} 
-                            alt="Thread attachment" 
-                            className="post-image rounded"
+                          <MediaGallery
+                            mediaList={thread.media}
+                            size="medium"
                           />
                         </div>
+                      ) : (
+                        thread.images &&
+                        thread.images.length > 0 && (
+                          <div className="flex-shrink-0 mr-4">
+                            <img
+                              src={thread.images[0]}
+                              alt="Thread attachment"
+                              className="post-image rounded"
+                            />
+                          </div>
+                        )
                       )}
                       <div className="flex-1">
                         <div className="flex items-center mb-1">
-                          <span className="font-bold text-primary">Anonymous</span>
-                          <span className="ml-2 post-num">#{thread.id.substring(0, 6)}</span>
-                          <span className="ml-2 timestamp">{formatDate(thread.createdAt)}</span>
+                          <span className="font-bold text-primary">
+                            Anonymous
+                          </span>
+                          <span className="ml-2 post-num">
+                            #{thread.id.substring(0, 6)}
+                          </span>
+                          <span className="ml-2 timestamp">
+                            {formatDate(thread.createdAt)}
+                          </span>
                         </div>
                         {thread.title && (
-                          <div className="text-sm mb-2 font-bold">{thread.title}</div>
+                          <div className="text-sm mb-2 font-bold">
+                            {thread.title}
+                          </div>
                         )}
                         <div className="text-sm mb-2">
                           <MarkdownContent content={thread.content} />
-                          
+
                           {/* Check if this is the crypto board */}
-                          {thread.boardId === 'crypto' && thread.content && (
+                          {thread.boardId === "crypto" && thread.content && (
                             <PumpFunWidget content={thread.content} />
                           )}
                         </div>
-                        
+
                         <div className="flex mt-2 space-x-2">
                           <Button
                             onClick={() => handleQuotePost(thread.id)}
@@ -424,96 +478,132 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                           >
                             <i className="fas fa-reply mr-1"></i> Reply
                           </Button>
-                          
+
                           <Button
                             onClick={() => handleLikePost(thread.id)}
                             variant="ghost"
                             size="sm"
-                            className={`text-xs ${likedPosts[thread.id] ? 'text-accent' : 'text-gray-500'}`}
-                            title={likedPosts[thread.id] ? "Unlike this post" : "Like this post"}
+                            className={`text-xs ${likedPosts[thread.id] ? "text-accent" : "text-gray-500"}`}
+                            title={
+                              likedPosts[thread.id]
+                                ? "Unlike this post"
+                                : "Like this post"
+                            }
                           >
-                            {likedPosts[thread.id] ? <ThumbsUp size={14} className="mr-1" /> : <ThumbsUp size={14} className="mr-1" />}
-                            {postLikes[thread.id] > 0 && <span>{postLikes[thread.id]}</span>}
+                            {likedPosts[thread.id] ? (
+                              <ThumbsUp size={14} className="mr-1" />
+                            ) : (
+                              <ThumbsUp size={14} className="mr-1" />
+                            )}
+                            {postLikes[thread.id] > 0 && (
+                              <span>{postLikes[thread.id]}</span>
+                            )}
                           </Button>
                         </div>
                       </div>
                     </div>
                   </div>
                 </TabsContent>
-                
+
                 <TabsContent value="visualization" className="pt-2">
-                  <ThreadContextVisualization threadId={threadId} highlightedPostId={selectedPostId} />
+                  <ThreadContextVisualization
+                    threadId={threadId}
+                    highlightedPostId={selectedPostId}
+                  />
                 </TabsContent>
               </Tabs>
-              
+
               {/* Replies */}
               <div className="border-t border-gray-200">
                 {loading && posts.length === 0 ? (
                   // Loading skeletons for replies
-                  Array(3).fill(0).map((_, index) => (
-                    <div className="post p-4" key={index}>
-                      <div className="flex items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center mb-1">
-                            <Skeleton className="h-4 w-24" />
-                            <Skeleton className="h-4 w-12 ml-2" />
-                            <Skeleton className="h-4 w-32 ml-2" />
+                  Array(3)
+                    .fill(0)
+                    .map((_, index) => (
+                      <div className="post p-4" key={index}>
+                        <div className="flex items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center mb-1">
+                              <Skeleton className="h-4 w-24" />
+                              <Skeleton className="h-4 w-12 ml-2" />
+                              <Skeleton className="h-4 w-32 ml-2" />
+                            </div>
+                            <Skeleton className="h-4 w-full mb-1" />
+                            <Skeleton className="h-4 w-full mb-1" />
+                            <Skeleton className="h-4 w-3/4 mb-1" />
                           </div>
-                          <Skeleton className="h-4 w-full mb-1" />
-                          <Skeleton className="h-4 w-full mb-1" />
-                          <Skeleton className="h-4 w-3/4 mb-1" />
                         </div>
                       </div>
-                    </div>
-                  ))
+                    ))
                 ) : posts.length === 0 && thread ? (
                   <div className="post p-8 text-center text-gray-500">
                     No replies yet. Be the first to respond!
                   </div>
                 ) : (
                   // Actual replies
-                  posts.map(post => (
-                    <div id={`post-${post.id}`} className="post p-4" key={post.id}>
+                  posts.map((post) => (
+                    <div
+                      id={`post-${post.id}`}
+                      className="post p-4"
+                      key={post.id}
+                    >
                       <div className="flex items-start">
                         {/* Display post media */}
                         {post.media && post.media.length > 0 ? (
                           <div className="flex-shrink-0 mr-4">
                             <MediaGallery mediaList={post.media} size="small" />
                           </div>
-                        ) : post.images && post.images.length > 0 && (
-                          <div className="flex-shrink-0 mr-4">
-                            <img 
-                              src={post.images[0]} 
-                              alt="Post attachment" 
-                              className="post-image rounded"
-                            />
-                          </div>
+                        ) : (
+                          post.images &&
+                          post.images.length > 0 && (
+                            <div className="flex-shrink-0 mr-4">
+                              <img
+                                src={post.images[0]}
+                                alt="Post attachment"
+                                className="post-image rounded"
+                              />
+                            </div>
+                          )
                         )}
                         <div className="flex-1">
                           <div className="flex items-center mb-1">
-                            <span className="font-bold text-primary">Anonymous</span>
-                            <span className="ml-2 post-num">#{post.id.substring(0, 6)}</span>
-                            <span className="ml-2 timestamp">{formatDate(post.createdAt)}</span>
+                            <span className="font-bold text-primary">
+                              Anonymous
+                            </span>
+                            <span className="ml-2 post-num">
+                              #{post.id.substring(0, 6)}
+                            </span>
+                            <span className="ml-2 timestamp">
+                              {formatDate(post.createdAt)}
+                            </span>
                           </div>
                           <div className="text-sm mb-2">
                             {/* Show references to other posts */}
-                            {post.references && post.references.length > 0 && post.references.some(ref => ref !== threadId) && (
-                              <div className="mb-2">
-                                {post.references.filter(ref => ref !== threadId).map(ref => (
-                                  <div key={ref} className="text-accent">
-                                    &gt;&gt;{ref.substring(0, 6)}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+                            {post.references &&
+                              post.references.length > 0 &&
+                              post.references.some(
+                                (ref) => ref !== threadId,
+                              ) && (
+                                <div className="mb-2">
+                                  {post.references
+                                    .filter((ref) => ref !== threadId)
+                                    .map((ref) => (
+                                      <div key={ref} className="text-accent">
+                                        &gt;&gt;{ref.substring(0, 6)}
+                                      </div>
+                                    ))}
+                                </div>
+                              )}
                             <MarkdownContent content={post.content} />
-                            
+
                             {/* Check if this is the crypto board */}
-                            {thread && thread.boardId === 'crypto' && post.content && (
-                              <PumpFunWidget content={post.content} />
-                            )}
+                            {thread &&
+                              thread.boardId === "crypto" &&
+                              post.content && (
+                                <PumpFunWidget content={post.content} />
+                              )}
                           </div>
-                          
+
                           <div className="flex mt-2 space-x-2">
                             <Button
                               onClick={() => handleQuotePost(post.id)}
@@ -523,16 +613,26 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                             >
                               <i className="fas fa-reply mr-1"></i> Reply
                             </Button>
-                            
+
                             <Button
                               onClick={() => handleLikePost(post.id)}
                               variant="ghost"
                               size="sm"
-                              className={`text-xs ${likedPosts[post.id] ? 'text-accent' : 'text-gray-500'}`}
-                              title={likedPosts[post.id] ? "Unlike this post" : "Like this post"}
+                              className={`text-xs ${likedPosts[post.id] ? "text-accent" : "text-gray-500"}`}
+                              title={
+                                likedPosts[post.id]
+                                  ? "Unlike this post"
+                                  : "Like this post"
+                              }
                             >
-                              {likedPosts[post.id] ? <ThumbsUp size={14} className="mr-1" /> : <ThumbsUp size={14} className="mr-1" />}
-                              {postLikes[post.id] > 0 && <span>{postLikes[post.id]}</span>}
+                              {likedPosts[post.id] ? (
+                                <ThumbsUp size={14} className="mr-1" />
+                              ) : (
+                                <ThumbsUp size={14} className="mr-1" />
+                              )}
+                              {postLikes[post.id] > 0 && (
+                                <span>{postLikes[post.id]}</span>
+                              )}
                             </Button>
                           </div>
                         </div>
@@ -541,11 +641,16 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                   ))
                 )}
               </div>
-              
+
               {/* Reply Form */}
-              <div id="reply-form" className="p-4 bg-gray-50 border-t border-gray-200">
-                <h3 className="text-sm font-bold mb-4 uppercase text-gray-600">Post Reply</h3>
-                
+              <div
+                id="reply-form"
+                className="p-4 bg-gray-50 border-t border-gray-200"
+              >
+                <h3 className="text-sm font-bold mb-4 uppercase text-gray-600">
+                  Post Reply
+                </h3>
+
                 {selectedPostId && (
                   <div className="mb-4 p-2 bg-gray-100 border-l-4 border-accent">
                     <div className="flex justify-between items-center">
@@ -563,123 +668,15 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                     </div>
                   </div>
                 )}
-                
-                <PostReplyForm onSubmitReply={handleSubmitReply} threadId={threadId} />
+
+                <PostReplyForm
+                  onSubmitReply={handleSubmitReply}
+                  threadId={threadId}
+                />
               </div>
             </>
           ) : null}
         </div>
-      </div>
-      
-      {/* Floating navigation */}
-      <div className="fixed bottom-20 right-6 flex flex-col gap-2">
-        <Button
-          onClick={scrollToTop}
-          size="sm"
-          variant="outline"
-          className="rounded-full h-10 w-10 p-0 bg-primary text-white shadow-md"
-        >
-          <ArrowUp className="h-5 w-5" />
-        </Button>
-        
-        <Button
-          onClick={scrollToBottom}
-          size="sm"
-          variant="outline"
-          className="rounded-full h-10 w-10 p-0 bg-primary text-white shadow-md"
-        >
-          <ArrowDown className="h-5 w-5" />
-        </Button>
-        
-        <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-          <DialogTrigger asChild>
-            <Button
-              size="sm"
-              variant="outline"
-              className="rounded-full h-10 w-10 p-0 bg-primary text-white shadow-md"
-            >
-              <Search className="h-5 w-5" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="w-full max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Search Thread</DialogTitle>
-              <DialogDescription>
-                Find text within this thread and all its replies.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="flex gap-2 items-center mt-2">
-              <Input
-                placeholder="Search for..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    performSearch();
-                  }
-                }}
-                className="flex-1"
-              />
-              <Button onClick={performSearch} disabled={!searchQuery.trim()}>
-                Search
-              </Button>
-            </div>
-            
-            {searchResults.length > 0 ? (
-              <div className="mt-4">
-                <div className="flex justify-between items-center mb-2">
-                  <div className="text-sm text-gray-500">
-                    {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={prevSearchResult}
-                      variant="outline"
-                      size="sm"
-                      disabled={searchResults.length <= 1}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      onClick={nextSearchResult}
-                      variant="outline"
-                      size="sm"
-                      disabled={searchResults.length <= 1}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="border rounded-md p-2 bg-gray-50">
-                  <div className="font-medium text-sm mb-1">
-                    Result {currentSearchResult + 1} of {searchResults.length}
-                  </div>
-                  <div className="text-sm">
-                    <span className="text-accent">
-                      ...{searchResults[currentSearchResult]?.text}...
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ) : searchQuery.trim() && currentSearchResult === -1 ? (
-              <div className="mt-4 text-center text-gray-500">
-                No results found for "{searchQuery}"
-              </div>
-            ) : null}
-            
-            <DialogFooter>
-              <Button
-                onClick={() => setSearchOpen(false)}
-                variant="outline"
-                size="sm"
-              >
-                Close
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

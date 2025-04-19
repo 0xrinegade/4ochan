@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useParams } from "wouter";
 import { Header } from "@/components/Header";
 import { BoardSidebar } from "@/components/BoardSidebar";
@@ -7,10 +7,42 @@ import { useNostr } from "@/hooks/useNostr";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const Thread: React.FC<{ id?: string }> = ({ id }) => {
+// Helper function to set Open Graph meta tags
+const setOpenGraphTags = (title: string, description: string, imageUrl?: string) => {
+  // Find existing OG tags and remove them
+  document.querySelectorAll('meta[property^="og:"]').forEach(tag => tag.remove());
+  
+  const metaTags = [
+    { property: 'og:title', content: title },
+    { property: 'og:description', content: description },
+    { property: 'og:type', content: 'website' },
+    { property: 'og:url', content: window.location.href },
+  ];
+  
+  // Add image tag if provided
+  if (imageUrl) {
+    metaTags.push({ property: 'og:image', content: imageUrl });
+  }
+  
+  // Create and append the meta tags
+  metaTags.forEach(tag => {
+    const meta = document.createElement('meta');
+    meta.setAttribute('property', tag.property);
+    meta.setAttribute('content', tag.content);
+    document.head.appendChild(meta);
+  });
+};
+
+interface ThreadProps {
+  id?: string;
+  replyId?: string;
+}
+
+const Thread: React.FC<ThreadProps> = ({ id, replyId }) => {
   // If id is not passed as a prop, try to get it from the URL params
-  const params = useParams<{ id: string }>();
+  const params = useParams<{ id: string; replyId: string }>();
   const threadId = id || params.id;
+  const specificReplyId = replyId || params.replyId;
   
   const { connectedRelays, connect } = useNostr();
   const isMobile = useIsMobile();
@@ -48,7 +80,7 @@ const Thread: React.FC<{ id?: string }> = ({ id }) => {
               </div>
             </div>
           ) : (
-            <ThreadView threadId={threadId} />
+            <ThreadView threadId={threadId} replyId={specificReplyId} setOpenGraphTags={setOpenGraphTags} />
           )}
         </div>
       </div>
