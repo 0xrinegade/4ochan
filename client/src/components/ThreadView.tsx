@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ThreadSubscribeButton } from "@/components/ThreadSubscribeButton";
 import { useNostr } from "@/context/NostrContext";
 import { MarkdownContent } from "@/components/MarkdownContent";
-import { PumpFunWidget, extractEthereumAddresses } from "@/components/PumpFunWidget";
+import { PumpFunWidget } from "@/components/PumpFunWidget";
 import { 
   ArrowUp, 
   ArrowDown, 
@@ -306,25 +306,10 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                   <div className="text-sm mb-2">
                     <MarkdownContent content={thread.content} />
                     
-                    {/* Check if this is the crypto board and detect contract addresses in thread */}
-                    {thread.boardId === 'crypto' && thread.content && (() => {
-                      // Use our utility function to extract valid Ethereum addresses
-                      const addresses = extractEthereumAddresses(thread.content);
-                      
-                      if (addresses.length > 0) {
-                        return (
-                          <div className="mt-3">
-                            {addresses.map((address, index) => (
-                              <PumpFunWidget 
-                                key={`thread-contract-${index}`}
-                                contractAddress={address} 
-                              />
-                            ))}
-                          </div>
-                        );
-                      }
-                      return null;
-                    })()}
+                    {/* Check if this is the crypto board */}
+                    {thread.boardId === 'crypto' && thread.content && (
+                      <PumpFunWidget content={thread.content} />
+                    )}
                   </div>
                   
                   <div className="flex mt-2">
@@ -404,29 +389,9 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                         )}
                         <MarkdownContent content={post.content} />
                         
-                        {/* Check if this is the crypto board and detect contract addresses */}
-                        {thread && thread.boardId === 'crypto' && (
-                          <>
-                            {/* Look for Ethereum addresses in the post content */}
-                            {post.content && (() => {
-                              // Use our utility function to extract valid Ethereum addresses
-                              const addresses = extractEthereumAddresses(post.content);
-                              
-                              if (addresses.length > 0) {
-                                return (
-                                  <div className="mt-3">
-                                    {addresses.map((address, index) => (
-                                      <PumpFunWidget 
-                                        key={`${post.id}-contract-${index}`}
-                                        contractAddress={address} 
-                                      />
-                                    ))}
-                                  </div>
-                                );
-                              }
-                              return null;
-                            })()}
-                          </>
+                        {/* Check if this is the crypto board */}
+                        {thread && thread.boardId === 'crypto' && post.content && (
+                          <PumpFunWidget content={post.content} />
                         )}
                       </div>
                       

@@ -844,6 +844,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // ===== CRYPTO TOKEN ANALYSIS ROUTES =====
+  
+  // Get token analysis for a given contract address
+  app.get("/api/token/:address", async (req, res) => {
+    try {
+      const { address } = req.params;
+      
+      // Validate Ethereum address format
+      if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+        return res.status(400).json({ error: "Invalid Ethereum address format" });
+      }
+      
+      // Call Moralis API to get token information
+      const tokenAnalysis = await getTokenAnalysis(address);
+      
+      if (tokenAnalysis.error) {
+        return res.status(404).json({ error: tokenAnalysis.error });
+      }
+      
+      return res.json(tokenAnalysis);
+    } catch (error) {
+      console.error("Error fetching token analysis:", error);
+      return res.status(500).json({ error: "Failed to fetch token data" });
+    }
+  });
 
   // Setup WebSocket server for real-time notifications
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
