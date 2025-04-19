@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4ochan.org - Offline</title>
+  <style>
+    body {
+      font-family: 'Libertarian', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5dc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      color: #000;
+    }
+    .container {
+      max-width: 600px;
+      text-align: center;
+      padding: 20px;
+      background-color: #fff;
+      border: 2px solid #000;
+    }
+    .header {
+      background-color: #800000;
+      color: #fff;
+      padding: 4px 8px;
+      font-weight: bold;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+    }
+    .content {
+      padding: 16px;
+      border: 1px solid #000;
+    }
+    .btn {
+      background-color: #ccc;
+      border: 2px solid #000;
+      padding: 4px 8px;
+      margin-top: 16px;
+      font-weight: bold;
+      font-size: 12px;
+      box-shadow: 2px 2px 0 #000;
+      cursor: pointer;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 10px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <span style="margin-right: 4px;">■</span> 4OCHAN.ORG - OFFLINE MODE
+    </div>
+    <div class="content">
+      <h2>You are offline</h2>
+      <p>You're currently offline and can't connect to 4ochan.org. Any posts or threads you create will be saved locally and uploaded once you reconnect.</p>
+      <p>Check your internet connection and try again.</p>
+      <button class="btn" onclick="window.location.reload()">RETRY CONNECTION</button>
+    </div>
+  </div>
+  <div class="footer">
+    Best viewed with Netscape Navigator
+  </div>
+</body>
+</html>
