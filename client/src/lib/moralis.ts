@@ -40,9 +40,27 @@ export interface TokenPrice {
   exchangeName?: string;
 }
 
+export interface TokenPriceHistory {
+  timestamp: number;
+  price: number;
+  volume?: number;
+  marketCap?: number;
+}
+
+export interface TokenMetrics {
+  totalSupply?: string;
+  circulatingSupply?: string;
+  holders?: number;
+  transactions24h?: number;
+  volumeChange24h?: number;
+  priceChange24h?: number;
+}
+
 export interface TokenAnalysis {
   metadata?: TokenMetadata;
   price?: TokenPrice;
+  priceHistory?: TokenPriceHistory[];
+  metrics?: TokenMetrics;
   error?: string;
 }
 
@@ -95,11 +113,23 @@ export const getSimplifiedTokenInfo = async (address: string): Promise<{
   symbol?: string;
   price?: number;
   priceChange24h?: number;
+  volumeChange24h?: number;
+  holders?: number;
+  totalSupply?: string;
+  circulatingSupply?: string;
   logo?: string;
+  priceHistory?: TokenPriceHistory[];
+  address?: string; // Include the token address
   error?: string;
 }> => {
   try {
-    const analysis = await getTokenAnalysis(address);
+    const response = await fetch(`/api/token/${address}`);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to fetch token data');
+    }
+    
+    const analysis = await response.json();
     
     if (analysis.error) {
       return { error: analysis.error };
@@ -109,7 +139,14 @@ export const getSimplifiedTokenInfo = async (address: string): Promise<{
       name: analysis.metadata?.name,
       symbol: analysis.metadata?.symbol,
       price: analysis.price?.usdPrice,
-      logo: analysis.metadata?.thumbnail,
+      priceChange24h: analysis.metrics?.priceChange24h,
+      volumeChange24h: analysis.metrics?.volumeChange24h,
+      holders: analysis.metrics?.holders,
+      totalSupply: analysis.metrics?.totalSupply,
+      circulatingSupply: analysis.metrics?.circulatingSupply,
+      logo: analysis.metadata?.thumbnail || analysis.metadata?.logo,
+      priceHistory: analysis.priceHistory,
+      address: address // Include the original token address
     };
   } catch (error) {
     console.error('Error in getSimplifiedTokenInfo:', error);

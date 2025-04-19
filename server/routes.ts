@@ -870,6 +870,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ error: "Failed to fetch token data" });
     }
   });
+  
+  // Get token analysis by ticker symbol (like $ETH, $SOL, etc)
+  app.get("/api/token-symbol/:symbol", async (req, res) => {
+    try {
+      let { symbol } = req.params;
+      
+      // Remove $ prefix if present
+      if (symbol.startsWith('$')) {
+        symbol = symbol.substring(1);
+      }
+      
+      // Normalize symbol to uppercase
+      symbol = symbol.toUpperCase();
+      
+      // Common token contract addresses for popular tokens
+      const tokenAddresses: Record<string, string> = {
+        'ETH': '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH contract
+        'BTC': '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', // WBTC contract
+        'SOL': '0xD31a59c85aE9D8edEFeC411D448f90841571b89c', // SOL on Ethereum
+        'DOGE': '0x4206931337dc273a630d328dA6441786BfaD668f', // DOGE on Ethereum
+        'SHIB': '0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE', // SHIB
+        'LINK': '0x514910771AF9Ca656af840dff83E8264EcF986CA', // Chainlink
+        'MATIC': '0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0', // Polygon/Matic
+        'UNI': '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984', // Uniswap
+        'USDT': '0xdAC17F958D2ee523a2206206994597C13D831ec7', // Tether
+        'USDC': '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USD Coin
+        'DAI': '0x6B175474E89094C44Da98b954EedeAC495271d0F', // DAI Stablecoin
+        'AAVE': '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9', // Aave
+        'CRO': '0xA0b73E1Ff0B80914AB6fe0444E65848C4C34450b', // Cronos
+        'AVAX': '0x85f138bfEE4ef8e540890CFb48F620571d67Eda3', // Avalanche
+        'ADA': '0x8a6f3BF52A26a21531514E23016eEAe8Ba7e7018', // Cardano on Ethereum
+        'BNB': '0xB8c77482e45F1F44dE1745F52C74426C631bDD52', // Binance Coin
+        'DOT': '0x7083609fCE4d1d8Dc0C979AAb8c869Ea2C873402', // Polkadot on Ethereum
+        'XRP': '0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE', // XRP on Ethereum
+      };
+      
+      // Find token address
+      const tokenAddress = tokenAddresses[symbol];
+      
+      if (!tokenAddress) {
+        return res.status(404).json({ error: `Token symbol ${symbol} not found in our registry` });
+      }
+      
+      // Call Moralis API to get token information
+      const tokenAnalysis = await getTokenAnalysis(tokenAddress);
+      
+      if (tokenAnalysis.error) {
+        return res.status(404).json({ error: tokenAnalysis.error });
+      }
+      
+      return res.json(tokenAnalysis);
+    } catch (error) {
+      console.error("Error fetching token by symbol:", error);
+      return res.status(500).json({ error: "Failed to fetch token data" });
+    }
+  });
 
   // Setup WebSocket server for real-time notifications
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
