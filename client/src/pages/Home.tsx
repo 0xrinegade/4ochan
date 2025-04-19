@@ -30,10 +30,13 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
   
   const { boards: nostrBoards, loading: loadingBoards } = useBoards();
   const nostr = useNostr();
-  const { connect, connectedRelays, relays, identity } = nostr;
+  const { connect, connectedRelays, relays, identity, getTotalViewCount } = nostr;
   const [connecting, setConnecting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { toast } = useToast();
+  
+  // State for total view count
+  const [totalViews, setTotalViews] = useState<number>(0);
   
   // State for user activity
   const [userCreatedThreads, setUserCreatedThreads] = useState<Thread[]>([]);
@@ -55,6 +58,27 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
       connect().finally(() => setConnecting(false));
     }
   }, [connectedRelays, connect]);
+  
+  // Load total view count
+  useEffect(() => {
+    if (connectedRelays > 0 && getTotalViewCount) {
+      const fetchTotalViews = async () => {
+        try {
+          const count = await getTotalViewCount();
+          setTotalViews(count);
+        } catch (error) {
+          console.error("Error fetching total view count:", error);
+        }
+      };
+      
+      fetchTotalViews();
+      
+      // Refresh view count every 5 minutes
+      const interval = setInterval(fetchTotalViews, 300000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [connectedRelays, getTotalViewCount]);
   
   // Load user activity data
   useEffect(() => {
@@ -354,13 +378,16 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
                           <span className="font-bold">Boards:</span> {nostrBoards.length}
                         </div>
                         <div>
-                          <span className="font-bold">Created:</span> {new Date().toLocaleDateString()}
+                          <span className="font-bold">Thread Views:</span> {totalViews.toLocaleString()}
                         </div>
                         <div>
                           <span className="font-bold">Version:</span> 0.1.0
                         </div>
                         <div>
                           <span className="font-bold">Powered by:</span> Nostr
+                        </div>
+                        <div className="col-span-2 sm:col-span-3 text-xs text-gray-700 mt-1">
+                          <span className="font-bold">Created:</span> {new Date().toLocaleDateString()}
                         </div>
                       </div>
                     </div>

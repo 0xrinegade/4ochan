@@ -61,8 +61,6 @@ interface NostrContextType {
   markNotificationRead: (notificationId: string) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
   getUnreadNotificationCount: () => Promise<number>;
-  // Thread statistics
-  getThreadStats: (threadId: string) => Promise<{ viewCount: number, engagement: number } | null>;
 }
 
 export const NostrContext = createContext<NostrContextType | undefined>(undefined);
@@ -1936,7 +1934,8 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     markAllNotificationsRead,
     getUnreadNotificationCount,
     // Thread statistics
-    getThreadStats
+    getThreadStats,
+    getTotalViewCount
   };
 
   return (
