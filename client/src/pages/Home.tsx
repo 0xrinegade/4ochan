@@ -9,6 +9,15 @@ import { useBoards } from "@/hooks/useBoards";
 import { CreateThreadModal } from "@/components/CreateThreadModal";
 import { formatPubkey } from "@/lib/nostr";
 import { useToast } from "@/hooks/use-toast";
+import { Thread } from "@/types";
+
+// Interface for user replies
+interface UserReply {
+  id: string;
+  threadId: string;
+  content: string;
+  createdAt: number;
+}
 
 const Home: React.FC<{ id?: string }> = ({ id }) => {
   // If id is not passed as a prop, try to get it from the URL params
@@ -21,6 +30,12 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
   const [connecting, setConnecting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { toast } = useToast();
+  
+  // State for user activity
+  const [userCreatedThreads, setUserCreatedThreads] = useState<Thread[]>([]);
+  const [userReplies, setUserReplies] = useState<UserReply[]>([]);
+  const [newRepliesCount, setNewRepliesCount] = useState(0);
+  const [lastVisitTime, setLastVisitTime] = useState<number>(0);
 
   // Find the current board details - either by ID or shortName
   const currentBoard = boardId
@@ -36,6 +51,131 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
       connect().finally(() => setConnecting(false));
     }
   }, [connectedRelays, connect]);
+  
+  // Load user activity data
+  useEffect(() => {
+    if (!identity?.pubkey) return;
+    
+    const fetchUserActivity = async () => {
+      try {
+        // Load last visit time from localStorage
+        const lastVisitData = localStorage.getItem('last-visit-time');
+        const currentTime = Math.floor(Date.now() / 1000);
+        
+        if (lastVisitData) {
+          setLastVisitTime(parseInt(lastVisitData, 10));
+        }
+        
+        // Save current visit time
+        localStorage.setItem('last-visit-time', currentTime.toString());
+        
+        // Fetch user created threads
+        if (nostr.pool && connectedRelays > 0) {
+          // Get all threads created by this user
+          const filter = {
+            kinds: [nostr.KIND.THREAD],
+            authors: [identity.pubkey],
+            limit: 10
+          };
+          
+          const relayUrls = relays
+            .filter(r => r.status === 'connected' && r.read)
+            .map(r => r.url);
+            
+          if (relayUrls.length > 0 && nostr.pool) {
+            // Get thread events from all connected relays
+            const events = await nostr.pool.querySync(relayUrls, filter);
+            console.log(`Found ${events.length} threads created by user`);
+            
+            // Parse thread events into Thread objects
+            const threads: Thread[] = [];
+            
+            for (const event of events) {
+              try {
+                const threadData = JSON.parse(event.content);
+                
+                const thread: Thread = {
+                  id: event.id,
+                  boardId: threadData.boardId || 'unknown',
+                  title: threadData.title || 'Untitled',
+                  content: threadData.content,
+                  images: threadData.images || [],
+                  authorPubkey: event.pubkey,
+                  createdAt: event.created_at,
+                  replyCount: 0,
+                  lastReplyTime: event.created_at
+                };
+                
+                threads.push(thread);
+              } catch (error) {
+                console.error("Failed to parse user thread event", event, error);
+              }
+            }
+            
+            // Sort by creation time (newest first)
+            const sortedThreads = threads.sort((a, b) => b.createdAt - a.createdAt);
+            setUserCreatedThreads(sortedThreads);
+            
+            // Fetch user's replies
+            const replyFilter = {
+              kinds: [nostr.KIND.POST],
+              authors: [identity.pubkey],
+              limit: 20
+            };
+            
+            const replyEvents = await nostr.pool.querySync(relayUrls, replyFilter);
+            console.log(`Found ${replyEvents.length} replies by user`);
+            
+            // Parse reply events
+            const replies: UserReply[] = [];
+            let newRepliesCounter = 0;
+            
+            for (const event of replyEvents) {
+              try {
+                // Find thread ID from tags
+                const threadTag = event.tags.find((tag: string[]) => tag[0] === 'e');
+                if (threadTag && threadTag[1]) {
+                  const threadId = threadTag[1];
+                  
+                  const reply: UserReply = {
+                    id: event.id,
+                    threadId,
+                    content: event.content,
+                    createdAt: event.created_at
+                  };
+                  
+                  replies.push(reply);
+                  
+                  // Count new replies since last visit
+                  if (lastVisitData && event.created_at > parseInt(lastVisitData, 10) && event.pubkey !== identity.pubkey) {
+                    newRepliesCounter++;
+                  }
+                }
+              } catch (error) {
+                console.error("Failed to parse user reply event", event, error);
+              }
+            }
+            
+            // Sort by creation time (newest first)
+            const sortedReplies = replies.sort((a, b) => b.createdAt - a.createdAt);
+            setUserReplies(sortedReplies);
+            setNewRepliesCount(newRepliesCounter);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user activity:", error);
+      }
+    };
+    
+    fetchUserActivity();
+    
+    // Set up an interval to check for new activity every minute
+    const intervalId = setInterval(fetchUserActivity, 60000);
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [identity, connectedRelays, nostr, relays]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,16 +186,60 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
             <div className="w-full md:w-1/4">
               <div className="mb-2">
                 <div className="bg-primary text-white py-0.5 px-2 font-bold text-xs flex items-center">
-                  <span className="mr-1">■</span> QUICK LINKS
+                  <span className="mr-1">■</span> RECENT ACTIVITY
                 </div>
-                <div className="bg-white border border-black border-t-0 p-1">
-                  <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-1 gap-1 md:list-disc md:pl-4 text-sm">
-                    <li className="mb-0.5"><a href="/board/b" className="text-primary underline">Random</a></li>
-                    <li className="mb-0.5"><a href="/board/tech" className="text-primary underline">Technology</a></li>
-                    <li className="mb-0.5"><a href="/board/ai" className="text-primary underline">AI</a></li>
-                    <li className="mb-0.5"><a href="/board/p" className="text-primary underline">Psyche</a></li>
-                    <li className="mb-0.5"><a href="/board/gg" className="text-primary underline">Games</a></li>
-                  </ul>
+                <div className="bg-white border border-black border-t-0 p-2">
+                  <div className="mb-2">
+                    <div className="text-xs font-bold mb-1">Your Threads:</div>
+                    {identity?.pubkey ? (
+                      <>
+                        {userCreatedThreads.length > 0 ? (
+                          <ul className="text-xs md:list-disc md:pl-4">
+                            {userCreatedThreads.slice(0, 3).map(thread => (
+                              <li key={thread.id} className="mb-0.5 truncate">
+                                <a href={`/thread/${thread.id}`} className="text-primary underline">
+                                  {thread.title || "Untitled Thread"}
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-xs text-gray-500">No threads created yet</p>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-xs text-gray-500">Not connected</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <div className="text-xs font-bold mb-1">Recent Replies:</div>
+                    {identity?.pubkey ? (
+                      <>
+                        {userReplies.length > 0 ? (
+                          <ul className="text-xs md:list-disc md:pl-4">
+                            {userReplies.slice(0, 3).map(reply => (
+                              <li key={reply.id} className="mb-0.5 truncate">
+                                <a href={`/thread/${reply.threadId}`} className="text-primary underline">
+                                  {reply.content.substring(0, 30)}...
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-xs text-gray-500">No replies yet</p>
+                        )}
+                        
+                        {newRepliesCount > 0 && (
+                          <div className="mt-2 bg-yellow-100 border border-yellow-300 p-1 text-xs">
+                            <span className="font-bold">{newRepliesCount}</span> new {newRepliesCount === 1 ? 'reply' : 'replies'} since your last visit
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-xs text-gray-500">Not connected</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
