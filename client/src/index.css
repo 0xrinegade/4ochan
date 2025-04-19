@@ -1247,6 +1247,28 @@
   .post-preview-container {
     z-index: 100;
   }
+  
+  /* Custom retro dialog for post references */
+  .retro-dialog {
+    font-family: 'Libertarian', sans-serif;
+    background-color: #f0f0f0 !important;
+    border: 2px solid black !important;
+    box-shadow: 4px 4px 0 black !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .retro-dialog-header {
+    background-color: #d0d0d0;
+    border-bottom: 2px solid black;
+    padding: 6px 10px;
+  }
+  
+  .retro-dialog-title {
+    font-weight: bold;
+    font-size: 1rem;
+    color: black;
+  }
 
   .nested-preview-container {
     position: relative;

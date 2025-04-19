@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { useNostr } from '@/context/NostrContext';
 import { PostPreview } from './PostPreview';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface PostReferenceProps {
   postId: string;
@@ -14,57 +20,49 @@ export const PostReference: React.FC<PostReferenceProps> = ({
   threadId 
 }) => {
   const { getPost } = useNostr();
-  const [showPreview, setShowPreview] = useState(false);
-  const [previewPosition, setPreviewPosition] = useState({ x: 0, y: 0 });
+  const [showModal, setShowModal] = useState(false);
 
   const handleMouseEnter = async (e: React.MouseEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = rect.left;
-    const y = rect.bottom + window.scrollY;
-    
-    setPreviewPosition({ x, y });
-    setShowPreview(true);
+    setShowModal(true);
   };
 
   const handleMouseLeave = () => {
-    setShowPreview(false);
+    // We'll keep the modal open if the mouse is over it
+    // and rely on Dialog's built-in close mechanisms
   };
 
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
       e.preventDefault();
       onClick();
+    } else {
+      setShowModal(true);
     }
   };
 
   return (
-    <span className="post-reference-container" style={{ position: 'relative' }}>
-      <span 
-        className="post-reference"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onClick={handleClick}
-      >
-        &gt;&gt;{postId.substring(0, 8)}
-      </span>
-      
-      {showPreview && (
-        <div 
-          className="post-preview-container" 
-          style={{ 
-            position: 'absolute',
-            left: `${previewPosition.x}px`, 
-            top: `${previewPosition.y + 10}px`
-          }}
-          onMouseEnter={() => setShowPreview(true)}
-          onMouseLeave={() => setShowPreview(false)}
+    <>
+      <span className="post-reference-container">
+        <span 
+          className="post-reference"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onClick={handleClick}
         >
-          <PostPreview 
-            postId={postId} 
-            threadId={threadId}
-          />
-        </div>
-      )}
-    </span>
+          &gt;&gt;{postId.substring(0, 8)}
+        </span>
+      </span>
+
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Referenced Post {postId.substring(0, 8)}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            This message is referring to the span component in file client/src/components/PostReference.tsx at line 42.
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
