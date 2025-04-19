@@ -54,13 +54,39 @@ interface DetectedToken {
 
 // Regular expression to find Ethereum addresses
 const findEthAddresses = (content: string): string[] => {
-  const regex = /0x[a-fA-F0-9]{40}/g;
+  // Standard Ethereum address regex
+  const standardRegex = /0x[a-fA-F0-9]{40}/g;
+  
+  // Context-aware address patterns - match addresses that are labeled as Ethereum or mentioned with specific words
+  const contextPatterns = [
+    // Format: "Ethereum address: 0x..."
+    /\b(?:ethereum|eth)(?:\s+(?:address|contract|token))?[\s:\-]+(0x[a-fA-F0-9]{40})\b/gi,
+    
+    // Format: "Token: XXXX (0x...)"
+    /\b(?:token|contract)[\s:\-]+[a-zA-Z][\s\w]*\(?(0x[a-fA-F0-9]{40})\)?/gi,
+    
+    // Format: "0x... (token name/symbol)"
+    /(0x[a-fA-F0-9]{40})\s*\([^)]+\)/g,
+  ];
+  
   let matches: string[] = [];
   let match;
   
-  // Use a traditional while loop approach to avoid compatibility issues
-  while ((match = regex.exec(content)) !== null) {
+  // Match standard pattern
+  while ((match = standardRegex.exec(content)) !== null) {
     matches.push(match[0]);
+    console.log(`ETH address found:`, match[0]);
+  }
+  
+  // Match context-aware patterns
+  for (const pattern of contextPatterns) {
+    while ((match = pattern.exec(content)) !== null) {
+      const address = match[1]; // Capture group for address
+      if (address) {
+        matches.push(address);
+        console.log(`ETH address found with context pattern ${pattern}:`, address);
+      }
+    }
   }
   
   // Return unique addresses
@@ -70,15 +96,33 @@ const findEthAddresses = (content: string): string[] => {
 
 // Regular expression to find Solana addresses
 const findSolAddresses = (content: string): string[] => {
+  // Improve matching of Solana addresses - being more precise
   // Solana addresses are base58-encoded strings, typically 32-44 characters long
   // Excluding common prefixes like 0x to avoid false matches with other cryptos
-  const regex = /\b[1-9A-HJ-NP-Za-km-z]{32,44}\b/g;
-  let matches: string[] = [];
-  let match;
   
-  // Use a traditional while loop approach to avoid compatibility issues
-  while ((match = regex.exec(content)) !== null) {
-    matches.push(match[0]);
+  // Common Solana address patterns
+  const commonSolTokens = [
+    // Explicit token mention with SOL name
+    /\bBONK\s*:\s*([1-9A-HJ-NP-Za-km-z]{32,44})\b/g,
+    /\bSol(?:ana)?\s*(?:token|address|contract)?[\s:\-]*([1-9A-HJ-NP-Za-km-z]{32,44})\b/gi,
+    
+    // Direct address match - more strict to avoid false positives
+    /\b([1-9A-HJ-NP-Za-km-z]{43})\b/g,  // Exact 43 char match - very likely to be a Solana address
+    /\b([1-9A-HJ-NP-Za-km-z]{44})\b/g,  // Exact 44 char match - very likely to be a Solana address
+  ];
+  
+  let matches: string[] = [];
+  
+  for (const pattern of commonSolTokens) {
+    let match;
+    while ((match = pattern.exec(content)) !== null) {
+      // If the pattern has a capturing group, use that, otherwise use the full match
+      const address = match[1] || match[0];
+      matches.push(address);
+      
+      // Debug log for development
+      console.log(`SOL match found with pattern ${pattern}:`, address);
+    }
   }
   
   // Return unique addresses
@@ -88,14 +132,35 @@ const findSolAddresses = (content: string): string[] => {
 
 // Regular expression to find token ticker symbols (like $ETH, $BTC, etc)
 const findTokenSymbols = (content: string): string[] => {
-  const regex = /\$([A-Za-z]{2,10})\b/g;
-  let matches: string[] = [];
-  let match;
+  // Multiple patterns to catch various ways tokens are mentioned
+  const patterns = [
+    // Standard $XXX format
+    /\$([A-Za-z]{2,10})\b/g,
+    
+    // Explicitly labeled as token/symbol: XXX
+    /\b(?:token|symbol|ticker)[:\s]+([A-Z]{2,10})\b/gi,
+    
+    // Common formats: ETH, SOL, BTC (without $ but in parentheses or after name)
+    /\b(?:Ethereum|Ether)\s*\(([A-Z]{2,5})\)/gi,
+    /\b(?:Solana)\s*\(([A-Z]{2,5})\)/gi,
+    /\b(?:Bitcoin)\s*\(([A-Z]{2,5})\)/gi,
+    
+    // Explicitly mentioned popular tokens
+    /\b(ETH|BTC|SOL|USDT|USDC|BONK|PEPE|DOGE)\b/g
+  ];
   
-  // Use a traditional while loop approach to avoid compatibility issues
-  while ((match = regex.exec(content)) !== null) {
-    // match[1] is the capturing group without the $ sign
-    matches.push(match[1]);
+  let matches: string[] = [];
+  
+  for (const pattern of patterns) {
+    let match;
+    while ((match = pattern.exec(content)) !== null) {
+      // match[1] is the capturing group without the symbol
+      const symbol = (match[1] || match[0]).toUpperCase();
+      matches.push(symbol);
+      
+      // Debug log
+      console.log(`Symbol match found with pattern ${pattern}:`, symbol);
+    }
   }
   
   // Return unique symbols
@@ -229,10 +294,15 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
     retry: 1
   });
   
-  // Automatically select the first token if only one is available
+  // Automatically select the first token if available and log detected tokens for debugging
   useEffect(() => {
-    if (tokens.length === 1 && !selectedToken) {
-      setSelectedToken(tokens[0]);
+    if (tokens.length > 0) {
+      console.log('Detected tokens:', tokens);
+      
+      if (!selectedToken) {
+        console.log('Auto-selecting first token:', tokens[0]);
+        setSelectedToken(tokens[0]);
+      }
     }
   }, [tokens, selectedToken]);
   
