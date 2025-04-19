@@ -29,7 +29,7 @@ import {
   Repeat,
   Percent,
   Info,
-  Lock,
+  Lock as LockIcon,
   Hash
 } from 'lucide-react';
 import {
@@ -622,7 +622,7 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
                         
                         <div className="flex justify-between items-center">
                           <div className="text-sm flex items-center text-gray-700">
-                            <Lock className="h-3 w-3 mr-1 text-gray-400" /> Contract
+                            <LockIcon className="h-3 w-3 mr-1 text-gray-400" /> Contract
                           </div>
                           <div className="font-medium text-xs font-mono truncate max-w-[120px]">
                             {selectedToken?.value ? selectedToken.value.substring(0, 8) + '...' : 'N/A'}
