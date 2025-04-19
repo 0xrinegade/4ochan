@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ThreadSubscribeButton } from "@/components/ThreadSubscribeButton";
 import { useNostr } from "@/context/NostrContext";
 import { MarkdownContent } from "@/components/MarkdownContent";
+import { PumpFunWidget } from "@/components/PumpFunWidget";
 import { 
   ArrowUp, 
   ArrowDown, 
@@ -382,6 +383,33 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                           </div>
                         )}
                         <MarkdownContent content={post.content} />
+                        
+                        {/* Check if this is the crypto board and detect contract addresses */}
+                        {thread && thread.boardId === 'crypto' && (
+                          <>
+                            {/* Look for Ethereum addresses in the format 0x... */}
+                            {post.content && (() => {
+                              // Match potential Ethereum addresses with regex
+                              // This checks for 0x followed by 40 hex characters, with word boundaries
+                              const ethAddressRegex = /\b(0x[a-fA-F0-9]{40})\b/g;
+                              const matches = [...post.content.matchAll(ethAddressRegex)];
+                              
+                              if (matches.length > 0) {
+                                return (
+                                  <div className="mt-3">
+                                    {matches.map((match, index) => (
+                                      <PumpFunWidget 
+                                        key={`${post.id}-contract-${index}`}
+                                        contractAddress={match[1]} 
+                                      />
+                                    ))}
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </>
+                        )}
                       </div>
                       
                       <div className="flex mt-2">
