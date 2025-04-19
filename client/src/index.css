@@ -1247,3 +1247,52 @@
   gap: 16px !important;
   pointer-events: auto !important;
 }
+
+/* Thread Tree Visualization */
+.thread-tree {
+  @apply border-2 border-black bg-white p-4 my-4;
+}
+
+.tree-container {
+  max-height: 300px;
+  @apply overflow-y-auto;
+}
+
+.tree-node {
+  @apply my-2;
+}
+
+.tree-node-content {
+  @apply flex items-center p-2 bg-gray-100 border border-gray-300 cursor-pointer;
+}
+
+.tree-node-content:hover {
+  @apply bg-gray-200;
+}
+
+.tree-node-content.selected {
+  @apply bg-primary text-white border-primary;
+}
+
+.tree-line {
+  width: 10px;
+  height: 2px;
+  @apply bg-gray-400 mr-2;
+}
+
+.tree-node-label {
+  @apply flex items-center;
+}
+
+.tree-node-label .post-num {
+  @apply mr-2;
+}
+
+.tree-node-label .post-preview {
+  @apply text-xs text-gray-700 truncate;
+  max-width: 300px;
+}
+
+.tree-node-content.selected .post-preview {
+  @apply text-white;
+}

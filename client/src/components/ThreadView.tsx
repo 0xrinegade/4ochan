@@ -11,6 +11,7 @@ import { ThreadSubscribeButton } from "@/components/ThreadSubscribeButton";
 import { useNostr } from "@/context/NostrContext";
 import { MarkdownContent } from "@/components/MarkdownContent";
 import { PumpFunWidget } from "@/components/PumpFunWidget";
+import { ThreadTree } from "@/components/ThreadTree";
 import { 
   ArrowUp, 
   ArrowDown, 
@@ -518,6 +519,21 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
               ))
             )}
           </div>
+          
+          {/* Thread Visualization */}
+          {thread && posts.length > 0 && (
+            <div className="mb-4">
+              <ThreadTree 
+                posts={posts} 
+                threadId={threadId} 
+                selectedPostId={selectedPostId}
+                onSelectPost={(postId) => {
+                  setSelectedPostId(postId);
+                  document.getElementById('reply-form')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              />
+            </div>
+          )}
           
           {/* Reply Form */}
           <div id="reply-form" className="p-4 bg-gray-50 border-t border-gray-200">
