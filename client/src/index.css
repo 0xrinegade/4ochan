@@ -796,6 +796,64 @@
     overflow: hidden;
   }
   
+  .typst-render {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    background-color: white;
+  }
+  
+  .typst-heading {
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  
+  .typst-heading h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+  }
+  
+  .typst-heading p {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0;
+  }
+  
+  .typst-content {
+    border: 1px solid #eee;
+    background-color: #fcfcfc;
+    padding: 1rem;
+    border-radius: 0;
+    overflow: auto;
+    max-height: 400px;
+  }
+  
+  .typst-formatted {
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+    margin: 0;
+    line-height: 1.5;
+  }
+  
+  .theme-dark .typst-render {
+    background-color: #1e1e1e;
+  }
+  
+  .theme-dark .typst-heading p {
+    color: #aaa;
+  }
+  
+  .theme-dark .typst-content {
+    border-color: #333;
+    background-color: #252525;
+  }
+  
+  .theme-dark .typst-formatted {
+    color: #ddd;
+  }
+  
   .typst-placeholder {
     display: flex;
     flex-direction: column;

@@ -20,6 +20,8 @@ mermaid.initialize({
 
 // Function to handle Typst code blocks
 const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element => {
+  const [showSource, setShowSource] = useState(false);
+  
   return (
     <div className={`typst-container ${isDarkMode ? 'typst-dark' : 'typst-light'}`}>
       <div className="typst-header">
@@ -31,6 +33,13 @@ const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element =>
             onClick={() => navigator.clipboard.writeText(content)}
           >
             Copy
+          </button>
+          <button
+            className="typst-action-button"
+            title={showSource ? "Show Preview" : "Show Source"}
+            onClick={() => setShowSource(!showSource)}
+          >
+            {showSource ? "Show Preview" : "Show Source"}
           </button>
           <a 
             href={`https://typst.app/project?snippet=${encodeURIComponent(content)}`} 
@@ -44,13 +53,27 @@ const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element =>
         </div>
       </div>
       
-      <SyntaxHighlighter
-        style={isDarkMode ? vscDarkPlus : vs}
-        language="rust" // Use rust highlighting as a fallback since Typst syntax is not directly supported
-        PreTag="div"
-      >
-        {content}
-      </SyntaxHighlighter>
+      {showSource ? (
+        <SyntaxHighlighter
+          style={isDarkMode ? vscDarkPlus : vs}
+          language="rust" // Use rust highlighting as a fallback since Typst syntax is not directly supported
+          PreTag="div"
+        >
+          {content}
+        </SyntaxHighlighter>
+      ) : (
+        <div className="typst-preview">
+          <div className="typst-render">
+            <div className="typst-heading">
+              <h3>Preview</h3>
+              <p>This is a preview of the Typst document.</p>
+            </div>
+            <div className="typst-content">
+              <pre className="typst-formatted">{content}</pre>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
