@@ -428,18 +428,18 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
         </div>
       </div>
       
-      {/* Navigation and Search Buttons - Always Visible */}
-      <div className="fixed right-4 bottom-20 flex flex-col space-y-2 z-50">
+      {/* Navigation and Search Buttons - Always Fixed on Screen */}
+      <div className="fixed right-6 bottom-24 flex flex-col space-y-4 z-[100]">
         {/* Search Dialog - Only enabled when a thread is loaded */}
         <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
           <DialogTrigger asChild>
             <Button 
-              className="rounded-full w-10 h-10 p-0 flex items-center justify-center bg-accent hover:bg-accent/90 text-white"
+              className="rounded-full w-12 h-12 p-0 flex items-center justify-center bg-accent hover:bg-accent/90 text-white shadow-lg border-2 border-black"
               variant="default"
               title="Search in thread"
               disabled={!thread}
             >
-              <Search size={18} />
+              <Search size={20} />
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
@@ -537,23 +537,23 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
         {/* Bottom scroll button */}
         <Button
           onClick={scrollToBottom}
-          className="rounded-full w-10 h-10 p-0 flex items-center justify-center bg-primary hover:bg-primary/90 text-white shadow-md"
+          className="rounded-full w-12 h-12 p-0 flex items-center justify-center bg-primary hover:bg-primary/90 text-white shadow-lg border-2 border-black"
           variant="default"
           title="Scroll to bottom"
           disabled={!threadContainerRef.current}
         >
-          <ArrowDown size={18} />
+          <ArrowDown size={20} />
         </Button>
         
         {/* Top scroll button */}
         <Button
           onClick={scrollToTop}
-          className="rounded-full w-10 h-10 p-0 flex items-center justify-center bg-primary hover:bg-primary/90 text-white shadow-md"
+          className="rounded-full w-12 h-12 p-0 flex items-center justify-center bg-primary hover:bg-primary/90 text-white shadow-lg border-2 border-black"
           variant="default"
           title="Scroll to top"
           disabled={!threadContainerRef.current}
         >
-          <ArrowUp size={18} />
+          <ArrowUp size={20} />
         </Button>
       </div>
     </div>
