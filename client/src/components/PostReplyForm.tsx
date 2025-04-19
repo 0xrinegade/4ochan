@@ -108,11 +108,11 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Don't allow submission if there's no processed text
-    if (!isProcessed || !processedText.trim()) {
+    // Check if there's content to process
+    if (!replyText.trim()) {
       toast({
-        title: "Processing Required",
-        description: "Please write your message and click 'Process with AI' first",
+        title: "Error",
+        description: "Message cannot be empty",
         variant: "destructive",
       });
       return;
@@ -120,6 +120,35 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
     
     try {
       setIsSubmitting(true);
+      setIsProcessing(true);
+      
+      // First, silently process with GPT-4o
+      let finalContent = replyText;
+      
+      try {
+        // Send to GPT-In-The-Middle API without showing UI for it
+        const response = await apiRequest<GPTProcessResponse>({
+          method: "POST",
+          url: "/api/gpt-process",
+          data: {
+            userInput: replyText,
+            threadId,
+            context: `This is a message in thread #${threadId || 'unknown'}`
+          }
+        });
+
+        if (response.success) {
+          finalContent = response.processedText;
+        } else {
+          console.error("GPT processing failed silently:", response.message);
+          // Continue with original content if processing fails
+        }
+      } catch (error) {
+        console.error("Error in silent GPT processing:", error);
+        // Continue with original content if processing fails
+      } finally {
+        setIsProcessing(false);
+      }
       
       // Handle image upload if selected
       let imageUrls: string[] = [];
@@ -151,7 +180,7 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
       }
       
       // Submit the processed reply with both legacy image URLs and new media
-      await onSubmitReply(processedText, imageUrls, uploadedMedia);
+      await onSubmitReply(finalContent, imageUrls, uploadedMedia);
       
       // Reset form
       setReplyText("");
@@ -163,7 +192,7 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
       
       toast({
         title: "Reply Posted",
-        description: "Your AI-processed reply has been posted successfully",
+        description: "Your reply has been posted successfully",
       });
     } catch (error: any) {
       toast({
@@ -184,47 +213,13 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
           value={replyText}
           onChange={(e) => {
             setReplyText(e.target.value);
-            // Reset processed state when user edits the text
-            if (isProcessed) {
-              setIsProcessed(false);
-            }
           }}
-          placeholder="Write your message here... AI will process it before posting!"
+          placeholder="What's your response? (Your message will be enhanced by AI)"
           rows={3}
           className="w-full p-2 border border-black rounded-none bg-white text-sm font-mono"
           disabled={isSubmitting || isProcessing}
         />
       </div>
-
-      {/* AI Processing Button */}
-      <div className="flex justify-center mb-2">
-        <Button
-          type="button"
-          onClick={handleProcessClick}
-          className="bg-[#8b0000] hover:bg-[#6b0000] text-white text-sm border border-black rounded-none w-full"
-          disabled={isProcessing || isSubmitting || !replyText.trim()}
-        >
-          {isProcessing ? (
-            <>
-              <span className="animate-pulse">AI is processing...</span>
-            </>
-          ) : (
-            "Process with GPT-4o"
-          )}
-        </Button>
-      </div>
-
-      {/* AI Processed Text Section */}
-      {(isProcessed || processedText) && (
-        <div className="mb-3 border border-black p-2 bg-white">
-          <div className="text-sm font-bold mb-1 bg-primary text-white p-1">
-            AI-PROCESSED MESSAGE (THIS WILL BE POSTED)
-          </div>
-          <div className="p-2 min-h-[60px] text-sm font-mono whitespace-pre-wrap">
-            {processedText || "⌛ Waiting for AI to process your message..."}
-          </div>
-        </div>
-      )}
       
       {/* Media Uploader Toggle */}
       <div className="mb-2">
@@ -279,11 +274,11 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
         <Button
           type="submit"
           className="bg-primary hover:bg-[#6b0000] text-white text-sm border border-black rounded-none"
-          disabled={isSubmitting || isUploading || !isProcessed}
+          disabled={isSubmitting || isUploading || !replyText.trim()}
         >
-          {(isSubmitting || isUploading) ? (
+          {(isSubmitting || isUploading || isProcessing) ? (
             <>
-              {isUploading ? "Uploading..." : "Posting..."}
+              {isUploading ? "Uploading..." : isProcessing ? "Processing..." : "Posting..."}
             </>
           ) : (
             "Post Reply"

@@ -114,11 +114,11 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Don't allow submission if there's no processed text
-    if (!isProcessed || !processedContent.trim()) {
+    // Check if there's content to process
+    if (!content.trim()) {
       toast({
-        title: "Processing Required",
-        description: "Please write your message and click 'Process with AI' first",
+        title: "Error",
+        description: "Message cannot be empty",
         variant: "destructive",
       });
       return;
@@ -126,6 +126,39 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
     
     try {
       setIsSubmitting(true);
+      setIsProcessing(true);
+      
+      // First, silently process with GPT-4o
+      let finalContent = content;
+      
+      try {
+        // Send to GPT-In-The-Middle API without showing UI for it
+        const response = await apiRequest<GPTProcessResponse>({
+          method: "POST",
+          url: "/api/gpt-process",
+          data: {
+            userInput: content,
+            context: `This is a new thread in /${boardShortName}/ with title: ${title || "Untitled"}`,
+          }
+        });
+
+        if (response.success) {
+          finalContent = response.processedText;
+          
+          // If we got topics and there's no title yet, suggest one
+          if (response.topics && response.topics.length > 0 && !title.trim()) {
+            setTitle(response.topics[0].charAt(0).toUpperCase() + response.topics[0].slice(1));
+          }
+        } else {
+          console.error("GPT processing failed silently:", response.message);
+          // Continue with original content if processing fails
+        }
+      } catch (error) {
+        console.error("Error in silent GPT processing:", error);
+        // Continue with original content if processing fails
+      } finally {
+        setIsProcessing(false);
+      }
       
       // Handle image upload if selected
       let imageUrls: string[] = [];
@@ -157,7 +190,7 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
       }
       
       // Create the thread with processed content
-      await onCreateThread(title, processedContent, imageUrls);
+      await onCreateThread(title, finalContent, imageUrls);
       
       // Reset form
       setTitle("");
@@ -206,48 +239,14 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
                 value={content}
                 onChange={(e) => {
                   setContent(e.target.value);
-                  // Reset processed state when user edits the text
-                  if (isProcessed) {
-                    setIsProcessed(false);
-                  }
                 }}
-                placeholder="Write your message here... AI will process it before posting!"
+                placeholder="What do you want to discuss? (Your message will be enhanced by AI)"
                 rows={4}
                 className="mt-1 border-black rounded-none bg-white font-mono text-sm p-2"
                 required
                 disabled={isProcessing || isSubmitting}
               />
             </div>
-            
-            {/* AI Processing Button */}
-            <div className="flex justify-center">
-              <Button
-                type="button"
-                onClick={handleProcessClick}
-                className="bg-[#8b0000] hover:bg-[#6b0000] text-white text-sm border border-black rounded-none w-full"
-                disabled={isProcessing || isSubmitting || !content.trim()}
-              >
-                {isProcessing ? (
-                  <>
-                    <span className="animate-pulse">AI is processing...</span>
-                  </>
-                ) : (
-                  "Process with GPT-4o"
-                )}
-              </Button>
-            </div>
-            
-            {/* AI Processed Text Section */}
-            {(isProcessed || processedContent) && (
-              <div className="border border-black p-2 bg-white">
-                <div className="text-sm font-bold mb-1 bg-primary text-white p-1">
-                  AI-PROCESSED MESSAGE (THIS WILL BE POSTED)
-                </div>
-                <div className="p-2 min-h-[60px] text-sm font-mono whitespace-pre-wrap">
-                  {processedContent || "⌛ Waiting for AI to process your message..."}
-                </div>
-              </div>
-            )}
             
             <div>
               <Label htmlFor="image" className="font-bold text-black">Image</Label>
@@ -291,11 +290,11 @@ export const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
                 <Button 
                   type="submit"
                   className="bg-primary hover:bg-[#6b0000] text-white border border-black rounded-none"
-                  disabled={isSubmitting || isUploading || !isProcessed}
+                  disabled={isSubmitting || isUploading || !content.trim()}
                 >
-                  {(isSubmitting || isUploading) ? (
+                  {(isSubmitting || isUploading || isProcessing) ? (
                     <>
-                      {isUploading ? "Uploading..." : "Creating..."}
+                      {isUploading ? "Uploading..." : isProcessing ? "Processing..." : "Creating..."}
                     </>
                   ) : (
                     "Create Thread"
