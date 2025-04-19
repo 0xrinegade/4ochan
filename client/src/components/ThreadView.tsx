@@ -12,13 +12,15 @@ import { useNostr } from "@/context/NostrContext";
 import { MarkdownContent } from "@/components/MarkdownContent";
 import { PumpFunWidget } from "@/components/PumpFunWidget";
 import { ThreadTree } from "@/components/ThreadTree";
+import { ThreadContextVisualization } from "@/components/ThreadContextVisualization";
 import { 
   ArrowUp, 
   ArrowDown, 
   Search, 
   X,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
+  GitMerge
 } from "lucide-react";
 import { 
   Dialog, 
@@ -30,6 +32,7 @@ import {
   DialogTrigger 
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ThreadViewProps {
   threadId: string;
