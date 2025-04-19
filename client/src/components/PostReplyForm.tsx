@@ -6,7 +6,8 @@ import { uploadImage } from "@/lib/nostr";
 import { apiRequest } from "@/lib/queryClient";
 import { MediaUploader } from "@/components/MediaUploader";
 import { MediaContent } from "@/types";
-import { ImageIcon } from "lucide-react";
+import { ImageIcon, PencilIcon } from "lucide-react";
+import { DrawingBoard } from "@/components/DrawingBoard";
 
 interface PostReplyFormProps {
   onSubmitReply: (content: string, imageUrls: string[], media?: MediaContent[]) => Promise<void>;
@@ -32,6 +33,7 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
   const [isProcessing, setIsProcessing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showMediaUploader, setShowMediaUploader] = useState(false);
+  const [showDrawingBoard, setShowDrawingBoard] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
@@ -44,6 +46,48 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
   
   const handleMediaUploaded = (media: MediaContent[]) => {
     setUploadedMedia(media);
+  };
+  
+  const handleSaveDrawing = async (imageDataUrl: string) => {
+    try {
+      setIsUploading(true);
+      toast({
+        title: "Uploading Drawing",
+        description: "Your drawing is being uploaded...",
+      });
+      
+      // Upload the drawing to Nostr
+      const imageUrl = await uploadImage(imageDataUrl);
+      
+      // Create a media object for the drawing
+      const media: MediaContent = {
+        id: `drawing-${Date.now()}`,
+        url: imageUrl,
+        type: 'image',
+        name: `Drawing ${new Date().toLocaleTimeString()}`,
+        size: Math.round(imageDataUrl.length * 0.75), // Approximate size calculation
+      };
+      
+      // Add to uploaded media
+      setUploadedMedia(prev => [...prev, media]);
+      
+      // Close drawing board
+      setShowDrawingBoard(false);
+      
+      toast({
+        title: "Drawing Uploaded",
+        description: "Your drawing has been added to your post.",
+      });
+    } catch (error) {
+      console.error("Error uploading drawing:", error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload your drawing.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
   
   // Handle pasting images from clipboard

@@ -428,133 +428,134 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
         </div>
       </div>
       
-      {/* Navigation and Search Buttons */}
-      {thread && (
-        <div className="fixed right-4 bottom-20 flex flex-col space-y-2">
-          {/* Search Dialog */}
-          <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                className="rounded-full w-10 h-10 p-0 flex items-center justify-center bg-accent hover:bg-accent/90 text-white"
-                variant="default"
-                title="Search in thread"
-              >
-                <Search size={18} />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Search in Thread</DialogTitle>
-                <DialogDescription>
-                  Enter text to search in this thread's content.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="flex items-center space-x-2 py-4">
-                <div className="grid flex-1 gap-2">
-                  <Input
-                    placeholder="Enter search term..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="col-span-3"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        performSearch();
-                      }
-                    }}
-                  />
-                </div>
-                <Button onClick={performSearch} type="submit" size="sm">
-                  Search
-                </Button>
-              </div>
-              
-              {searchResults.length > 0 && (
-                <div className="mt-2 max-h-60 overflow-y-auto">
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="text-sm font-medium">
-                      {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={prevSearchResult}
-                        disabled={searchResults.length <= 1}
-                      >
-                        Previous
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={nextSearchResult}
-                        disabled={searchResults.length <= 1}
-                      >
-                        Next
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {searchResults.map((result, index) => (
-                      <div 
-                        key={`${result.id}-${index}`}
-                        className={`p-2 text-sm border rounded cursor-pointer hover:bg-accent/10 ${
-                          index === currentSearchResult ? 'border-accent bg-accent/5' : 'border-gray-200'
-                        }`}
-                        onClick={() => {
-                          setCurrentSearchResult(index);
-                          scrollToResult(result.id);
-                        }}
-                      >
-                        <div className="font-medium mb-1">
-                          Post #{result.id.substring(0, 6)}
-                        </div>
-                        <div>
-                          {result.text}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              <DialogFooter className="sm:justify-end">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setSearchOpen(false);
-                    setSearchResults([]);
-                    setSearchQuery('');
+      {/* Navigation and Search Buttons - Always Visible */}
+      <div className="fixed right-4 bottom-20 flex flex-col space-y-2 z-50">
+        {/* Search Dialog - Only enabled when a thread is loaded */}
+        <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+          <DialogTrigger asChild>
+            <Button 
+              className="rounded-full w-10 h-10 p-0 flex items-center justify-center bg-accent hover:bg-accent/90 text-white"
+              variant="default"
+              title="Search in thread"
+              disabled={!thread}
+            >
+              <Search size={18} />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Search in Thread</DialogTitle>
+              <DialogDescription>
+                Enter text to search in this thread's content.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center space-x-2 py-4">
+              <div className="grid flex-1 gap-2">
+                <Input
+                  placeholder="Enter search term..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="col-span-3"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      performSearch();
+                    }
                   }}
-                >
-                  Close
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          
-          {/* Bottom scroll button */}
-          <Button
-            onClick={scrollToBottom}
-            className="rounded-full w-10 h-10 p-0 flex items-center justify-center bg-primary hover:bg-primary/90 text-white"
-            variant="default"
-            title="Scroll to bottom"
-          >
-            <ArrowDown size={18} />
-          </Button>
-          
-          {/* Top scroll button */}
-          <Button
-            onClick={scrollToTop}
-            className="rounded-full w-10 h-10 p-0 flex items-center justify-center bg-primary hover:bg-primary/90 text-white"
-            variant="default"
-            title="Scroll to top"
-          >
-            <ArrowUp size={18} />
-          </Button>
-        </div>
-      )}
+                />
+              </div>
+              <Button onClick={performSearch} type="submit" size="sm">
+                Search
+              </Button>
+            </div>
+            
+            {searchResults.length > 0 && (
+              <div className="mt-2 max-h-60 overflow-y-auto">
+                <div className="flex justify-between items-center mb-2">
+                  <div className="text-sm font-medium">
+                    {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={prevSearchResult}
+                      disabled={searchResults.length <= 1}
+                    >
+                      Previous
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={nextSearchResult}
+                      disabled={searchResults.length <= 1}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  {searchResults.map((result, index) => (
+                    <div 
+                      key={`${result.id}-${index}`}
+                      className={`p-2 text-sm border rounded cursor-pointer hover:bg-accent/10 ${
+                        index === currentSearchResult ? 'border-accent bg-accent/5' : 'border-gray-200'
+                      }`}
+                      onClick={() => {
+                        setCurrentSearchResult(index);
+                        scrollToResult(result.id);
+                      }}
+                    >
+                      <div className="font-medium mb-1">
+                        Post #{result.id.substring(0, 6)}
+                      </div>
+                      <div>
+                        {result.text}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <DialogFooter className="sm:justify-end">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setSearchOpen(false);
+                  setSearchResults([]);
+                  setSearchQuery('');
+                }}
+              >
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Bottom scroll button */}
+        <Button
+          onClick={scrollToBottom}
+          className="rounded-full w-10 h-10 p-0 flex items-center justify-center bg-primary hover:bg-primary/90 text-white shadow-md"
+          variant="default"
+          title="Scroll to bottom"
+          disabled={!threadContainerRef.current}
+        >
+          <ArrowDown size={18} />
+        </Button>
+        
+        {/* Top scroll button */}
+        <Button
+          onClick={scrollToTop}
+          className="rounded-full w-10 h-10 p-0 flex items-center justify-center bg-primary hover:bg-primary/90 text-white shadow-md"
+          variant="default"
+          title="Scroll to top"
+          disabled={!threadContainerRef.current}
+        >
+          <ArrowUp size={18} />
+        </Button>
+      </div>
     </div>
   );
 };
