@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNostr } from "@/hooks/useNostr";
 import { Button } from "@/components/ui/button";
 import { RelayConnectionModal } from "@/components/RelayConnectionModal";
-import { OpenAILoginButton } from "@/components/OpenAILoginButton";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useBoards } from "@/hooks/useBoards";
 import { useTheme } from "@/context/ThemeContext";
 import { useNavigation } from "@/context/NavigationContext";
+import { getOrCreateIdentity } from "@/lib/nostr";
 
 // Define theme types to match ThemeContext
 type ThemeName = 'light' | 'dark' | 'highcontrast' | 'retro' | 'sepia';
@@ -40,7 +40,7 @@ const NavBoardTab: React.FC<{ shortName: string; label: string }> = ({ shortName
 };
 
 export const Header: React.FC = () => {
-  const { connectedRelays, relays } = useNostr();
+  const { connectedRelays, relays, identity, updateIdentity } = useNostr();
   const [showConnectionModal, setShowConnectionModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
@@ -153,23 +153,33 @@ export const Header: React.FC = () => {
                 : 'Offline - Click to Connect'}
             </p>
             <div className="flex items-center gap-2 justify-end">
-              {currentUser ? (
-                <div className="flex gap-2 items-center">
-                  <span className="text-xs">Logged in as <b>{currentUser}</b></span>
+              <div className="flex gap-2 items-center">
+                {identity.pubkey ? (
+                  <>
+                    <span className="text-xs">
+                      Connected: <b>{identity.pubkey.substring(0, 6)}...{identity.pubkey.substring(identity.pubkey.length - 4)}</b>
+                    </span>
+                  </>
+                ) : (
                   <button 
-                    onClick={handleLogout}
+                    onClick={() => {
+                      // Generate random key if none exists
+                      if (!identity.pubkey) {
+                        const newIdentity = getOrCreateIdentity();
+                        updateIdentity(newIdentity);
+                        toast({
+                          title: "Nostr Identity Created",
+                          description: "A new Nostr identity has been created for you.",
+                        });
+                      }
+                    }}
                     className="text-xs bg-gray-200 text-black font-bold py-0.5 px-2 border-2 border-black"
                     style={{ boxShadow: "2px 2px 0 #000" }}
                   >
-                    Log Out
+                    Generate Nostr Key
                   </button>
-                </div>
-              ) : (
-                <OpenAILoginButton 
-                  onLoginSuccess={handleLoginSuccess}
-                  className="text-xs py-0.5 px-2 h-auto" 
-                />
-              )}
+                )}
+              </div>
               {/* Always show notification bell */}
               <NotificationBell />
 
@@ -260,23 +270,36 @@ export const Header: React.FC = () => {
           <div className="md:hidden bg-white text-black border border-black p-2 mb-2">
             {/* Mobile login */}
             <div className="flex flex-col space-y-2 mb-2">
-              {currentUser ? (
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs">Logged in as <b>{currentUser}</b></span>
+              <div className="flex flex-col gap-1">
+                {identity.pubkey ? (
+                  <>
+                    <span className="text-xs">
+                      Connected with Nostr key:
+                    </span>
+                    <div className="text-xs font-mono bg-gray-100 p-1 break-all border border-black">
+                      {identity.pubkey.substring(0, 10)}...{identity.pubkey.substring(identity.pubkey.length - 6)}
+                    </div>
+                  </>
+                ) : (
                   <button 
-                    onClick={handleLogout}
+                    onClick={() => {
+                      // Generate random key if none exists
+                      if (!identity.pubkey) {
+                        const newIdentity = getOrCreateIdentity();
+                        updateIdentity(newIdentity);
+                        toast({
+                          title: "Nostr Identity Created",
+                          description: "A new Nostr identity has been created for you.",
+                        });
+                      }
+                    }}
                     className="text-xs bg-gray-200 text-black font-bold py-0.5 px-2 border-2 border-black"
                     style={{ boxShadow: "2px 2px 0 #000" }}
                   >
-                    Log Out
+                    Generate Nostr Key
                   </button>
-                </div>
-              ) : (
-                <OpenAILoginButton 
-                  onLoginSuccess={handleLoginSuccess}
-                  className="text-xs py-1 px-2 h-auto w-full" 
-                />
-              )}
+                )}
+              </div>
               
               <div className="flex justify-between">
                 <button 
