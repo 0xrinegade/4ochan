@@ -443,11 +443,11 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
                   
                   setShowCreateModal(false);
                   
-                  // Navigate directly to the thread page
+                  // Navigate directly to the thread page using client-side navigation
                   console.log("Thread created successfully, navigating to thread:", thread.id);
                   setTimeout(() => {
-                    // Open the thread detail page
-                    window.location.href = `/thread/${thread.id}`;
+                    // Use client-side navigation to avoid page reload
+                    navigateWithoutReload(`/thread/${thread.id}`);
                   }, 1000);
                   
                   return Promise.resolve();

@@ -15,7 +15,7 @@ import PageTransition from "./components/PageTransition";
 import { useEffect, useState, useCallback } from "react";
 
 // Create a module-level variable to hold the navigate function
-let globalNavigate: (to: string) => void;
+let globalNavigate: ((to: string) => void) | null = null;
 
 // Global function to navigate without page reload
 // We'll use this to override normal anchor clicks
