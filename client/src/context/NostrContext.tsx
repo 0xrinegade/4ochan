@@ -53,6 +53,8 @@ interface NostrContextType {
   markNotificationRead: (notificationId: string) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
   getUnreadNotificationCount: () => Promise<number>;
+  // Thread statistics
+  getThreadStats: (threadId: string) => Promise<{ viewCount: number, engagement: number } | null>;
 }
 
 export const NostrContext = createContext<NostrContextType | undefined>(undefined);
