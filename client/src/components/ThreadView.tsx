@@ -13,6 +13,7 @@ import { MarkdownContent } from "@/components/MarkdownContent";
 import { PumpFunWidget } from "@/components/PumpFunWidget";
 import { ThreadTree } from "@/components/ThreadTree";
 import { ThreadContextVisualization } from "@/components/ThreadContextVisualization";
+import { PostReference } from "@/components/PostReference";
 import {
   ArrowUp,
   ArrowDown,
@@ -680,13 +681,16 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId, replyId, setOp
                               post.references.some(
                                 (ref) => ref !== threadId,
                               ) && (
-                                <div className="mb-2">
+                                <div className="post-references mb-2 flex flex-wrap items-center">
+                                  <span className="text-muted-foreground text-xs mr-2">Replying to:</span>
                                   {post.references
                                     .filter((ref) => ref !== threadId)
                                     .map((ref) => (
-                                      <div key={ref} className="text-accent">
-                                        &gt;&gt;{ref.substring(0, 6)}
-                                      </div>
+                                      <PostReference 
+                                        key={ref} 
+                                        postId={ref}
+                                        threadId={threadId}
+                                      />
                                     ))}
                                 </div>
                               )}

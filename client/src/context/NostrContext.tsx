@@ -41,6 +41,7 @@ interface NostrContextType {
   getThreadsByBoard: (boardId: string) => Promise<Thread[]>;
   getThread: (threadId: string) => Promise<Thread | undefined>;
   getPostsByThread: (threadId: string) => Promise<Post[]>;
+  getPost: (postId: string) => Promise<Post | undefined>;
   createThread: (boardId: string, title: string, content: string, imageUrls: string[], media?: MediaContent[]) => Promise<Thread>;
   createPost: (threadId: string, content: string, replyToIds: string[], imageUrls: string[], media?: MediaContent[]) => Promise<Post>;
   // Post likes
