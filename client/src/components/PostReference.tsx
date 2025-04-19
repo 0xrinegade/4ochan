@@ -27,8 +27,8 @@ export const PostReference: React.FC<PostReferenceProps> = ({
   };
 
   const handleMouseLeave = () => {
-    // We'll keep the modal open if the mouse is over it
-    // and rely on Dialog's built-in close mechanisms
+    // Close the modal when mouse leaves
+    setShowModal(false);
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -54,12 +54,13 @@ export const PostReference: React.FC<PostReferenceProps> = ({
       </span>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Referenced Post {postId.substring(0, 8)}</DialogTitle>
+        <DialogContent className="sm:max-w-[425px] retro-dialog">
+          <DialogHeader className="retro-dialog-header">
+            <DialogTitle className="retro-dialog-title">Referenced Post {postId.substring(0, 8)}</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            This message is referring to the span component in file client/src/components/PostReference.tsx at line 42.
+          <div className="p-4 text-black">
+            <p>This message is referring to the span component in file client/src/components/PostReference.tsx at line 42.</p>
+            <p className="mt-2 font-mono text-sm">Displayed when hovering over &gt;&gt;{postId.substring(0, 8)}</p>
           </div>
         </DialogContent>
       </Dialog>
