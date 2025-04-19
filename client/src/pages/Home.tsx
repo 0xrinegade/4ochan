@@ -41,15 +41,6 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto">
         <Header />
-        <div className="flex justify-center mt-2 mb-3">
-          <button 
-            onClick={() => setShowCreateModal(true)}
-            className="bg-[#8b0000] text-white font-bold py-1 px-4 border-2 border-black"
-            style={{ boxShadow: "2px 2px 0 #000" }}
-          >
-            Create New Thread
-          </button>
-        </div>
         <main className="container mx-auto px-2 sm:px-4">
           <div className="flex flex-col md:flex-row gap-2">
             <div className="w-full md:w-1/4">
