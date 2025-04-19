@@ -1,7 +1,17 @@
 import OpenAI from "openai";
+import { encode } from 'gpt-tokenizer'; // For token counting
 
 // The newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// Token threshold for switching models - use GPT-3.5 for short prompts to save cost and improve performance
+const TOKEN_THRESHOLD = 30;
+
+// Utility function to select most appropriate model based on input length
+const getModelForPrompt = (prompt: string): string => {
+  const tokens = encode(prompt);
+  return tokens.length < TOKEN_THRESHOLD ? 'gpt-3.5-turbo' : 'gpt-4o';
+};
 
 interface AIAuthResponse {
   success: boolean;
@@ -14,8 +24,11 @@ export async function authenticateWithAI(
   input: string,
 ): Promise<AIAuthResponse> {
   try {
+    const model = getModelForPrompt(input);
+    console.log(`Using ${model} for authentication (input length: ${input.length} chars)`);
+    
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: model,
       messages: [
         {
           role: "system",
@@ -53,13 +66,16 @@ export async function authenticateWithAI(
 
 export async function generateAIResponse(prompt: string): Promise<string> {
   try {
+    const model = getModelForPrompt(prompt);
+    console.log(`Using ${model} for generateAIResponse (input length: ${prompt.length} chars)`);
+    
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: model,
       messages: [
         {
           role: "system",
           content: `You are an AI that rewrites user messages for an anonymous board.
-          Your job is to amplify the user's original message — make it more intense, more direct, or more committed to the mood and tone they’re expressing.
+          Your job is to amplify the user's original message — make it more intense, more direct, or more committed to the mood and tone they're expressing.
           Do not neutralize, soften, or correct anything. Preserve their style, but double down on it.
           Return only the amplified version of the message.`,
         },
@@ -98,23 +114,30 @@ export async function processUserInput(
   username?: string,
 ): Promise<GPTInTheMiddleResponse> {
   try {
-    const systemPrompt = `You are the GPT-In-The-Middle for a textboard where all user messages are processed through you before being posted.
-    Your job is to amplify the user's message — make it more direct, more intense, or more committed to the tone and mood they expressed.
-    You should preserve their writing style and attitude. If they’re casual, stay casual. If they’re ranting, rant harder.
+    // Use the improved prompt from user request
+    const systemPrompt = `You are the GPT-In-The-Middle for an anonymous messageboard. 
+Your job is to process each user message before it gets posted. 
+You must preserve the user's tone, mood, and style — your output should feel like *they* wrote it, just more fully expressed.
 
-    Guidelines:
-    1. Keep the user's original intent, tone, and voice intact.
-    2. Do not neutralize, sanitize, or soften their words.
-    3. Make the post hit harder — amplify what they’re already saying.
-    4. Don’t fix grammar or wording unless it helps push the tone further.
-    5. If the message is explicitly harmful or hateful, return a neutral warning instead.
-    6. Respond with ONLY the final message text, no commentary or extra formatting.
+Behavior rules:
+1. If the message is clear and intentional, leave it mostly untouched.
+2. If the message lacks context or clarity, elaborate naturally — as if the user had written more to support their point.
+3. If the message presents an opinion or claim, feel free to add relevant examples, details, or sources — but only if it fits the user's voice.
+4. Never exaggerate emotion or style. If the user is calm, stay calm. If they're intense, match it — don't escalate it.
+5. Keep short posts short. Don't pad or add filler.
+6. Never correct grammar or spelling unless it clarifies meaning.
+7. If the message is explicitly hateful or dangerous, return a neutral warning instead.
+8. Output ONLY the final version of the post — no commentary, no explanations.
 
-    ${context ? `Conversation context: ${context}` : ""}
-    `;
+${context ? `Conversation context: ${context}` : ""}
+`;
+
+    // Select model based on prompt length
+    const model = getModelForPrompt(userInput);
+    console.log(`Using ${model} for GPT-In-The-Middle (input length: ${userInput.length} chars)`);
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: model,
       messages: [
         {
           role: "system",
@@ -125,13 +148,13 @@ export async function processUserInput(
           content: userInput,
         },
       ],
-      temperature: 0.7, // balanced creativity
-      max_tokens: 4096, // max response length
+      temperature: 0.7,
+      max_tokens: 4096,
     });
 
-    // Get sentiment analysis in a separate API call
+    // For sentiment analysis, always use a lighter model since it's simple classification
     const sentimentResponse = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-3.5-turbo", // Always use the faster model for sentiment analysis
       messages: [
         {
           role: "system",
