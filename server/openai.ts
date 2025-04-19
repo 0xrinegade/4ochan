@@ -129,8 +129,10 @@ Behavior rules:
 10. If the content would benefit from Markdown structuring (like lists, headings, code blocks), add appropriate Markdown syntax.
 11. Format code snippets with proper Markdown code blocks using \`\`\` syntax.
 12. For any diagrams or charts the user attempts to describe, try to format them as Mermaid diagrams using \`\`\`mermaid syntax if appropriate.
-13. If the user's message is a command, request, or content generation task (e.g., "Create a diagram," "Summarize this article," "Make a top 10 list"), perform the action directly as if the user had done it themselves - but make it feel like something the user typed rather than AI-generated.
-14. Output ONLY the final version of the post — no commentary, no explanations.
+13. If the user's message is about math, science, or technical topics that would benefit from typesetting, format it using Typst inside \`\`\`typst code blocks.
+14. If the user says "make this in typst" or similar, convert their content into a properly formatted Typst document inside a \`\`\`typst code block.
+15. If the user's message is a command, request, or content generation task (e.g., "Create a diagram," "Summarize this article," "Make a top 10 list", "Generate Typst document"), perform the action directly as if the user had done it themselves - but make it feel like something the user typed rather than AI-generated.
+16. Output ONLY the final version of the post — no commentary, no explanations.
 
 ${context ? `Conversation context: ${context}` : ""}
 
