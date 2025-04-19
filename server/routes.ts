@@ -584,81 +584,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // ===== AI AUTHENTICATION ROUTES =====
+  // ===== NOSTR AUTHENTICATION ENDPOINTS =====
   
-  // OpenAI OAuth redirect endpoint
-  app.get("/api/auth/openai-redirect", (req, res) => {
-    // Set up the OpenAI OAuth endpoints
-    const clientId = "org-oi0iXakKcsP1wTTOYKRBoMGr"; // This is a public client ID for OpenAI
-    const redirectUri = encodeURIComponent(`${req.protocol}://${req.get('host')}/api/auth/openai-callback`);
-    const scope = encodeURIComponent("openid profile email");
-    const responseType = "code";
-    
-    // Generate the authorization URL
-    const authUrl = `https://auth.openai.com/oauth/authorize?client_id=${clientId}&response_type=${responseType}&redirect_uri=${redirectUri}&scope=${scope}`;
-    
-    // Return the redirect URL
-    return res.json({
-      success: true,
-      redirectUrl: authUrl
-    });
-  });
-  
-  // OpenAI OAuth callback endpoint
-  app.get("/api/auth/openai-callback", async (req, res) => {
+  // Validate a Nostr key
+  app.post("/api/auth/validate-nostr-key", async (req, res) => {
     try {
-      // Get the authorization code from the query parameters
-      const code = req.query.code as string;
+      const { pubkey } = req.body;
       
-      if (!code) {
-        throw new Error("No authorization code provided");
+      if (!pubkey || typeof pubkey !== 'string') {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Please provide a valid Nostr public key."
+        });
       }
       
-      // In a real OAuth flow, we would exchange the code for tokens
-      // Since we're using an API key directly, we'll use it to verify user identity
-      
-      if (!process.env.OPENAI_API_KEY) {
-        throw new Error("OpenAI API key not configured");
+      // Check if this is a valid Nostr pubkey format
+      if (!/^[0-9a-f]{64}$/.test(pubkey)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Nostr public key format."
+        });
       }
       
-      // Instead of using the OAuth token exchange (which requires client secret), 
-      // we'll use the OpenAI API key to make a simple verification request
-      // This ensures we can only authenticate if we have a valid API key
-      const OpenAI = await import("openai").then(mod => mod.default);
-      const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY
-      });
-      
-      // Verify API key works by making a simple request
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o", // Use the latest OpenAI model
-        messages: [{ role: "user", content: "Generate a unique username for a Nostr user in one word" }],
-        max_tokens: 50
-      });
-      
-      if (!response || !response.choices || !response.choices[0]?.message?.content) {
-        throw new Error("Failed to verify OpenAI API key");
-      }
-      
-      // Generate a unique OpenAI-based username
-      const generatedName = response.choices[0].message.content.trim()
-        .replace(/[^a-zA-Z0-9]/g, ""); // Clean up any special characters
-      
-      const username = `oai_${generatedName.toLowerCase()}`;
-      
-      // Create a unique Nostr keypair for this user
-      const { generateSecretKey, getPublicKey } = await import("nostr-tools");
-      const privkey = generateSecretKey();
-      const pubkey = getPublicKey(privkey);
-      
-      // Create a new user or get existing user
+      // Check if a user exists with this pubkey
       let user = await storage.getUserByNostrPubkey(pubkey);
       
+      // If no user exists, create one
       if (!user) {
-        // Create a new user with the Nostr keypair
+        // Generate a unique username based on pubkey
+        const shortPubkey = pubkey.substring(0, 6);
+        const username = `nostr_${shortPubkey}`;
+        
         user = await storage.createUser({
-          username: username,
-          password: "", // No password for OAuth users
+          username,
+          password: "", // No password for Nostr users
           nostrPubkey: pubkey,
           displayName: username,
           avatar: null,
@@ -668,89 +627,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateLastSeen(user.id);
       }
       
-      // Redirect to the frontend with success parameters
-      return res.redirect(`/?login_success=true&username=${user.username}&pubkey=${pubkey}`);
-    } catch (error) {
-      console.error("Error in OpenAI OAuth callback:", error);
-      return res.redirect("/?login_error=true");
-    }
-  });
-  
-  // AI-powered login endpoint
-  app.post("/api/auth/ai-login", async (req, res) => {
-    try {
-      const { loginText } = req.body;
-      
-      if (!loginText || typeof loginText !== 'string' || loginText.trim().length < 25) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "Please provide thoughtful text of at least 25 characters." 
-        });
-      }
-      
-      const authResult = await authenticateWithAI(loginText);
-      
-      if (authResult.success && authResult.username) {
-        // Check if user exists, otherwise create them
-        let user = await storage.getUserByUsername(authResult.username);
-        
-        if (!user) {
-          // Create a new user with the AI-generated username
-          user = await storage.createUser({
-            username: authResult.username,
-            password: "ai-auth-" + Math.random().toString(36).substring(2, 15), // Generate a random password
-            nostrPubkey: "", // Empty for AI-generated users
-            displayName: authResult.username,
-            avatar: null,
-          });
-        } else {
-          // Update last seen
-          await storage.updateLastSeen(user.id);
-        }
-        
-        // Set up a simple session (in production, use proper session management)
-        // req.session.userId = user.id;
-        
-        return res.status(200).json({
-          success: true,
-          message: authResult.message,
-          username: user.username,
-          userId: user.id
-        });
-      }
-      
-      return res.status(401).json({
-        success: false,
-        message: authResult.message || "Authentication failed."
+      return res.status(200).json({
+        success: true,
+        message: "Nostr identity verified",
+        username: user.username,
+        userId: user.id,
+        pubkey
       });
     } catch (error) {
-      console.error("Error in AI login:", error);
+      console.error("Error validating Nostr key:", error);
       return res.status(500).json({ 
         success: false, 
-        message: "Internal server error during login."
+        message: "Internal server error validating Nostr key."
       });
-    }
-  });
-  
-  // AI login hint endpoint
-  app.post("/api/auth/login-hint", async (req, res) => {
-    try {
-      const { loginText } = req.body;
-      
-      if (!loginText || typeof loginText !== 'string') {
-        return res.status(400).json({ hint: "Please provide some text to get a hint." });
-      }
-      
-      const hint = await generateAIResponse(
-        `The user tried to log in with this text but was rejected: "${loginText.substring(0, 100)}...". 
-        Give them a hint about why they might have been rejected and what to write instead. 
-        Keep it brief and helpful.`
-      );
-      
-      return res.json({ hint });
-    } catch (error) {
-      console.error("Error generating login hint:", error);
-      return res.status(500).json({ hint: "Error generating hint. Please try different input." });
     }
   });
 
