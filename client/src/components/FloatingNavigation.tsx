@@ -107,21 +107,7 @@ export const FloatingNavigation: React.FC = () => {
       {/* Bottom scroll button */}
       <Button
         onClick={scrollToBottom}
-        style={{
-          width: '50px',
-          height: '50px',
-          padding: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: '#FF6B00', // Bright orange
-          color: 'white',
-          borderRadius: '50%',
-          border: '3px solid black',
-          boxShadow: '0 4px 8px rgba(0,0,0,0.5)',
-          cursor: 'pointer',
-          transition: 'transform 0.2s ease',
-        }}
+        className="w-12 h-12 p-0 flex items-center justify-center bg-primary text-primary-foreground rounded-full border-2 border-black shadow-lg hover:bg-primary/90"
         variant="default"
         title="Scroll to bottom"
       >
@@ -131,21 +117,7 @@ export const FloatingNavigation: React.FC = () => {
       {/* Top scroll button */}
       <Button
         onClick={scrollToTop}
-        style={{
-          width: '50px',
-          height: '50px',
-          padding: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: '#FF6B00', // Bright orange
-          color: 'white',
-          borderRadius: '50%',
-          border: '3px solid black',
-          boxShadow: '0 4px 8px rgba(0,0,0,0.5)',
-          cursor: 'pointer',
-          transition: 'transform 0.2s ease',
-        }}
+        className="w-12 h-12 p-0 flex items-center justify-center bg-primary text-primary-foreground rounded-full border-2 border-black shadow-lg hover:bg-primary/90"
         variant="default"
         title="Scroll to top"
       >
@@ -156,21 +128,7 @@ export const FloatingNavigation: React.FC = () => {
       <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
         <DialogTrigger asChild>
           <Button 
-            style={{
-              width: '50px',
-              height: '50px',
-              padding: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#FF6B00', // Bright orange
-              color: 'white',
-              borderRadius: '50%',
-              border: '3px solid black',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.5)',
-              cursor: 'pointer',
-              transition: 'transform 0.2s ease',
-            }}
+            className="w-12 h-12 p-0 flex items-center justify-center bg-primary text-primary-foreground rounded-full border-2 border-black shadow-lg hover:bg-primary/90"
             variant="default"
             title="Search the page"
           >
