@@ -278,7 +278,7 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
                       {tokenData.name || 'Unknown Token'} 
                       {tokenData.symbol && <span className="ml-2 text-gray-500">({tokenData.symbol})</span>}
                     </h3>
-                    {tokenData.price ? (
+                    {tokenData.price && typeof tokenData.price === 'number' ? (
                       <p className="text-lg font-bold">${tokenData.price.toFixed(6)}</p>
                     ) : (
                       <p className="text-sm text-gray-500">Price unavailable</p>
@@ -383,7 +383,7 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
                   
                   <TabsContent value="metrics" className="min-h-[120px]">
                     <div className="space-y-2">
-                      {tokenData.priceChange24h !== undefined && (
+                      {tokenData.priceChange24h !== undefined && typeof tokenData.priceChange24h === 'number' && (
                         <div className="flex justify-between border-b pb-1">
                           <span className="text-sm">24h Price Change:</span>
                           <span className={`font-medium ${tokenData.priceChange24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -392,7 +392,7 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
                         </div>
                       )}
                       
-                      {tokenData.volumeChange24h !== undefined && (
+                      {tokenData.volumeChange24h !== undefined && typeof tokenData.volumeChange24h === 'number' && (
                         <div className="flex justify-between border-b pb-1">
                           <span className="text-sm">24h Volume Change:</span>
                           <span className={`font-medium ${tokenData.volumeChange24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
