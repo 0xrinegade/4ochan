@@ -13,6 +13,7 @@ import { NostrProvider } from "./context/NostrContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { NavigationProvider } from "./context/NavigationContext";
 import PageTransition from "./components/PageTransition";
+import FloatingNavigation from "./components/FloatingNavigation";
 import { useEffect, useState, useCallback } from "react";
 
 // Create a module-level variable to hold the navigate function
@@ -127,6 +128,7 @@ function App() {
         <NostrProvider>
           <NavigationProvider>
             <AppRouter />
+            <FloatingNavigation />
             <Toaster />
           </NavigationProvider>
         </NostrProvider>
