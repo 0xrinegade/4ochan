@@ -692,10 +692,10 @@ const MermaidDiagram: React.FC<{ chart: string, isDarkMode: boolean }> = ({ char
   return (
     <div className="mermaid-container">
       <div className="mermaid-header">
-        <div className="mermaid-title">Mermaid Diagram</div>
+        <div className="mermaid-title text-primary-foreground">Mermaid Diagram</div>
         <div className="mermaid-action-buttons">
           <button 
-            className="mermaid-action-button" 
+            className="mermaid-action-button text-secondary-foreground" 
             title="Copy Mermaid code" 
             onClick={() => navigator.clipboard.writeText(chart)}
           >
@@ -705,7 +705,7 @@ const MermaidDiagram: React.FC<{ chart: string, isDarkMode: boolean }> = ({ char
             href={`https://mermaid.live/edit#${encodeURIComponent(chart)}`} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="mermaid-action-button"
+            className="mermaid-action-button text-secondary-foreground"
           >
             Edit Live
           </a>
@@ -713,8 +713,8 @@ const MermaidDiagram: React.FC<{ chart: string, isDarkMode: boolean }> = ({ char
       </div>
       {error ? (
         <div className="mermaid-error">
-          <p>Error rendering Mermaid diagram:</p>
-          <pre>{error}</pre>
+          <p className="text-destructive-foreground">Error rendering Mermaid diagram:</p>
+          <pre className="text-destructive-foreground">{error}</pre>
           <SyntaxHighlighter
             style={isDarkMode ? vscDarkPlus : vs}
             language="mermaid"

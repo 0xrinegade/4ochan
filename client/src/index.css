@@ -196,16 +196,16 @@
 
 .mermaid-error {
   padding: 1rem;
-  background-color: #ffebee;
-  color: #c62828;
-  border-top: 1px solid #ef9a9a;
+  background-color: hsl(var(--destructive) / 0.1);
+  color: hsl(var(--destructive));
+  border-top: 1px solid hsl(var(--destructive) / 0.5);
 }
 
 .mermaid-error pre {
-  background-color: #fff;
+  background-color: hsl(var(--background));
   padding: 0.5rem;
-  border: 1px solid #ef9a9a;
-  color: #c62828;
+  border: 1px solid hsl(var(--destructive) / 0.5);
+  color: hsl(var(--destructive));
   font-size: 0.8rem;
   overflow-x: auto;
   margin-bottom: 0.5rem;
