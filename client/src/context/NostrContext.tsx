@@ -296,15 +296,24 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     
     // Check for write relays, use all available relays as a fallback
-    let writeRelays = relays
-      .filter(r => r.status === 'connected' && r.write)
-      .map(r => r.url);
+    // Use a Set to ensure unique relay URLs
+    const uniqueRelays = new Set<string>(
+      relays
+        .filter(r => r.status === 'connected' && r.write)
+        .map(r => r.url)
+    );
+    
+    let writeRelays = Array.from(uniqueRelays);
     
     // If no specific write relays, try using all connected relays
     if (writeRelays.length === 0) {
-      writeRelays = relays
-        .filter(r => r.status === 'connected')
-        .map(r => r.url);
+      const allConnectedRelays = new Set<string>(
+        relays
+          .filter(r => r.status === 'connected')
+          .map(r => r.url)
+      );
+      
+      writeRelays = Array.from(allConnectedRelays);
         
       // If still no relays available, save for later and throw error
       if (writeRelays.length === 0) {
