@@ -35,7 +35,7 @@ import {
 import { getSimplifiedTokenInfo, TokenPriceHistory } from '@/lib/moralis';
 
 // Define token types
-type TokenType = 'address' | 'symbol';
+type TokenType = 'eth_address' | 'sol_address' | 'symbol';
 interface DetectedToken {
   value: string;
   type: TokenType;
@@ -44,6 +44,24 @@ interface DetectedToken {
 // Regular expression to find Ethereum addresses
 const findEthAddresses = (content: string): string[] => {
   const regex = /0x[a-fA-F0-9]{40}/g;
+  let matches: string[] = [];
+  let match;
+  
+  // Use a traditional while loop approach to avoid compatibility issues
+  while ((match = regex.exec(content)) !== null) {
+    matches.push(match[0]);
+  }
+  
+  // Return unique addresses
+  const uniqueAddresses = Array.from(new Set(matches));
+  return uniqueAddresses;
+};
+
+// Regular expression to find Solana addresses
+const findSolAddresses = (content: string): string[] => {
+  // Solana addresses are base58-encoded strings, typically 32-44 characters long
+  // Excluding common prefixes like 0x to avoid false matches with other cryptos
+  const regex = /\b[1-9A-HJ-NP-Za-km-z]{32,44}\b/g;
   let matches: string[] = [];
   let match;
   
@@ -76,11 +94,13 @@ const findTokenSymbols = (content: string): string[] => {
 
 // Find all tokens (addresses and symbols) in content
 const findTokens = (content: string): DetectedToken[] => {
-  const addresses = findEthAddresses(content);
+  const ethAddresses = findEthAddresses(content);
+  const solAddresses = findSolAddresses(content);
   const symbols = findTokenSymbols(content);
   
   const tokens: DetectedToken[] = [
-    ...addresses.map(addr => ({ value: addr, type: 'address' as TokenType })),
+    ...ethAddresses.map(addr => ({ value: addr, type: 'eth_address' as TokenType })),
+    ...solAddresses.map(addr => ({ value: addr, type: 'sol_address' as TokenType })),
     ...symbols.map(sym => ({ value: sym, type: 'symbol' as TokenType }))
   ];
   
@@ -145,9 +165,25 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
     queryFn: async () => {
       if (!selectedToken) return { error: 'No token selected' };
       
-      if (selectedToken.type === 'address') {
+      if (selectedToken.type === 'eth_address') {
         // Fetch by Ethereum address
         return getSimplifiedTokenInfo(selectedToken.value);
+      } else if (selectedToken.type === 'sol_address') {
+        // Fetch Solana token info
+        try {
+          const response = await fetch(`/api/solana-token/${selectedToken.value}`);
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to fetch Solana token data');
+          }
+          return response.json();
+        } catch (error) {
+          console.error('Error fetching Solana token:', error);
+          return { 
+            error: 'Failed to fetch Solana token data. This feature requires Solana API support.',
+            address: selectedToken.value
+          };
+        }
       } else {
         // Fetch by symbol
         const response = await fetch(`/api/token-symbol/${selectedToken.value}`);
@@ -184,8 +220,10 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
   
   // Format token display text
   const getTokenDisplayText = (token: DetectedToken): string => {
-    if (token.type === 'address') {
+    if (token.type === 'eth_address') {
       return `${token.value.substring(0, 6)}...${token.value.substring(38)}`;
+    } else if (token.type === 'sol_address') {
+      return `${token.value.substring(0, 4)}...${token.value.substring(token.value.length - 4)}`;
     } else {
       return `$${token.value}`;
     }
@@ -241,7 +279,9 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
             <div className="text-sm font-mono bg-slate-200 p-2 rounded mb-3 break-all border border-slate-300">
               {selectedToken.type === 'symbol' 
                 ? `Token Symbol: $${selectedToken.value}` 
-                : selectedToken.value
+                : selectedToken.type === 'eth_address'
+                  ? `Ethereum Address: ${selectedToken.value}`
+                  : `Solana Address: ${selectedToken.value}`
               }
             </div>
             
@@ -429,77 +469,124 @@ export const PumpFunWidget: React.FC<PumpFunWidgetProps> = ({ content }) => {
                 </Tabs>
                 
                 <div className="flex gap-2 mt-3 flex-wrap">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="text-xs"
-                    onClick={() => {
-                      // Use token address from selectedToken or tokenData if available
-                      const tokenAddress = selectedToken?.type === 'address' 
-                        ? selectedToken.value 
-                        : tokenData?.address;
-                        
-                      if (tokenAddress) {
-                        window.open(`https://etherscan.io/token/${tokenAddress}`, '_blank');
-                      }
-                    }}
-                  >
-                    Etherscan <ExternalLink className="h-3 w-3 ml-1" />
-                  </Button>
+                  {selectedToken?.type === 'eth_address' && (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs"
+                        onClick={() => {
+                          // Use token address from selectedToken or tokenData if available
+                          const tokenAddress = selectedToken?.type === 'eth_address' 
+                            ? selectedToken.value 
+                            : tokenData?.address;
+                            
+                          if (tokenAddress) {
+                            window.open(`https://etherscan.io/token/${tokenAddress}`, '_blank');
+                          }
+                        }}
+                      >
+                        Etherscan <ExternalLink className="h-3 w-3 ml-1" />
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs"
+                        onClick={() => {
+                          // Use token address from selectedToken or tokenData if available
+                          const tokenAddress = selectedToken?.type === 'eth_address' 
+                            ? selectedToken.value 
+                            : tokenData?.address;
+                            
+                          if (tokenAddress) {
+                            window.open(`https://app.uniswap.org/#/swap?outputCurrency=${tokenAddress}`, '_blank');
+                          }
+                        }}
+                      >
+                        Uniswap <ExternalLink className="h-3 w-3 ml-1" />
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs"
+                        onClick={() => {
+                          // Use token address from selectedToken or tokenData if available
+                          const tokenAddress = selectedToken?.type === 'eth_address' 
+                            ? selectedToken.value 
+                            : tokenData?.address;
+                            
+                          if (tokenAddress) {
+                            window.open(`https://dexscreener.com/ethereum/${tokenAddress}`, '_blank');
+                          }
+                        }}
+                      >
+                        DexScreener <ExternalLink className="h-3 w-3 ml-1" />
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs"
+                        onClick={() => {
+                          // Use token address from selectedToken or tokenData if available
+                          const tokenAddress = selectedToken?.type === 'eth_address' 
+                            ? selectedToken.value 
+                            : tokenData?.address;
+                            
+                          if (tokenAddress) {
+                            window.open(`https://www.pump.fun/token/${tokenAddress}`, '_blank');
+                          }
+                        }}
+                      >
+                        Pump.fun <ExternalLink className="h-3 w-3 ml-1" />
+                      </Button>
+                    </>
+                  )}
                   
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="text-xs"
-                    onClick={() => {
-                      // Use token address from selectedToken or tokenData if available
-                      const tokenAddress = selectedToken?.type === 'address' 
-                        ? selectedToken.value 
-                        : tokenData?.address;
-                        
-                      if (tokenAddress) {
-                        window.open(`https://app.uniswap.org/#/swap?outputCurrency=${tokenAddress}`, '_blank');
-                      }
-                    }}
-                  >
-                    Uniswap <ExternalLink className="h-3 w-3 ml-1" />
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="text-xs"
-                    onClick={() => {
-                      // Use token address from selectedToken or tokenData if available
-                      const tokenAddress = selectedToken?.type === 'address' 
-                        ? selectedToken.value 
-                        : tokenData?.address;
-                        
-                      if (tokenAddress) {
-                        window.open(`https://dexscreener.com/ethereum/${tokenAddress}`, '_blank');
-                      }
-                    }}
-                  >
-                    DexScreener <ExternalLink className="h-3 w-3 ml-1" />
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="text-xs"
-                    onClick={() => {
-                      // Use token address from selectedToken or tokenData if available
-                      const tokenAddress = selectedToken?.type === 'address' 
-                        ? selectedToken.value 
-                        : tokenData?.address;
-                        
-                      if (tokenAddress) {
-                        window.open(`https://www.pump.fun/token/${tokenAddress}`, '_blank');
-                      }
-                    }}
-                  >
-                    Pump.fun <ExternalLink className="h-3 w-3 ml-1" />
-                  </Button>
+                  {selectedToken?.type === 'sol_address' && (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs"
+                        onClick={() => {
+                          if (selectedToken?.value) {
+                            window.open(`https://solscan.io/token/${selectedToken.value}`, '_blank');
+                          }
+                        }}
+                      >
+                        Solscan <ExternalLink className="h-3 w-3 ml-1" />
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs"
+                        onClick={() => {
+                          if (selectedToken?.value) {
+                            window.open(`https://solana.fm/address/${selectedToken.value}`, '_blank');
+                          }
+                        }}
+                      >
+                        Solana FM <ExternalLink className="h-3 w-3 ml-1" />
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs"
+                        onClick={() => {
+                          if (selectedToken?.value) {
+                            window.open(`https://jup.ag/swap/SOL-${selectedToken.value}`, '_blank');
+                          }
+                        }}
+                      >
+                        Jupiter <ExternalLink className="h-3 w-3 ml-1" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             )}
