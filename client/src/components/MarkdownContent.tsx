@@ -595,17 +595,17 @@ const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element =>
   return (
     <div className={`typst-container ${isDarkMode ? 'typst-dark' : 'typst-light'}`}>
       <div className="typst-header">
-        <div className="typst-title">Typst Document</div>
+        <div className="typst-title text-primary-foreground">Typst Document</div>
         <div className="typst-action-buttons">
           <button 
-            className="typst-action-button" 
+            className="typst-action-button text-secondary-foreground" 
             title="Copy Typst code" 
             onClick={() => navigator.clipboard.writeText(content)}
           >
             Copy
           </button>
           <button
-            className="typst-action-button"
+            className="typst-action-button text-secondary-foreground"
             title={showSource ? "Show Preview" : "Show Source"}
             onClick={() => setShowSource(!showSource)}
           >
@@ -615,7 +615,7 @@ const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element =>
             href={`https://typst.app/project?snippet=${encodeURIComponent(content)}`} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="typst-action-button"
+            className="typst-action-button text-secondary-foreground"
             title="Open in Typst App"
           >
             Open in Typst
@@ -635,8 +635,8 @@ const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element =>
         <div className="typst-preview">
           <div className="typst-render">
             <div className="typst-heading">
-              <h3>Document Preview</h3>
-              <p>Formatted with Vivliostyle</p>
+              <h3 className="text-primary-foreground">Document Preview</h3>
+              <p className="text-secondary-foreground">Formatted with Vivliostyle</p>
             </div>
             <div className="typst-content">
               <TypstVivliostyleViewer content={content} isDarkMode={isDarkMode} />
