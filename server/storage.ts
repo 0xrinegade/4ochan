@@ -35,6 +35,26 @@ export interface IStorage {
   addReputationPoints(log: InsertReputationLog): Promise<ReputationLog>;
   getReputationLogs(userId: number): Promise<ReputationLog[]>;
   
+  // Achievement management
+  getAchievements(includeHidden?: boolean): Promise<Achievement[]>;
+  getAchievement(id: number): Promise<Achievement | undefined>;
+  createAchievement(achievement: InsertAchievement): Promise<Achievement>;
+  getUserAchievements(userId: number): Promise<UserAchievement[]>;
+  awardAchievement(userAchievement: InsertUserAchievement): Promise<UserAchievement>;
+  updateAchievementProgress(userId: number, achievementId: number, progress: number): Promise<UserAchievement | undefined>;
+  
+  // User stats management
+  getUserStats(userId: number): Promise<UserStats | undefined>;
+  createUserStats(userStats: InsertUserStats): Promise<UserStats>;
+  updateUserStats(userId: number, statsData: Partial<InsertUserStats>): Promise<UserStats | undefined>;
+  incrementUserStats(userId: number, field: keyof Omit<UserStats, 'id' | 'userId' | 'lastUpdated'>, amount?: number): Promise<void>;
+  
+  // Reputation levels
+  getReputationLevels(): Promise<ReputationLevel[]>;
+  getReputationLevel(level: number): Promise<ReputationLevel | undefined>;
+  getReputationLevelByPoints(points: number): Promise<ReputationLevel | undefined>;
+  createReputationLevel(level: InsertReputationLevel): Promise<ReputationLevel>;
+  
   // Follower management
   followUser(follower: InsertFollower): Promise<Follower>;
   unfollowUser(followerId: number, followingId: number): Promise<void>;
