@@ -787,3 +787,18 @@
     filter: brightness(95%);
     text-decoration: none;
   }
+  
+  .typst-preview {
+    width: 100%;
+    min-height: 300px;
+    background-color: white;
+    padding: 0;
+    overflow: hidden;
+  }
+  
+  .typst-iframe {
+    width: 100%;
+    height: 500px;
+    border: none;
+    background-color: white;
+  }

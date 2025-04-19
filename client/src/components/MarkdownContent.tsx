@@ -20,17 +20,30 @@ mermaid.initialize({
 
 // Function to handle Typst code blocks
 const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element => {
+  const [showSource, setShowSource] = useState(false);
+  
+  // Generate a unique ID for this Typst document
+  const typstId = `typst-${Math.random().toString(36).substr(2, 9)}`;
+  
   return (
     <div className={`typst-container ${isDarkMode ? 'typst-dark' : 'typst-light'}`}>
       <div className="typst-header">
         <div className="typst-title">Typst Document</div>
         <div className="typst-action-buttons">
-          <button className="typst-action-button" title="Copy Typst code" onClick={() => {
-            navigator.clipboard.writeText(content);
-          }}>
+          <button 
+            className="typst-action-button" 
+            title="Copy Typst code" 
+            onClick={() => navigator.clipboard.writeText(content)}
+          >
             Copy
           </button>
-          {/* This is a placeholder. In a future update, we could add a button to render/preview the Typst */}
+          <button
+            className="typst-action-button"
+            title={showSource ? "Show Preview" : "Show Source"}
+            onClick={() => setShowSource(!showSource)}
+          >
+            {showSource ? "Show Preview" : "Show Source"}
+          </button>
           <a 
             href={`https://typst.app/project?snippet=${encodeURIComponent(content)}`} 
             target="_blank" 
@@ -42,13 +55,26 @@ const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element =>
           </a>
         </div>
       </div>
-      <SyntaxHighlighter
-        style={isDarkMode ? vscDarkPlus : vs}
-        language="rust" // Use rust highlighting as a fallback since Typst syntax is not directly supported
-        PreTag="div"
-      >
-        {content}
-      </SyntaxHighlighter>
+      
+      {showSource ? (
+        <SyntaxHighlighter
+          style={isDarkMode ? vscDarkPlus : vs}
+          language="rust" // Use rust highlighting as a fallback since Typst syntax is not directly supported
+          PreTag="div"
+        >
+          {content}
+        </SyntaxHighlighter>
+      ) : (
+        <div className="typst-preview">
+          <iframe
+            src={`https://typst.app/project?snippet=${encodeURIComponent(content)}&mode=view`}
+            title="Typst Document"
+            className="typst-iframe"
+            sandbox="allow-scripts allow-same-origin"
+            loading="lazy"
+          />
+        </div>
+      )}
     </div>
   );
 };
