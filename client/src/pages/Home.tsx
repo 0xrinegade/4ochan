@@ -7,7 +7,7 @@ import { AllThreadsList } from "@/components/AllThreadsList";
 import { useNostr } from "@/hooks/useNostr";
 import { useBoards } from "@/hooks/useBoards";
 import { CreateThreadModal } from "@/components/CreateThreadModal";
-import { formatPubkey } from "@/lib/nostr";
+import { formatPubkey, KIND } from "@/lib/nostr";
 import { useToast } from "@/hooks/use-toast";
 import { navigateWithoutReload } from "@/App";
 import { Thread } from "@/types";
@@ -89,9 +89,9 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
         
         // First fetch threads
         try {
-          // Get all threads created by this user
+          // Get all threads created by this user - use the KIND constant imported from the nostr.ts file
           const filter = {
-            kinds: [nostr.KIND.THREAD],
+            kinds: [KIND.THREAD],
             authors: [identity.pubkey],
             limit: 10
           };
@@ -135,7 +135,7 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
         try {
           // Fetch user's replies
           const replyFilter = {
-            kinds: [nostr.KIND.POST],
+            kinds: [KIND.POST],
             authors: [identity.pubkey],
             limit: 20
           };
