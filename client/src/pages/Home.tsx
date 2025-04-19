@@ -50,11 +50,11 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
                 </div>
                 <div className="bg-white border border-black border-t-0 p-1">
                   <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-1 gap-1 md:list-disc md:pl-4 text-sm">
-                    <li className="mb-0.5"><Link href="/board/b" className="text-primary underline">Random</Link></li>
-                    <li className="mb-0.5"><Link href="/board/tech" className="text-primary underline">Technology</Link></li>
-                    <li className="mb-0.5"><Link href="/board/ai" className="text-primary underline">AI</Link></li>
-                    <li className="mb-0.5"><Link href="/board/p" className="text-primary underline">Psyche</Link></li>
-                    <li className="mb-0.5"><Link href="/board/gg" className="text-primary underline">Games</Link></li>
+                    <li className="mb-0.5"><a href="/board/b" className="text-primary underline">Random</a></li>
+                    <li className="mb-0.5"><a href="/board/tech" className="text-primary underline">Technology</a></li>
+                    <li className="mb-0.5"><a href="/board/ai" className="text-primary underline">AI</a></li>
+                    <li className="mb-0.5"><a href="/board/p" className="text-primary underline">Psyche</a></li>
+                    <li className="mb-0.5"><a href="/board/gg" className="text-primary underline">Games</a></li>
                   </ul>
                 </div>
               </div>

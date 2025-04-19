@@ -129,7 +129,7 @@ export const AllThreadsList: React.FC = () => {
       {threads.length > 0 ? (
         // Thread List
         threads.map(thread => (
-          <Link href={`/thread/${thread.id}`} key={thread.id}>
+          <a href={`/thread/${thread.id}`} key={thread.id}>
             <div className="mb-4 bg-white border border-black cursor-pointer hover:border-primary">
               <div className="p-2 sm:p-4">
                 <div className="flex flex-col sm:flex-row items-start">
@@ -182,7 +182,7 @@ export const AllThreadsList: React.FC = () => {
                 </div>
               </div>
             </div>
-          </Link>
+          </a>
         ))
       ) : loading ? (
         // Loading skeletons
