@@ -13,6 +13,7 @@ import { navigateWithoutReload } from "@/App";
 import { Thread } from "@/types";
 import { ThreadPopularityHeatmap } from "@/components/ThreadPopularityHeatmap";
 import { AllThreadsHeatmap } from "@/components/AllThreadsHeatmap";
+import { ConnectionStatus } from "@/components/ConnectionStatus";
 
 // Interface for user replies
 interface UserReply {
@@ -212,6 +213,7 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
       <div className="max-w-4xl mx-auto">
         <Header />
         <main className="container mx-auto px-2 sm:px-4">
+          <ConnectionStatus />
           <div className="flex flex-col md:flex-row gap-2">
             <div className="w-full md:w-1/4">
               <div className="mb-2">
