@@ -10,7 +10,7 @@ import { useBoards } from "@/hooks/useBoards";
 import { useTheme } from "@/context/ThemeContext";
 
 // Define theme types to match ThemeContext
-type ThemeName = 'crimson' | 'hotdogstand' | 'windows95' | 'vaporwave' | 'matrix';
+type ThemeName = 'light' | 'dark' | 'highcontrast' | 'retro' | 'sepia';
 
 // Board navigation tab that simply uses the shortName
 const NavBoardTab: React.FC<{ shortName: string; label: string }> = ({ shortName, label }) => {
@@ -183,25 +183,25 @@ export const Header: React.FC = () => {
                         let themeColor = '';
                         
                         switch(theme) {
-                          case 'crimson':
-                            displayName = 'Classic Red';
-                            themeColor = '#8B0000';
+                          case 'light':
+                            displayName = 'Light';
+                            themeColor = '#0066B8';
                             break;
-                          case 'hotdogstand':
-                            displayName = 'Retro Red';
-                            themeColor = '#D82C20';
+                          case 'dark':
+                            displayName = 'Dark';
+                            themeColor = '#0098FF';
                             break;
-                          case 'windows95':
-                            displayName = 'Classic Blue';
+                          case 'highcontrast':
+                            displayName = 'High Contrast';
+                            themeColor = '#FFFF00';
+                            break;
+                          case 'retro':
+                            displayName = 'Retro';
                             themeColor = '#000080';
                             break;
-                          case 'vaporwave':
-                            displayName = 'Lavender';
-                            themeColor = '#7B68EE';
-                            break;
-                          case 'matrix':
-                            displayName = 'Dark Mode';
-                            themeColor = '#00CC00';
+                          case 'sepia':
+                            displayName = 'Sepia';
+                            themeColor = '#8B4000';
                             break;
                           default:
                             displayName = String(theme).charAt(0).toUpperCase() + String(theme).slice(1);
@@ -289,25 +289,25 @@ export const Header: React.FC = () => {
                     let themeColor = '';
                     
                     switch(theme) {
-                      case 'crimson':
-                        displayName = 'Classic Red';
-                        themeColor = '#8B0000';
+                      case 'light':
+                        displayName = 'Light';
+                        themeColor = '#0066B8';
                         break;
-                      case 'hotdogstand':
-                        displayName = 'Retro Red';
-                        themeColor = '#D82C20';
+                      case 'dark':
+                        displayName = 'Dark';
+                        themeColor = '#0098FF';
                         break;
-                      case 'windows95':
-                        displayName = 'Classic Blue';
+                      case 'highcontrast':
+                        displayName = 'High Contrast';
+                        themeColor = '#FFFF00';
+                        break;
+                      case 'retro':
+                        displayName = 'Retro';
                         themeColor = '#000080';
                         break;
-                      case 'vaporwave':
-                        displayName = 'Lavender';
-                        themeColor = '#7B68EE';
-                        break;
-                      case 'matrix':
-                        displayName = 'Dark Mode';
-                        themeColor = '#00CC00';
+                      case 'sepia':
+                        displayName = 'Sepia';
+                        themeColor = '#8B4000';
                         break;
                       default:
                         displayName = String(theme).charAt(0).toUpperCase() + String(theme).slice(1);

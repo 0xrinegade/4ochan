@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Define theme types based on theme.json
-type ThemeName = 'crimson' | 'hotdogstand' | 'windows95' | 'vaporwave' | 'matrix';
+// Define theme types based on VS Code-style themes
+type ThemeName = 'light' | 'dark' | 'highcontrast' | 'retro' | 'sepia';
 
 interface ThemeColors {
   primary: string;
@@ -22,61 +22,66 @@ interface ThemeContextType {
   themes: ThemeName[];
 }
 
-// Theme configuration from theme.json
+// Theme configuration based on VS Code style themes
 const themeSettings: ThemeSettings = {
-  crimson: {
-    primary: '#8B0000',     // Dark red primary
-    background: '#F8F5E6',  // Soft beige background
-    buttonBackground: '#E8E8E8', // Light gray buttons
-    buttonText: '#000000',  // Black text on buttons
-    text: '#333333'         // Dark gray for main text
-  },
-  hotdogstand: {
-    primary: '#D82C20',     // Softer red (less harsh)
-    background: '#FFF8E1',  // Cream yellow (less bright)
-    buttonBackground: '#D82C20', // Red buttons
-    buttonText: '#FFFFFF',  // White text on buttons (better contrast)
-    text: '#333333'         // Dark gray for main text
-  },
-  windows95: {
-    primary: '#000080',     // Classic Windows 95 blue
-    background: '#E6E6E6',  // Lighter gray (more modern)
-    buttonBackground: '#D4D0C8', // Classic Win95 button color
-    buttonText: '#000000',  // Black text on buttons
-    text: '#333333'         // Dark gray text
-  },
-  vaporwave: {
-    primary: '#FF00CC',     // More pastel pink
-    background: '#F5F5FF',  // Very light blue
-    buttonBackground: '#7B68EE', // Medium slate blue (softer)
+  light: {
+    primary: '#0066B8',     // VS Code blue
+    background: '#FFFFFF',  // White background
+    buttonBackground: '#0066B8',  // Blue buttons
     buttonText: '#FFFFFF',  // White text on buttons
-    text: '#333333'         // Normal dark text
+    text: '#333333',        // Dark gray for text
+    border: '#CCCCCC'       // Light gray borders
   },
-  matrix: {
-    primary: '#00CC00',     // Softer green (less harsh)
-    background: '#0A0A0A',  // Very dark gray (not pure black)
-    text: '#33FF33',        // Brighter green text
-    buttonBackground: '#003300', // Dark green buttons
-    buttonText: '#00FF00'   // Green text on buttons
+  dark: {
+    primary: '#0098FF',     // Bright blue for dark theme
+    background: '#1E1E1E',  // VS Code dark gray
+    buttonBackground: '#3A3D41', // Dark gray buttons
+    buttonText: '#FFFFFF',  // White text on buttons
+    text: '#D4D4D4',        // Light gray text
+    border: '#3A3D41'       // Dark borders
+  },
+  highcontrast: {
+    primary: '#FFFF00',     // Bright yellow
+    background: '#000000',  // Black
+    buttonBackground: '#000000', // Black buttons with yellow borders
+    buttonText: '#FFFFFF',  // White text
+    text: '#FFFFFF',        // White text
+    border: '#FFFF00'       // Yellow borders
+  },
+  retro: {
+    primary: '#000080',     // Navy blue
+    background: '#D4D0C8',  // Classic gray  
+    buttonBackground: '#D4D0C8', // Gray buttons
+    buttonText: '#000000',  // Black text on buttons
+    text: '#000000',        // Black text
+    border: '#808080'       // Gray borders
+  },
+  sepia: {
+    primary: '#8B4000',     // Brown
+    background: '#F4ECD8',  // Sepia background
+    buttonBackground: '#C09465', // Tan buttons
+    buttonText: '#000000',  // Black text on buttons
+    text: '#5B4636',        // Dark brown text
+    border: '#C09465'       // Tan borders
   }
 };
 
 const ThemeContext = createContext<ThemeContextType>({
-  currentTheme: 'crimson',
+  currentTheme: 'light',
   setTheme: () => {},
-  themes: ['crimson', 'hotdogstand', 'windows95', 'vaporwave', 'matrix']
+  themes: ['light', 'dark', 'highcontrast', 'retro', 'sepia']
 });
 
 export const useTheme = () => useContext(ThemeContext);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Try to get theme from localStorage, default to crimson
+  // Try to get theme from localStorage, default to light
   const [currentTheme, setCurrentTheme] = useState<ThemeName>(() => {
     const savedTheme = localStorage.getItem('theme') as ThemeName;
-    return savedTheme && themeSettings[savedTheme] ? savedTheme : 'crimson';
+    return savedTheme && themeSettings[savedTheme] ? savedTheme : 'light';
   });
 
-  const themes: ThemeName[] = ['crimson', 'hotdogstand', 'windows95', 'vaporwave', 'matrix'];
+  const themes: ThemeName[] = ['light', 'dark', 'highcontrast', 'retro', 'sepia'];
 
   // Function to convert hex to hsl
   const hexToHSL = (hex: string): string => {
@@ -149,15 +154,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         document.documentElement.style.setProperty('--popover', hexToHSL(colors.background));
       }
       
-      // Set text color if specified, otherwise default to black/white based on background
+      // Set text color if specified
       if (colors.text) {
         const textHSL = hexToHSL(colors.text);
-        document.documentElement.style.setProperty('--foreground', textHSL);
-        document.documentElement.style.setProperty('--card-foreground', textHSL);
-        document.documentElement.style.setProperty('--popover-foreground', textHSL);
-      } else if (theme === 'matrix') {
-        // Matrix theme needs green text throughout
-        const textHSL = hexToHSL('#00FF00');
         document.documentElement.style.setProperty('--foreground', textHSL);
         document.documentElement.style.setProperty('--card-foreground', textHSL);
         document.documentElement.style.setProperty('--popover-foreground', textHSL);
@@ -173,17 +172,17 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         document.documentElement.style.setProperty('--secondary-foreground', hexToHSL(colors.buttonText));
       }
       
-      // For Matrix theme, set all border colors to match the green
-      if (theme === 'matrix') {
-        document.documentElement.style.setProperty('--border', hexToHSL('#00FF00'));
+      // Set border color if specified
+      if (colors.border) {
+        document.documentElement.style.setProperty('--border', hexToHSL(colors.border));
       }
       
-      // Set primary foreground color (text on primary backgrounds)
-      if (theme === 'hotdogstand') {
-        document.documentElement.style.setProperty('--primary-foreground', hexToHSL('#FFFF00'));
-      } else if (theme === 'matrix') {
+      // Handle specific theme settings
+      if (theme === 'highcontrast') {
+        // High contrast theme needs specific foreground settings
         document.documentElement.style.setProperty('--primary-foreground', hexToHSL('#000000'));
       } else {
+        // Default primary foreground is white for better contrast
         document.documentElement.style.setProperty('--primary-foreground', hexToHSL('#FFFFFF'));
       }
       

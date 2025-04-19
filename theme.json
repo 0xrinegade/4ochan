@@ -1,54 +1,72 @@
 {
-  "variant": "tint",
-  "primary": "#8B0000",
+  "variant": "professional",
+  "primary": "#0066B8",
   "appearance": "light",
   "radius": 0,
   "colors": {
-    "secondary": "#F5F5DC",
-    "background": "#F5F5DC",
-    "accent": "#000000",
-    "text": "#000000",
-    "link": "#8B0000",
-    "borderColor": "#000000",
-    "buttonBackground": "#D3D3D3",
-    "buttonText": "#000000",
-    "buttonBorder": "#000000",
-    "headerBackground": "#8B0000",
+    "secondary": "#F5F5F5",
+    "background": "#FFFFFF",
+    "accent": "#0066B8",
+    "text": "#333333",
+    "link": "#0066B8",
+    "borderColor": "#CCCCCC",
+    "buttonBackground": "#0066B8",
+    "buttonText": "#FFFFFF",
+    "buttonBorder": "#0066B8",
+    "headerBackground": "#0066B8",
     "headerText": "#FFFFFF",
-    "tabActive": "#8B0000",
+    "tabActive": "#0066B8",
     "tabInactive": "#FFFFFF",
-    "threadBorder": "#000000",
+    "threadBorder": "#CCCCCC",
     "threadBackground": "#FFFFFF",
-    "threadHover": "#F0F0F0"
+    "threadHover": "#F5F5F5"
   },
   "themes": {
-    "crimson": {
-      "primary": "#8B0000",
-      "background": "#F5F5DC"
+    "light": {
+      "primary": "#0066B8",
+      "background": "#FFFFFF",
+      "text": "#333333",
+      "borderColor": "#CCCCCC"
     },
-    "hotdogstand": {
-      "primary": "#FF0000",
-      "background": "#FFFF00",
-      "buttonBackground": "#FF0000",
-      "buttonText": "#FFFF00"
+    "dark": {
+      "primary": "#0098FF",
+      "background": "#1E1E1E",
+      "text": "#D4D4D4",
+      "borderColor": "#3A3D41",
+      "buttonBackground": "#3A3D41",
+      "buttonText": "#FFFFFF",
+      "threadBackground": "#252526",
+      "threadHover": "#2D2D2D"
     },
-    "windows95": {
-      "primary": "#000080",
-      "background": "#C0C0C0",
-      "buttonBackground": "#C0C0C0"
-    },
-    "vaporwave": {
-      "primary": "#FF00FF",
-      "background": "#00FFFF",
-      "buttonBackground": "#FF00FF",
-      "buttonText": "#FFFFFF"
-    },
-    "matrix": {
-      "primary": "#00FF00",
+    "highcontrast": {
+      "primary": "#FFFF00",
       "background": "#000000",
-      "text": "#00FF00",
-      "buttonBackground": "#003300",
-      "buttonText": "#00FF00"
+      "text": "#FFFFFF",
+      "borderColor": "#FFFF00",
+      "buttonBackground": "#000000",
+      "buttonText": "#FFFFFF",
+      "threadBackground": "#000000",
+      "threadHover": "#333333"
+    },
+    "retro": {
+      "primary": "#000080",
+      "background": "#D4D0C8",
+      "text": "#000000",
+      "borderColor": "#808080",
+      "buttonBackground": "#D4D0C8",
+      "buttonText": "#000000",
+      "threadBackground": "#FFFFFF",
+      "threadHover": "#EFEFEF"
+    },
+    "sepia": {
+      "primary": "#8B4000",
+      "background": "#F4ECD8",
+      "text": "#5B4636",
+      "borderColor": "#C09465",
+      "buttonBackground": "#C09465",
+      "buttonText": "#000000",
+      "threadBackground": "#FBF8F1",
+      "threadHover": "#F7F2E5"
     }
   },
   "typography": {
