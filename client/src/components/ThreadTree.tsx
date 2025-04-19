@@ -71,23 +71,20 @@ export const ThreadTree: React.FC<ThreadTreeProps> = ({
       <div key={node.post.id} className="tree-node">
         <div 
           className={`tree-node-content ${isSelected ? 'selected' : ''}`}
-          style={{ marginLeft: `${level * 20}px` }}
           onClick={() => onSelectPost(node.post.id)}
         >
           <div className="tree-line"></div>
           <div className="tree-node-label">
             <span className="post-num">#{node.post.id.substring(0, 6)}</span>
             <span className="post-preview">
-              {node.post.content.length > 30 
-                ? node.post.content.substring(0, 30) + '...' 
-                : node.post.content}
+              {truncate(node.post.content || '', 30)}
             </span>
           </div>
         </div>
         
         {node.children.length > 0 && (
           <div className="tree-children">
-            {node.children.map(child => renderNode(child, level + 1))}
+            {node.children.map(child => renderNode(child))}
           </div>
         )}
       </div>

@@ -1259,11 +1259,12 @@
 }
 
 .tree-node {
-  @apply my-2;
+  @apply my-2 relative;
 }
 
 .tree-node-content {
   @apply flex items-center p-2 bg-gray-100 border border-gray-300 cursor-pointer;
+  position: relative;
 }
 
 .tree-node-content:hover {
@@ -1274,10 +1275,27 @@
   @apply bg-primary text-white border-primary;
 }
 
+/* Classic tree view connector lines */
 .tree-line {
+  width: 15px;
+  height: 2px;
+  @apply bg-gray-500 mr-2;
+}
+
+.tree-children {
+  @apply pl-6 relative;
+  border-left: 2px dotted #999;
+  margin-left: 5px;
+}
+
+.tree-children .tree-node-content::before {
+  content: '';
+  position: absolute;
+  left: -15px;
+  top: 50%;
   width: 10px;
   height: 2px;
-  @apply bg-gray-400 mr-2;
+  @apply bg-gray-500;
 }
 
 .tree-node-label {
@@ -1285,7 +1303,7 @@
 }
 
 .tree-node-label .post-num {
-  @apply mr-2;
+  @apply mr-2 font-mono;
 }
 
 .tree-node-label .post-preview {
@@ -1295,4 +1313,9 @@
 
 .tree-node-content.selected .post-preview {
   @apply text-white;
+}
+
+/* Retro color for selected node */
+.tree-node-content.selected {
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
 }
