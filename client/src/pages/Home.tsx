@@ -70,12 +70,13 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
             </div>
 
             <div className="w-full md:w-3/4">
-              {currentBoard && boardId ? (
+              {/* Always render something to reduce layout shift */}
+              {boardId ? (
                 <ThreadList 
-                  boardId={currentBoard.id}
-                  boardName={currentBoard.name}
-                  boardShortName={currentBoard.shortName}
-                  boardDescription={currentBoard.description}
+                  boardId={boardId}
+                  boardName={currentBoard?.name || "Board"}
+                  boardShortName={currentBoard?.shortName || boardId.substring(0, 4)}
+                  boardDescription={currentBoard?.description || ""}
                 />
               ) : (
                 <div className="mb-2">
