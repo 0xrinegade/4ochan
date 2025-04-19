@@ -10,7 +10,9 @@ interface AIAuthResponse {
   userId?: number;
 }
 
-export async function authenticateWithAI(input: string): Promise<AIAuthResponse> {
+export async function authenticateWithAI(
+  input: string,
+): Promise<AIAuthResponse> {
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -20,7 +22,7 @@ export async function authenticateWithAI(input: string): Promise<AIAuthResponse>
           content: `You are an AI authentication system. Analyze the user input to determine if it shows human-like reasoning and coherence. 
           If the input seems like a genuine human trying to log in, assign them a username in the format "anon_[3-4 random letters]". 
           Respond with JSON in this format: { "success": boolean, "message": string, "username": string if success is true }. 
-          Reject inputs that are very short, nonsensical, or look like bot-generated text.`
+          Reject inputs that are very short, nonsensical, or look like bot-generated text.`,
         },
         {
           role: "user",
@@ -31,7 +33,9 @@ export async function authenticateWithAI(input: string): Promise<AIAuthResponse>
       temperature: 0.2,
     });
 
-    const content = response.choices[0].message.content || '{"success":false,"message":"No response generated"}';
+    const content =
+      response.choices[0].message.content ||
+      '{"success":false,"message":"No response generated"}';
     const result = JSON.parse(content);
     return {
       success: result.success === true,
@@ -54,16 +58,17 @@ export async function generateAIResponse(prompt: string): Promise<string> {
       messages: [
         {
           role: "system",
-          content: `You are a helpful AI assistant on a retro-styled imageboard. 
-          Respond concisely and helpfully, with a slight 90s internet nostalgia feel.
-          Don't use more than 2-3 sentences, and try to be genuinely helpful but brief.`
+          content: `You are an AI that rewrites user messages for an anonymous board.
+          Your job is to amplify the user's original message — make it more intense, more direct, or more committed to the mood and tone they’re expressing.
+          Do not neutralize, soften, or correct anything. Preserve their style, but double down on it.
+          Return only the amplified version of the message.`,
         },
         {
           role: "user",
           content: prompt,
         },
       ],
-      temperature: 0.7,
+      temperature: 0.85,
       max_tokens: 100,
     });
 
@@ -88,9 +93,9 @@ interface GPTInTheMiddleResponse {
  * @param username Username of the person posting
  */
 export async function processUserInput(
-  userInput: string, 
+  userInput: string,
   context?: string,
-  username?: string
+  username?: string,
 ): Promise<GPTInTheMiddleResponse> {
   try {
     const systemPrompt = `You are the GPT-In-The-Middle for a retro-styled imageboard where all user messages are processed through you before being posted.
@@ -104,7 +109,7 @@ export async function processUserInput(
     5. If the input is toxic, hateful, or inappropriate, respond with a gentle warning instead
     6. Occasionally add nostalgic references to early internet culture if relevant
     
-    ${context ? `Conversation context: ${context}` : ''}
+    ${context ? `Conversation context: ${context}` : ""}
     
     Respond with ONLY the transformed message text that will be posted. Don't include any meta-commentary or explanations of what you're doing.`;
 
@@ -113,7 +118,7 @@ export async function processUserInput(
       messages: [
         {
           role: "system",
-          content: systemPrompt
+          content: systemPrompt,
         },
         {
           role: "user",
@@ -133,7 +138,7 @@ export async function processUserInput(
           content: `Analyze the sentiment of the following text on a scale from 1 to 10, 
           where 1 is extremely negative and 10 is extremely positive. 
           Also extract 1-3 topic tags that describe what the content is about.
-          Respond with JSON in this format: {"sentiment": number, "topics": [string, string?]}`
+          Respond with JSON in this format: {"sentiment": number, "topics": [string, string?]}`,
         },
         {
           role: "user",
@@ -146,20 +151,25 @@ export async function processUserInput(
     });
 
     // Parse sentiment analysis
-    const sentimentContent = sentimentResponse.choices[0].message.content || '{"sentiment": 5, "topics": ["general"]}';
+    const sentimentContent =
+      sentimentResponse.choices[0].message.content ||
+      '{"sentiment": 5, "topics": ["general"]}';
     const sentimentData = JSON.parse(sentimentContent);
 
     return {
-      content: response.choices[0].message.content || "Error processing your message. Please try again.",
+      content:
+        response.choices[0].message.content ||
+        "Error processing your message. Please try again.",
       originalIntent: userInput,
       sentimentScore: sentimentData.sentiment,
-      topicTags: sentimentData.topics
+      topicTags: sentimentData.topics,
     };
   } catch (error) {
     console.error("Error in GPT-In-The-Middle processing:", error);
     return {
-      content: "Sorry, I couldn't process your message at the moment. Please try again later.",
-      originalIntent: userInput
+      content:
+        "Sorry, I couldn't process your message at the moment. Please try again later.",
+      originalIntent: userInput,
     };
   }
 }
