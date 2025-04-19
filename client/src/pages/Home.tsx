@@ -7,6 +7,7 @@ import { useNostr } from "@/hooks/useNostr";
 import { useBoards } from "@/hooks/useBoards";
 import { CreateThreadModal } from "@/components/CreateThreadModal";
 import { formatPubkey } from "@/lib/nostr";
+import { useToast } from "@/hooks/use-toast";
 
 const Home: React.FC<{ id?: string }> = ({ id }) => {
   // If id is not passed as a prop, try to get it from the URL params
@@ -18,6 +19,7 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
   const { connect, connectedRelays, relays, identity } = nostr;
   const [connecting, setConnecting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { toast } = useToast();
 
   // Find the current board details - either by ID or shortName
   const currentBoard = boardId
@@ -154,11 +156,49 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
             <CreateThreadModal
               isOpen={showCreateModal}
               onClose={() => setShowCreateModal(false)}
-              onCreateThread={(title, content, imageUrls) => {
-                console.log("Creating thread:", { title, content, imageUrls });
-                setShowCreateModal(false);
-                return Promise.resolve();
+              onCreateThread={async (title, content, imageUrls) => {
+                try {
+                  // Find the current board if needed
+                  let targetBoardId = currentBoard?.id;
+                  if (!targetBoardId && nostrBoards.length > 0) {
+                    targetBoardId = nostrBoards[0].id;
+                  }
+                  
+                  if (!targetBoardId) {
+                    toast({
+                      title: "Error",
+                      description: "No board selected or available",
+                      variant: "destructive",
+                    });
+                    return Promise.reject("No board selected");
+                  }
+                  
+                  // Use the Nostr context to create the thread
+                  const thread = await nostr.createThread(
+                    targetBoardId,
+                    title,
+                    content,
+                    imageUrls
+                  );
+                  
+                  toast({
+                    title: "Thread Created",
+                    description: "Your thread has been posted successfully",
+                  });
+                  
+                  setShowCreateModal(false);
+                  return Promise.resolve();
+                } catch (error: any) {
+                  console.error("Error creating thread:", error);
+                  toast({
+                    title: "Error",
+                    description: error.message || "Failed to create thread",
+                    variant: "destructive",
+                  });
+                  return Promise.reject(error);
+                }
               }}
+              boardShortName={currentBoard?.shortName || boardId || ""}
             />
           )}
         </main>
