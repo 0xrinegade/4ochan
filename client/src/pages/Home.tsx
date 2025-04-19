@@ -11,6 +11,8 @@ import { formatPubkey, KIND } from "@/lib/nostr";
 import { useToast } from "@/hooks/use-toast";
 import { navigateWithoutReload } from "@/App";
 import { Thread } from "@/types";
+import { ThreadPopularityHeatmap } from "@/components/ThreadPopularityHeatmap";
+import { AllThreadsHeatmap } from "@/components/AllThreadsHeatmap";
 
 // Interface for user replies
 interface UserReply {
@@ -359,6 +361,17 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
                           <span className="font-bold">Powered by:</span> Nostr
                         </div>
                       </div>
+                    </div>
+                  </div>
+                  
+                  {/* Thread Popularity Heatmap */}
+                  <div className="mb-4">
+                    <div className="bg-primary text-white py-0.5 px-2 font-bold text-xs">
+                      <span className="mr-1">■</span> THREAD POPULARITY HEATMAP
+                    </div>
+                    <div className="bg-white border border-black border-t-0">
+                      {/* Pass all threads to the heatmap component */}
+                      <AllThreadsHeatmap />
                     </div>
                   </div>
 
