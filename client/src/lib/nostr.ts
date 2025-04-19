@@ -389,20 +389,23 @@ export const createThreadEvent = async (
     media: media || [],
   });
   
+  // Format tags properly according to NIP-01 and NIP-10 standards
   const tags = [
-    ["e", boardId, "", "root"],
+    // For "e" tag, make sure all 4 parts are properly formatted or use simpler version
+    ["e", boardId], // Simpler version without relay hint or marker
     ["board", boardId],
   ];
   
-  // Add image tags for backward compatibility
+  // Add image tags for backward compatibility, using only 2-element tags
   imageUrls.forEach(url => {
     tags.push(["image", url]);
   });
   
-  // Add media tags for more detailed media info
+  // Add media tags for more detailed media info, ensuring consistent format
   if (media && media.length > 0) {
     media.forEach(item => {
-      tags.push(["media", item.url, item.type, item.mimeType]);
+      // Only include essential data in a consistent format
+      tags.push(["media", item.url]);
     });
   }
   
@@ -424,13 +427,14 @@ export const createPostEvent = async (
     media: media || [],
   });
   
+  // Format tags properly according to NIP-01 and NIP-10 standards
   const tags = [
-    ["e", threadId, "", "root"],
+    ["e", threadId], // Simpler version of root reference
   ];
   
   // Add references to posts being replied to
   replyToIds.forEach(id => {
-    tags.push(["e", id, "", "reply"]);
+    tags.push(["e", id]); // Reference to specific post being replied to
   });
   
   // Add image tags for backward compatibility
@@ -438,10 +442,11 @@ export const createPostEvent = async (
     tags.push(["image", url]);
   });
   
-  // Add media tags for more detailed media info
+  // Add media tags for more detailed media info, ensuring consistent format
   if (media && media.length > 0) {
     media.forEach(item => {
-      tags.push(["media", item.url, item.type, item.mimeType]);
+      // Only include essential data in a consistent format
+      tags.push(["media", item.url]);
     });
   }
   
@@ -683,9 +688,10 @@ export const createSubscriptionEvent = async (
     createdAt: Math.floor(Date.now() / 1000)
   });
   
+  // Format tags consistently with the other event types
   const tags = [
-    ["e", threadId, "", "thread"],
-    ["subscription", "thread"]
+    ["e", threadId], // Thread reference
+    ["subscription", "thread"] // Subscription type
   ];
   
   return await createEvent(KIND.SUBSCRIPTION, subscriptionContent, tags, identity);
@@ -701,8 +707,9 @@ export const removeSubscriptionEvent = async (
     timestamp: Math.floor(Date.now() / 1000)
   });
   
+  // Format tags consistently
   const tags = [
-    ["e", subscriptionId, "", "subscription"] // Reference to the subscription being removed
+    ["e", subscriptionId] // Reference to the subscription being removed
   ];
   
   return await createEvent(KIND.METADATA, content, tags, identity);
@@ -724,14 +731,15 @@ export const createNotificationEvent = async (
     read: false
   });
   
+  // Format tags consistently
   const tags = [
     ["p", recipientPubkey], // Recipient pubkey
-    ["e", threadId, "", "thread"], // Thread reference
+    ["e", threadId] // Thread reference
   ];
   
   // Add post reference if available
   if (postId) {
-    tags.push(["e", postId, "", "post"]);
+    tags.push(["e", postId]);
   }
   
   return await createEvent(KIND.NOTIFICATION, notificationContent, tags, identity);
@@ -747,8 +755,9 @@ export const markNotificationAsRead = async (
     readAt: Math.floor(Date.now() / 1000)
   });
   
+  // Format tags consistently
   const tags = [
-    ["e", notificationId, "", "notification"]
+    ["e", notificationId]
   ];
   
   return await createEvent(KIND.METADATA, content, tags, identity);
@@ -768,9 +777,10 @@ export const updateSubscriptionEvent = async (
     updatedAt: Math.floor(Date.now() / 1000)
   });
   
+  // Format tags consistently
   const tags = [
-    ["e", subscriptionId, "", "subscription"], // Reference to the subscription being updated
-    ["e", threadId, "", "thread"], // Thread reference
+    ["e", subscriptionId], // Reference to the subscription being updated
+    ["e", threadId], // Thread reference
     ["subscription", "thread"] // Subscription type
   ];
   
