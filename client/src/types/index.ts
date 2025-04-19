@@ -3,11 +3,13 @@ export interface Thread {
   boardId: string;
   title: string;
   content: string;
-  createdBy: string;
+  createdBy?: string;  // Legacy field, can be optional if authorPubkey is used
+  authorPubkey?: string; // Author's pubkey for Nostr
   createdAt: number; // Unix timestamp
   lastReplyTime?: number;
   replyCount: number;
   images?: string[];
+  media?: MediaContent[]; // Media content attached to the thread
   nsfw?: boolean;
   tags?: string[];
   locked?: boolean;
@@ -64,4 +66,58 @@ export interface NostrEvent {
   tags: string[][];
   content: string;
   sig: string;
+}
+
+export interface NostrIdentity {
+  pubkey: string;
+  privkey?: string;
+  relays?: string[];
+  profile?: NostrProfile;
+}
+
+export interface NostrProfile {
+  pubkey: string;
+  name?: string;
+  displayName?: string;
+  picture?: string;
+  about?: string;
+  nip05?: string;
+  lud16?: string;
+}
+
+export interface ThreadSubscription {
+  id: string;
+  userId: string;
+  threadId: string;
+  title?: string;
+  createdAt: number;
+  notifyOnReplies: boolean;
+  notifyOnMentions: boolean;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  recipientPubkey?: string; // Pubkey of the notification recipient
+  title: string;
+  message: string;
+  type: 'mention' | 'reply' | 'system' | 'like';
+  threadId?: string;
+  postId?: string;
+  createdAt: number;
+  read: boolean;
+  readAt?: number; // When the notification was read
+  createdBy?: string;
+}
+
+export interface Post {
+  id: string;
+  threadId: string;
+  replyToId?: string;
+  content: string;
+  authorPubkey: string;
+  createdAt: number;
+  images?: string[];
+  media?: MediaContent[];
+  references?: string[]; // References to other posts/events
 }
