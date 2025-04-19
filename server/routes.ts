@@ -6,7 +6,8 @@ import { z } from "zod";
 import { 
   insertUserSchema, insertBadgeSchema, insertUserBadgeSchema, 
   insertReputationLogSchema, insertFollowerSchema,
-  insertThreadSubscriptionSchema, insertNotificationSchema
+  insertThreadSubscriptionSchema, insertNotificationSchema,
+  type UserStats
 } from '@shared/schema';
 
 // Since we're using the Nostr protocol for content,

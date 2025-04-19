@@ -1,4 +1,4 @@
-import { eq, and, desc, count, gte, lte, isNull, isNotNull } from "drizzle-orm";
+import { eq, and, desc, count, gte, lte, isNull, isNotNull, or } from "drizzle-orm";
 import { db } from "./db";
 import { 
   users, badges, userBadges, reputationLogs, followers, 
