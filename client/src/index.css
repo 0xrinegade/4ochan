@@ -1203,3 +1203,35 @@
     color: #ff9999;
     border-color: #ff5555;
   }
+  
+  /* Thread Navigation and Search Styles */
+  .highlight-post {
+    animation: highlight-pulse 2s;
+    position: relative;
+  }
+  
+  @keyframes highlight-pulse {
+    0%, 100% { 
+      background-color: transparent; 
+    }
+    50% { 
+      background-color: rgba(var(--accent-rgb), 0.1); 
+    }
+  }
+  
+  .post {
+    position: relative;
+    transition: background-color 0.3s ease;
+  }
+  
+  .post.highlight-post::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 2px solid hsl(var(--accent));
+    box-sizing: border-box;
+    pointer-events: none;
+  }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { useThread } from "@/hooks/useThreads";
 import { formatDate, formatPubkey, createThreadStatEvent } from "@/lib/nostr";
@@ -10,6 +10,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ThreadSubscribeButton } from "@/components/ThreadSubscribeButton";
 import { useNostr } from "@/context/NostrContext";
 import { MarkdownContent } from "@/components/MarkdownContent";
+import { 
+  ArrowUp, 
+  ArrowDown, 
+  Search, 
+  X 
+} from "lucide-react";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger 
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface ThreadViewProps {
   threadId: string;
@@ -20,6 +36,11 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const { identity, publishEvent, getThreadStats } = useNostr();
   const [viewTracked, setViewTracked] = useState(false);
+  const threadContainerRef = useRef<HTMLDivElement>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<{index: number, text: string, id: string}[]>([]);
+  const [currentSearchResult, setCurrentSearchResult] = useState(-1);
   
   // Track thread view and update thread statistics
   useEffect(() => {
@@ -56,6 +77,111 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
       trackThreadView();
     }
   }, [thread, threadId, identity, publishEvent, getThreadStats, viewTracked]);
+  
+  // Scroll to the top of the thread
+  const scrollToTop = () => {
+    if (threadContainerRef.current) {
+      threadContainerRef.current.parentElement?.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  };
+  
+  // Scroll to the bottom of the thread
+  const scrollToBottom = () => {
+    if (threadContainerRef.current) {
+      const container = threadContainerRef.current.parentElement;
+      if (container) {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
+    }
+  };
+  
+  // Perform search in thread content
+  const performSearch = () => {
+    if (!searchQuery.trim() || !thread || !posts) return;
+    
+    const query = searchQuery.toLowerCase();
+    const results: {index: number, text: string, id: string}[] = [];
+    
+    // Search in the thread title and content
+    if (thread.title && thread.title.toLowerCase().includes(query)) {
+      results.push({
+        index: 0,
+        text: thread.title,
+        id: thread.id
+      });
+    }
+    
+    if (thread.content && thread.content.toLowerCase().includes(query)) {
+      results.push({
+        index: 0,
+        text: thread.content.substring(
+          Math.max(0, thread.content.toLowerCase().indexOf(query) - 20),
+          Math.min(thread.content.length, thread.content.toLowerCase().indexOf(query) + query.length + 20)
+        ),
+        id: thread.id
+      });
+    }
+    
+    // Search in the posts content
+    posts.forEach((post, index) => {
+      if (post.content && post.content.toLowerCase().includes(query)) {
+        results.push({
+          index: index + 1, // +1 because the thread itself is at index 0
+          text: post.content.substring(
+            Math.max(0, post.content.toLowerCase().indexOf(query) - 20),
+            Math.min(post.content.length, post.content.toLowerCase().indexOf(query) + query.length + 20)
+          ),
+          id: post.id
+        });
+      }
+    });
+    
+    setSearchResults(results);
+    setCurrentSearchResult(results.length > 0 ? 0 : -1);
+    
+    // Scroll to the first result if any
+    if (results.length > 0) {
+      scrollToResult(results[0].id);
+    }
+  };
+  
+  // Scroll to a specific search result
+  const scrollToResult = (postId: string) => {
+    const postElement = document.getElementById(`post-${postId}`);
+    if (postElement) {
+      postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      postElement.classList.add('highlight-post');
+      
+      // Remove the highlight after a brief delay
+      setTimeout(() => {
+        postElement.classList.remove('highlight-post');
+      }, 2000);
+    }
+  };
+  
+  // Navigate to the next search result
+  const nextSearchResult = () => {
+    if (searchResults.length === 0) return;
+    
+    const next = (currentSearchResult + 1) % searchResults.length;
+    setCurrentSearchResult(next);
+    scrollToResult(searchResults[next].id);
+  };
+  
+  // Navigate to the previous search result
+  const prevSearchResult = () => {
+    if (searchResults.length === 0) return;
+    
+    const prev = (currentSearchResult - 1 + searchResults.length) % searchResults.length;
+    setCurrentSearchResult(prev);
+    scrollToResult(searchResults[prev].id);
+  };
   
   // Handle post being referenced for reply
   const handleQuotePost = (postId: string) => {
@@ -115,7 +241,7 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
         </div>
         
         {/* Thread Container */}
-        <div className="thread-container overflow-hidden">
+        <div ref={threadContainerRef} className="thread-container overflow-hidden">
           {loading && !thread ? (
             // Loading skeleton for thread
             <div className="p-4">
@@ -151,7 +277,7 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
             </div>
           ) : thread ? (
             // Original Post
-            <div className="p-4">
+            <div id={`post-${thread.id}`} className="p-4 post">
               <div className="flex items-start">
                 {/* Display thread media */}
                 {thread.media && thread.media.length > 0 ? (
@@ -222,7 +348,7 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
             ) : (
               // Actual replies
               posts.map(post => (
-                <div className="post p-4" key={post.id}>
+                <div id={`post-${post.id}`} className="post p-4" key={post.id}>
                   <div className="flex items-start">
                     {/* Display post media */}
                     {post.media && post.media.length > 0 ? (
@@ -301,6 +427,134 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
           </div>
         </div>
       </div>
+      
+      {/* Navigation and Search Buttons */}
+      {thread && (
+        <div className="fixed right-4 bottom-20 flex flex-col space-y-2">
+          {/* Search Dialog */}
+          <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                className="rounded-full w-10 h-10 p-0 flex items-center justify-center bg-accent hover:bg-accent/90 text-white"
+                variant="default"
+                title="Search in thread"
+              >
+                <Search size={18} />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Search in Thread</DialogTitle>
+                <DialogDescription>
+                  Enter text to search in this thread's content.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex items-center space-x-2 py-4">
+                <div className="grid flex-1 gap-2">
+                  <Input
+                    placeholder="Enter search term..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="col-span-3"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        performSearch();
+                      }
+                    }}
+                  />
+                </div>
+                <Button onClick={performSearch} type="submit" size="sm">
+                  Search
+                </Button>
+              </div>
+              
+              {searchResults.length > 0 && (
+                <div className="mt-2 max-h-60 overflow-y-auto">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="text-sm font-medium">
+                      {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={prevSearchResult}
+                        disabled={searchResults.length <= 1}
+                      >
+                        Previous
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={nextSearchResult}
+                        disabled={searchResults.length <= 1}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {searchResults.map((result, index) => (
+                      <div 
+                        key={`${result.id}-${index}`}
+                        className={`p-2 text-sm border rounded cursor-pointer hover:bg-accent/10 ${
+                          index === currentSearchResult ? 'border-accent bg-accent/5' : 'border-gray-200'
+                        }`}
+                        onClick={() => {
+                          setCurrentSearchResult(index);
+                          scrollToResult(result.id);
+                        }}
+                      >
+                        <div className="font-medium mb-1">
+                          Post #{result.id.substring(0, 6)}
+                        </div>
+                        <div>
+                          {result.text}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              <DialogFooter className="sm:justify-end">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setSearchOpen(false);
+                    setSearchResults([]);
+                    setSearchQuery('');
+                  }}
+                >
+                  Close
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          
+          {/* Bottom scroll button */}
+          <Button
+            onClick={scrollToBottom}
+            className="rounded-full w-10 h-10 p-0 flex items-center justify-center bg-primary hover:bg-primary/90 text-white"
+            variant="default"
+            title="Scroll to bottom"
+          >
+            <ArrowDown size={18} />
+          </Button>
+          
+          {/* Top scroll button */}
+          <Button
+            onClick={scrollToTop}
+            className="rounded-full w-10 h-10 p-0 flex items-center justify-center bg-primary hover:bg-primary/90 text-white"
+            variant="default"
+            title="Scroll to top"
+          >
+            <ArrowUp size={18} />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
