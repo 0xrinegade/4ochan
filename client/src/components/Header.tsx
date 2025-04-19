@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNostr } from "@/hooks/useNostr";
 import { Button } from "@/components/ui/button";
 import { RelayConnectionModal } from "@/components/RelayConnectionModal";
@@ -7,6 +7,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useBoards } from "@/hooks/useBoards";
+import { useTheme } from "@/context/ThemeContext";
 
 // Board navigation tab that simply uses the shortName
 const NavBoardTab: React.FC<{ shortName: string; label: string }> = ({ shortName, label }) => {
@@ -31,6 +32,9 @@ export const Header: React.FC = () => {
   const { connectedRelays, relays } = useNostr();
   const [showConnectionModal, setShowConnectionModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
+  const themeDropdownRef = useRef<HTMLDivElement>(null);
+  const { currentTheme, setTheme, themes } = useTheme();
   const { toast } = useToast();
 
   // Load user from localStorage on component mount
@@ -46,6 +50,20 @@ export const Header: React.FC = () => {
       }
     }
   }, []);
+  
+  // Handle click outside to close theme dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target as Node)) {
+        setThemeDropdownOpen(false);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [themeDropdownRef]);
 
   const toggleConnectionModal = () => {
     setShowConnectionModal(!showConnectionModal);
@@ -140,6 +158,41 @@ export const Header: React.FC = () => {
               {/* Always show notification bell */}
               <NotificationBell />
 
+              {/* Theme Dropdown */}
+              <div className="relative" ref={themeDropdownRef}>
+                <button 
+                  onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
+                  className="text-xs bg-gray-200 text-black font-bold py-0.5 px-2 border-2 border-black"
+                  style={{ boxShadow: "2px 2px 0 #000" }}
+                >
+                  Theme
+                </button>
+                
+                {themeDropdownOpen && (
+                  <div className="absolute right-0 mt-1 bg-white border-2 border-black z-50 w-32">
+                    <div className="bg-primary text-white text-xs font-bold py-0.5 px-1">
+                      SELECT THEME
+                    </div>
+                    <div className="p-1">
+                      {themes.map((theme) => (
+                        <button
+                          key={theme}
+                          onClick={() => {
+                            setTheme(theme);
+                            setThemeDropdownOpen(false);
+                          }}
+                          className={`w-full text-left text-xs py-0.5 px-1 mb-1 last:mb-0 ${
+                            currentTheme === theme ? 'bg-primary text-white' : 'bg-gray-200'
+                          }`}
+                        >
+                          {theme.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
               <button 
                 onClick={toggleConnectionModal}
                 className="text-xs bg-gray-200 text-black font-bold py-0.5 px-2 border-2 border-black"
@@ -185,7 +238,27 @@ export const Header: React.FC = () => {
                 <NotificationBell />
               </div>
               
-              <div className="text-xs">
+              {/* Mobile Theme Selector */}
+              <div className="mt-2">
+                <div className="bg-primary text-white text-xs font-bold py-0.5 px-1 mb-1">
+                  THEME
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {themes.map((theme) => (
+                    <button
+                      key={theme}
+                      onClick={() => setTheme(theme)}
+                      className={`text-xs py-0.5 px-2 border border-black ${
+                        currentTheme === theme ? 'bg-primary text-white' : 'bg-gray-200'
+                      }`}
+                    >
+                      {theme.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="text-xs mt-2">
                 <p>Relays: {connectedRelays}/{relays.length} connected</p>
                 <p>{dateString}</p>
               </div>
