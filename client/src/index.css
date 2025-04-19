@@ -1230,6 +1230,47 @@
     }
   }
   
+  /* Post reference and preview styles */
+  .post-reference {
+    color: hsl(var(--primary));
+    font-weight: 500;
+  }
+
+  .post-preview {
+    max-width: 320px;
+    background-color: hsl(var(--background));
+    border: 2px solid black;
+    box-shadow: 3px 3px 0 black;
+    z-index: 100;
+  }
+
+  .post-preview-container {
+    z-index: 100;
+  }
+
+  .nested-preview-container {
+    position: relative;
+  }
+
+  .child-references {
+    margin-top: 2px;
+    background-color: hsl(var(--background));
+    border-left: 2px solid hsl(var(--primary));
+    padding: 4px;
+    border-top: 1px solid hsl(var(--border));
+  }
+
+  .post-preview .markdown-content {
+    font-size: 0.875rem;
+  }
+
+  .post-preview .post-preview-images img {
+    height: 64px;
+    width: 64px;
+    object-fit: cover;
+    border: 1px solid hsl(var(--border));
+  }
+  
   .post {
     position: relative;
     transition: background-color 0.3s ease;

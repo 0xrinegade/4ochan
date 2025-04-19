@@ -1043,6 +1043,101 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [pool, relays]);
 
+  // Get a specific post by its ID
+  const getPost = useCallback(async (postId: string): Promise<Post | undefined> => {
+    // Check cache first
+    const cachedPost = localCache.getPost(postId);
+    if (cachedPost) {
+      return cachedPost;
+    }
+    
+    if (!pool) {
+      throw new Error("Not connected to any relays");
+    }
+    
+    // Fetch specific post directly
+    const filter: Filter = {
+      kinds: [KIND.POST],
+      ids: [postId]
+    };
+    
+    const relayUrls = relays.filter(r => r.status === 'connected' && r.read).map(r => r.url);
+    
+    try {
+      const events = await pool.querySync(relayUrls, filter);
+      
+      if (events.length === 0) {
+        console.log(`Post ${postId} not found`);
+        return undefined;
+      }
+      
+      const event = events[0];
+      
+      try {
+        // Extract content
+        let postContent = event.content;
+        
+        // Try to extract JSON content if available
+        try {
+          const contentData = JSON.parse(event.content);
+          if (contentData.content) {
+            postContent = contentData.content;
+          }
+        } catch (e) {
+          // Not JSON, use the raw content
+        }
+        
+        // Extract references from event tags
+        const references = event.tags
+          .filter((tag: string[]) => tag[0] === 'e')
+          .map((tag: string[]) => tag[1]);
+        
+        // Extract image URLs
+        const images = event.tags
+          .filter((tag: string[]) => tag[0] === 'image')
+          .map((tag: string[]) => tag[1]);
+        
+        // Determine thread ID from references (usually the first e tag is the thread)
+        const threadId = references.length > 0 ? references[0] : postId;
+        
+        const post: Post = {
+          id: event.id,
+          threadId,
+          content: postContent,
+          images: images,
+          media: [],
+          authorPubkey: event.pubkey,
+          createdAt: event.created_at,
+          references
+        };
+        
+        // Try to extract additional media if available in JSON content
+        try {
+          const postData = JSON.parse(event.content);
+          if (postData.images && Array.isArray(postData.images)) {
+            post.images = [...new Set([...post.images, ...postData.images])]; 
+          }
+          if (postData.media && Array.isArray(postData.media)) {
+            post.media = postData.media;
+          }
+        } catch (error) {
+          // Ignore JSON parsing errors, we've already handled the content
+        }
+        
+        // Cache the post
+        localCache.addPost(post);
+        
+        return post;
+      } catch (error) {
+        console.error(`Error processing post ${postId}:`, error);
+        return undefined;
+      }
+    } catch (error) {
+      console.error(`Error fetching post ${postId}:`, error);
+      return undefined;
+    }
+  }, [pool, relays]);
+
   // Create a new thread
   const createThread = useCallback(async (
     boardId: string, 
@@ -1917,6 +2012,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     getThreadsByBoard,
     getThread,
     getPostsByThread,
+    getPost,
     createThread,
     createPost,
     // Post likes
