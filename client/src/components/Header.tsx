@@ -8,6 +8,7 @@ import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useBoards } from "@/hooks/useBoards";
 import { useTheme } from "@/context/ThemeContext";
+import { useNavigation } from "@/context/NavigationContext";
 
 // Define theme types to match ThemeContext
 type ThemeName = 'light' | 'dark' | 'highcontrast' | 'retro' | 'sepia';
@@ -15,6 +16,7 @@ type ThemeName = 'light' | 'dark' | 'highcontrast' | 'retro' | 'sepia';
 // Board navigation tab that simply uses the shortName
 const NavBoardTab: React.FC<{ shortName: string; label: string }> = ({ shortName, label }) => {
   const [location] = useLocation();
+  const { navigateTo } = useNavigation();
   
   // Use simple path for board links that use shortName directly
   const href = `/board/${shortName}`;
@@ -22,10 +24,10 @@ const NavBoardTab: React.FC<{ shortName: string; label: string }> = ({ shortName
   // Check if this is the current active tab (simpler check)
   const isActive = location.startsWith(href);
   
-  // Handle direct navigation rather than using Link to ensure proper page load
+  // Handle navigation with animation
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    window.location.href = href;
+    navigateTo(href);
   };
   
   return (
@@ -111,7 +113,10 @@ export const Header: React.FC = () => {
       {/* Retro 90s banner and title with navigation tabs inside */}
       <div className="bg-primary text-white pt-3 px-4 border border-black mb-1 flex flex-col">
         <div className="flex justify-between items-start mb-4">
-          <a href="/" onClick={(e) => { e.preventDefault(); window.location.href = '/'; }}>
+          <a href="/" onClick={(e) => { 
+            e.preventDefault(); 
+            navigateTo('/');
+          }}>
             <div className="flex items-center cursor-pointer">
               <div className="w-10 h-10 md:w-12 md:h-12 bg-white flex items-center justify-center overflow-hidden border border-black mr-2 md:mr-3">
                 <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -349,7 +354,7 @@ export const Header: React.FC = () => {
         
         {/* Top navigation tabs - inside header and sitting on bottom border */}
         <div className="flex flex-wrap overflow-x-auto -mb-px ml-1">
-          <a href="/" onClick={(e) => { e.preventDefault(); window.location.href = '/'; }}>
+          <a href="/" onClick={(e) => { e.preventDefault(); navigateTo('/'); }}>
             <span className="bg-primary border-white text-white px-2 md:px-3 py-0.5 text-xs md:text-sm font-bold border border-black border-b-0 mr-1 relative -mb-[1px] inline-block cursor-pointer">Home</span>
           </a>
           <NavBoardTab shortName="b" label="Random" />
