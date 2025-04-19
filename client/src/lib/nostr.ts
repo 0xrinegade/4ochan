@@ -872,3 +872,24 @@ export const updateSubscriptionEvent = async (
   return await createEvent(KIND.METADATA, subscriptionContent, tags, identity);
 };
 
+// Create a thread stat tracking event (view count, engagement metric)
+export const createThreadStatEvent = async (
+  threadId: string,
+  viewCount: number,
+  engagement: number,
+  identity: NostrIdentity
+): Promise<NostrEvent> => {
+  const statContent = JSON.stringify({
+    viewCount,
+    engagement,
+    updatedAt: Math.floor(Date.now() / 1000)
+  });
+  
+  // Format tags properly - thread reference
+  const tags = [
+    ["e", threadId, "", "root"] // Thread reference with recommended NIP-10 formatting
+  ];
+  
+  return await createEvent(KIND.THREAD_STATS, statContent, tags, identity);
+};
+

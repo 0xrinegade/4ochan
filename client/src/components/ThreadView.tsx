@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useThread } from "@/hooks/useThreads";
-import { formatDate, formatPubkey } from "@/lib/nostr";
+import { formatDate, formatPubkey, createThreadStatEvent } from "@/lib/nostr";
 import { Button } from "@/components/ui/button";
 import { PostReplyForm } from "@/components/PostReplyForm";
 import { MediaGallery } from "@/components/MediaDisplay";
 import { MediaContent } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThreadSubscribeButton } from "@/components/ThreadSubscribeButton";
+import { useNostr } from "@/context/NostrContext";
 
 interface ThreadViewProps {
   threadId: string;
@@ -16,6 +17,44 @@ interface ThreadViewProps {
 export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
   const { thread, posts, loading, error, refreshThread, createPost } = useThread(threadId);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const { identity, publishEvent, getThreadStats } = useNostr();
+  const [viewTracked, setViewTracked] = useState(false);
+  
+  // Track thread view and update thread statistics
+  useEffect(() => {
+    if (thread && !viewTracked && identity) {
+      const trackThreadView = async () => {
+        try {
+          // Get current thread stats
+          const stats = await getThreadStats(threadId);
+          
+          // Calculate new stats
+          const newViewCount = (stats?.viewCount || 0) + 1;
+          const newEngagement = Math.floor((stats?.engagement || 0) + 0.1); // Small engagement increment for view
+          
+          // Create and publish thread stat event
+          const statEvent = await createThreadStatEvent(
+            threadId,
+            newViewCount,
+            newEngagement,
+            identity
+          );
+          
+          // Publish the stat event
+          await publishEvent(statEvent);
+          
+          // Mark as tracked to prevent multiple tracking events
+          setViewTracked(true);
+          
+          console.log(`Tracked view for thread ${threadId}, views: ${newViewCount}`);
+        } catch (error) {
+          console.error("Failed to track thread view:", error);
+        }
+      };
+      
+      trackThreadView();
+    }
+  }, [thread, threadId, identity, publishEvent, getThreadStats, viewTracked]);
   
   // Handle post being referenced for reply
   const handleQuotePost = (postId: string) => {
