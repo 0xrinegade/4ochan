@@ -579,6 +579,170 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ error: "Internal server error" });
     }
   });
+  
+  // ===== REPUTATION LEVELS ROUTES =====
+  
+  // Get all reputation levels
+  app.get("/api/reputation-levels", async (req, res) => {
+    try {
+      const levels = await storage.getReputationLevels();
+      return res.json(levels);
+    } catch (error) {
+      console.error("Error fetching reputation levels:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // ===== ACHIEVEMENT ROUTES =====
+  
+  // Get all achievements
+  app.get("/api/achievements", async (req, res) => {
+    try {
+      const includeHidden = req.query.includeHidden === "true";
+      const achievements = await storage.getAchievements(includeHidden);
+      return res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // Get a specific achievement
+  app.get("/api/achievements/:id", async (req, res) => {
+    try {
+      const achievementId = parseInt(req.params.id);
+      if (isNaN(achievementId)) {
+        return res.status(400).json({ error: "Invalid achievement ID" });
+      }
+      
+      const achievement = await storage.getAchievement(achievementId);
+      if (!achievement) {
+        return res.status(404).json({ error: "Achievement not found" });
+      }
+      
+      return res.json(achievement);
+    } catch (error) {
+      console.error("Error fetching achievement:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // Get user's achievements
+  app.get("/api/users/:id/achievements", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
+      const achievements = await storage.getUserAchievements(userId);
+      return res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching user achievements:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // Update achievement progress
+  app.post("/api/users/:id/achievements/:achievementId/progress", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const achievementId = parseInt(req.params.achievementId);
+      const { progress } = req.body;
+      
+      if (isNaN(userId) || isNaN(achievementId)) {
+        return res.status(400).json({ error: "Invalid ID parameter" });
+      }
+      
+      if (typeof progress !== 'number' || progress < 0 || progress > 100) {
+        return res.status(400).json({ error: "Progress must be a number between 0 and 100" });
+      }
+      
+      const userAchievement = await storage.updateAchievementProgress(userId, achievementId, progress);
+      if (!userAchievement) {
+        return res.status(404).json({ error: "User or achievement not found" });
+      }
+      
+      return res.json(userAchievement);
+    } catch (error) {
+      console.error("Error updating achievement progress:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // ===== USER STATS ROUTES =====
+  
+  // Get user stats
+  app.get("/api/users/:id/stats", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
+      const stats = await storage.getUserStats(userId);
+      if (!stats) {
+        // If no stats exist yet, return empty stats
+        return res.json({
+          userId,
+          postsCreated: 0,
+          threadsCreated: 0,
+          postsRepliedTo: 0,
+          imagesUploaded: 0,
+          reactionsReceived: 0,
+          totalViews: 0,
+          reputationPoints: 0,
+          karmaPoints: 0,
+          lastUpdated: new Date()
+        });
+      }
+      
+      return res.json(stats);
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // Increment a stat (for internal use)
+  app.post("/api/users/:id/stats/increment", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
+      const { field, amount = 1 } = req.body;
+      
+      if (!field || typeof field !== 'string') {
+        return res.status(400).json({ error: "Field name is required" });
+      }
+      
+      // Validate the field name to prevent SQL injection
+      const validFields = [
+        'postsCreated', 'threadsCreated', 'postsRepliedTo', 
+        'imagesUploaded', 'reactionsReceived', 'totalViews',
+        'reputationPoints', 'karmaPoints'
+      ] as const;
+      
+      if (!validFields.includes(field as any)) {
+        return res.status(400).json({ error: "Invalid field name" });
+      }
+      
+      await storage.incrementUserStats(
+        userId, 
+        field as keyof Omit<UserStats, 'id' | 'userId' | 'lastUpdated'>, 
+        amount
+      );
+      
+      // Get updated stats
+      const updatedStats = await storage.getUserStats(userId);
+      return res.json(updatedStats);
+    } catch (error) {
+      console.error("Error incrementing user stats:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
 
   // Create an HTTP server
   const httpServer = createServer(app);

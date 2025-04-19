@@ -38,7 +38,6 @@ const UserProfilePage: React.FC<{ id?: string }> = ({ id: propId }) => {
                     <div className="mt-4">
                       <ReputationDisplay 
                         userId={1} // This would be the user's ID from the database
-                        showDetails={true}
                       />
                     </div>
                   )}
