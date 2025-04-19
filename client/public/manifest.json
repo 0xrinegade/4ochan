@@ -1,23 +1,75 @@
 {
-  "name": "4ochan.org",
-  "short_name": "4ochan",
-  "description": "A decentralized imageboard built on Nostr",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#f5f5dc",
-  "theme_color": "#800000",
-  "icons": [
-    {
-      "src": "/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+    "name": "4ochan.org - Decentralized Imageboard",
+    "short_name": "4ochan",
+    "description": "A decentralized, privacy-first imageboard built on the Nostr protocol",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#f5f5dc",
+    "theme_color": "#800000",
+    "icons": [
+        {
+            "src": "/icon-192x192.svg",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icon-512x512.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "/screenshot-1.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide"
+        },
+        {
+            "src": "/screenshot-2.png",
+            "sizes": "750x1334",
+            "type": "image/png",
+            "form_factor": "narrow"
+        }
+    ],
+    "orientation": "any",
+    "categories": ["social", "entertainment", "communication"],
+    "shortcuts": [
+        {
+            "name": "View AI Board",
+            "short_name": "AI",
+            "url": "/board/ai",
+            "description": "Browse the AI board",
+            "icons": [
+                {
+                    "src": "/icon-192x192.svg",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "View Games Board",
+            "short_name": "Games",
+            "url": "/board/games",
+            "description": "Browse the Games board",
+            "icons": [
+                {
+                    "src": "/icon-192x192.svg",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ],
+    "related_applications": [],
+    "prefer_related_applications": false,
+    "lang": "en-US",
+    "dir": "ltr",
+    "iarc_rating_id": "",
+    "scope": "/",
+    "id": "4ochan-org-pwa",
+    "edge_side_panel": {
+        "preferred_width": 400
     }
-  ]
 }

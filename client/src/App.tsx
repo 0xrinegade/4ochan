@@ -14,6 +14,8 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { NavigationProvider } from "./context/NavigationContext";
 import PageTransition from "./components/PageTransition";
 import FloatingNavigation from "./components/FloatingNavigation";
+import PwaInstallBanner from "./components/PwaInstallBanner";
+import PwaOnboardingTour from "./components/PwaOnboardingTour";
 import { useEffect, useState, useCallback } from "react";
 
 // Create a module-level variable to hold the navigate function
@@ -141,6 +143,8 @@ function App() {
           <NavigationProvider>
             <AppRouter />
             <FloatingNavigation />
+            <PwaInstallBanner />
+            <PwaOnboardingTour />
             <Toaster />
           </NavigationProvider>
         </NostrProvider>

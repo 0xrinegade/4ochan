@@ -1,73 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>4ochan.org - Offline</title>
-  <style>
-    body {
-      font-family: 'Libertarian', sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f5f5dc;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      color: #000;
-    }
-    .container {
-      max-width: 600px;
-      text-align: center;
-      padding: 20px;
-      background-color: #fff;
-      border: 2px solid #000;
-    }
-    .header {
-      background-color: #800000;
-      color: #fff;
-      padding: 4px 8px;
-      font-weight: bold;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-    }
-    .content {
-      padding: 16px;
-      border: 1px solid #000;
-    }
-    .btn {
-      background-color: #ccc;
-      border: 2px solid #000;
-      padding: 4px 8px;
-      margin-top: 16px;
-      font-weight: bold;
-      font-size: 12px;
-      box-shadow: 2px 2px 0 #000;
-      cursor: pointer;
-    }
-    .footer {
-      margin-top: 20px;
-      font-size: 10px;
-      font-style: italic;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - 4ochan.org</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #f5f5dc;
+            color: #000000;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90vh;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 800px;
+            border: 2px solid #000;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 5px 5px 0px rgba(0,0,0,0.5);
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-bottom: 2px solid #800000;
+            color: #800000;
+        }
+        
+        .message {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .construction {
+            width: 100%;
+            max-width: 400px;
+            border: 1px dashed #000;
+            padding: 10px;
+            margin: 20px auto;
+            background-color: #ffffcc;
+            color: #800000;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 14px;
+            animation: blink 2s infinite;
+        }
+        
+        .button {
+            display: inline-block;
+            padding: 8px 16px;
+            margin-top: 20px;
+            background-color: #cccccc;
+            border: 2px solid black;
+            color: black;
+            font-weight: bold;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: 3px 3px 0 #000;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .button:hover {
+            background-color: #dddddd;
+        }
+        
+        .button:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0 #000;
+        }
+        
+        .offline-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <span style="margin-right: 4px;">■</span> 4OCHAN.ORG - OFFLINE MODE
+    <div class="container">
+        <h1>You're Offline</h1>
+        
+        <div class="offline-icon">📶❌</div>
+        
+        <div class="message">
+            Your internet connection appears to be offline. You can still access previously visited pages from the cache, but new content cannot be loaded.
+        </div>
+        
+        <div class="construction">
+            ⚠️ UNDER CONSTRUCTION ⚠️
+        </div>
+        
+        <div class="message">
+            <p>4ochan.org works best with an internet connection, but as a Progressive Web App, some features are available offline.</p>
+            
+            <p>You can try:</p>
+            <ul style="text-align: left; margin: 10px auto; max-width: 300px;">
+                <li>Checking your network connection</li>
+                <li>Going back to a previously visited page</li>
+                <li>Trying again later</li>
+            </ul>
+        </div>
+        
+        <button class="button" onclick="window.location.reload()">TRY AGAIN</button>
+        
+        <div class="footer">
+            <p>BEST VIEWED IN NETSCAPE NAVIGATOR 4.0 OR BETTER</p>
+            <p>© 2025 4ochan.org - The Decentralized Imageboard</p>
+        </div>
     </div>
-    <div class="content">
-      <h2>You are offline</h2>
-      <p>You're currently offline and can't connect to 4ochan.org. Any posts or threads you create will be saved locally and uploaded once you reconnect.</p>
-      <p>Check your internet connection and try again.</p>
-      <button class="btn" onclick="window.location.reload()">RETRY CONNECTION</button>
-    </div>
-  </div>
-  <div class="footer">
-    Best viewed with Netscape Navigator
-  </div>
+    
+    <script>
+        // Check network status and attempt to reconnect
+        window.addEventListener('online', () => {
+            window.location.reload();
+        });
+        
+        // Check if service worker is controlling the page and we have cached pages
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            // We're under service worker control, which means we might have some cached content
+            document.querySelector('.button').addEventListener('click', function() {
+                if (document.referrer && document.referrer.startsWith(window.location.origin)) {
+                    // If we have a referrer from the same origin, go back instead of reloading
+                    window.history.back();
+                } else {
+                    // Otherwise just reload and hope for the best
+                    window.location.reload();
+                }
+            });
+        }
+    </script>
 </body>
 </html>
