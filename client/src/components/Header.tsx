@@ -125,7 +125,8 @@ export const Header: React.FC = () => {
                   <span className="text-xs">Logged in as <b>{currentUser}</b></span>
                   <button 
                     onClick={handleLogout}
-                    className="text-xs bg-white border border-black px-2 py-0.5 hover:bg-secondary text-primary"
+                    className="text-xs bg-gray-200 text-black font-bold py-0.5 px-2 border-2 border-black"
+                    style={{ boxShadow: "2px 2px 0 #000" }}
                   >
                     Log Out
                   </button>
@@ -141,7 +142,8 @@ export const Header: React.FC = () => {
 
               <button 
                 onClick={toggleConnectionModal}
-                className="text-xs bg-white border border-black px-2 py-0.5 hover:bg-secondary text-primary"
+                className="text-xs bg-gray-200 text-black font-bold py-0.5 px-2 border-2 border-black"
+                style={{ boxShadow: "2px 2px 0 #000" }}
               >
                 Manage Relays
               </button>
@@ -159,7 +161,8 @@ export const Header: React.FC = () => {
                   <span className="text-xs">Logged in as <b>{currentUser}</b></span>
                   <button 
                     onClick={handleLogout}
-                    className="text-xs bg-primary text-white border border-black px-2 py-1 hover:bg-opacity-90"
+                    className="text-xs bg-gray-200 text-black font-bold py-0.5 px-2 border-2 border-black"
+                    style={{ boxShadow: "2px 2px 0 #000" }}
                   >
                     Log Out
                   </button>
@@ -174,7 +177,8 @@ export const Header: React.FC = () => {
               <div className="flex justify-between">
                 <button 
                   onClick={toggleConnectionModal}
-                  className="text-xs bg-primary text-white border border-black px-2 py-1 hover:bg-opacity-90"
+                  className="text-xs bg-gray-200 text-black font-bold py-0.5 px-2 border-2 border-black"
+                  style={{ boxShadow: "2px 2px 0 #000" }}
                 >
                   Manage Relays
                 </button>
