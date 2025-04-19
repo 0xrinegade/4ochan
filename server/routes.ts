@@ -14,7 +14,7 @@ import {
 // these backend routes handle user profiles and reputation systems
 
 import { authenticateWithAI, generateAIResponse, processUserInput } from "./openai";
-import { getTokenAnalysis } from "./moralis";
+import { getTokenAnalysis, getSolanaTokenAnalysis } from "./moralis";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
@@ -924,6 +924,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching token by symbol:", error);
       return res.status(500).json({ error: "Failed to fetch token data" });
+    }
+  });
+  
+  // Get Solana token analysis for a given token address
+  app.get("/api/solana-token/:address", async (req, res) => {
+    try {
+      const { address } = req.params;
+      
+      // Validate Solana address format (roughly)
+      // Solana addresses are base58 encoded and typically 32-44 characters long
+      if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)) {
+        return res.status(400).json({ error: "Invalid Solana address format" });
+      }
+      
+      // Call Moralis API to get Solana token information
+      const tokenAnalysis = await getSolanaTokenAnalysis(address);
+      
+      if (tokenAnalysis.error) {
+        return res.status(404).json({ error: tokenAnalysis.error });
+      }
+      
+      return res.json(tokenAnalysis);
+    } catch (error) {
+      console.error("Error fetching Solana token analysis:", error);
+      return res.status(500).json({ error: "Failed to fetch Solana token data" });
     }
   });
 
