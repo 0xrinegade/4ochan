@@ -5,6 +5,7 @@ import {
   nip19,
   generateSecretKey,
   finalizeEvent,
+  type Event,
 } from "nostr-tools";
 import { NostrEvent, NostrIdentity, Relay, NostrProfile } from "../types";
 
@@ -249,107 +250,114 @@ export const saveRelays = (relays: Relay[]) => {
   localStorage.setItem("nostr-relays", JSON.stringify(relays));
 };
 
-// Create and sign a new event
+// Create and sign a new event using the recommended approach from Nostr docs
 export const createEvent = async (
   kind: number,
   content: string,
   tags: string[][] = [],
   identity: NostrIdentity
 ): Promise<NostrEvent> => {
-  console.log("Creating event with identity:", {
-    hasPrivkey: !!identity.privkey,
-    privkeyType: typeof identity.privkey,
-    privkeyEmpty: typeof identity.privkey === 'string' ? identity.privkey.length === 0 : false,
-    pubkey: identity.pubkey
-  });
-  
-  if (!identity.privkey) {
-    console.error("Missing private key in identity:", identity);
-    throw new Error("Private key required to create an event");
-  }
-  
-  const unsignedEvent: any = {
-    kind,
-    created_at: Math.floor(Date.now() / 1000),
-    tags,
-    content,
-    pubkey: identity.pubkey,
-  };
-  
   try {
-    console.log("Creating event with:", { 
-      kind, 
-      pubkey: identity.pubkey,
-      privkeyType: typeof identity.privkey,
-      isUint8Array: identity.privkey instanceof Uint8Array,
-      tagsCount: tags.length
-    });
+    // Ensure we have valid identity data
+    if (!identity.privkey || !identity.pubkey) {
+      throw new Error("Valid identity with private and public keys required");
+    }
     
-    // Debug tags to help diagnose the issue
-    console.log("Tags structure:", JSON.stringify(tags));
+    // Convert private key to proper format for signing
+    let privateKeyHex: string;
+    let privateKeyBytes: Uint8Array;
     
-    // Ensure tags is an array of arrays with proper format
-    const validatedTags = tags.map(tag => {
-      // Ensure tag is array and has at least 2 elements
-      if (!Array.isArray(tag) || tag.length < 1) {
-        return ["", ""]; // Replace invalid tag with placeholder
-      }
-      
-      // Make sure first element exists and is a string
-      const tagName = typeof tag[0] === 'string' ? tag[0] : "";
-      
-      // Make sure second element exists and is a string
-      const tagValue = tag.length > 1 && typeof tag[1] === 'string' ? tag[1] : "";
-      
-      // Return a simple, validated tag with just name and value
-      return [tagName, tagValue];
-    });
-    
-    // Update unsigned event with validated tags
-    unsignedEvent.tags = validatedTags;
-    
-    // nostr-tools can accept a hex string for the private key
-    // Handle all possible formats to ensure it works consistently
-    let privateKey: string;
-    
+    // Handle private key format
     if (typeof identity.privkey === 'string') {
-      // If already a hex string, ensure it's valid hex
+      // If string, validate it's a proper hex
       if (/^[0-9a-fA-F]{64}$/.test(identity.privkey)) {
-        privateKey = identity.privkey;
+        privateKeyHex = identity.privkey;
+        
+        // Convert hex to bytes for signing
+        privateKeyBytes = new Uint8Array(32);
+        for (let i = 0; i < 32; i++) {
+          privateKeyBytes[i] = parseInt(privateKeyHex.slice(i * 2, i * 2 + 2), 16);
+        }
       } else {
-        // Invalid hex string, generate new one
         console.warn("Invalid hex string for private key, regenerating");
-        const newPrivkey = generateSecretKey();
-        privateKey = Array.from(newPrivkey)
+        privateKeyBytes = generateSecretKey();
+        privateKeyHex = Array.from(privateKeyBytes)
           .map(b => b.toString(16).padStart(2, '0'))
           .join('');
           
-        // Update the identity with valid keys
-        identity.privkey = privateKey;
-        identity.pubkey = getPublicKey(newPrivkey);
+        // Update identity with new keys
+        identity.privkey = privateKeyHex;
+        identity.pubkey = getPublicKey(privateKeyBytes);
         saveIdentity(identity);
       }
     } else {
-      // For any other format, just generate a new key to be safe
+      // For any non-string format, regenerate
       console.warn("Non-string private key format, regenerating");
-      const newPrivkey = generateSecretKey();
-      privateKey = Array.from(newPrivkey)
+      privateKeyBytes = generateSecretKey();
+      privateKeyHex = Array.from(privateKeyBytes)
         .map(b => b.toString(16).padStart(2, '0'))
         .join('');
         
-      // Update the identity for future use
-      identity.privkey = privateKey;
-      identity.pubkey = getPublicKey(newPrivkey);
+      // Update identity
+      identity.privkey = privateKeyHex;
+      identity.pubkey = getPublicKey(privateKeyBytes);
       saveIdentity(identity);
     }
     
-    // Sign and finalize the event using a hex string key
-    const event = finalizeEvent(unsignedEvent, privateKey);
+    // Validate and clean tags to simple name-value pairs
+    const cleanTags: string[][] = [];
     
-    console.log("Event created successfully:", {
-      id: event.id,
-      sig: event.sig ? event.sig.substring(0, 10) + '...' : 'missing'
+    for (const tag of tags) {
+      if (Array.isArray(tag) && tag.length > 0) {
+        // Ensure all tag elements are strings
+        const cleanTag = tag.map(item => 
+          typeof item === 'string' ? item : String(item)
+        );
+        cleanTags.push(cleanTag);
+      }
+    }
+    
+    // Log event creation details
+    console.log("Creating event:", {
+      kind,
+      pubkey: identity.pubkey,
+      tagsCount: cleanTags.length,
+      contentLength: content.length
     });
+    
+    console.log("Tags structure:", JSON.stringify(cleanTags));
+    
+    // Create unsigned event with basic required fields
+    const createdAt = Math.floor(Date.now() / 1000);
+    
+    // Create an unsigned event object first
+    const unsignedEvent = {
+      kind,
+      created_at: createdAt,
+      tags: cleanTags,
+      content,
+      pubkey: identity.pubkey,
+    };
+    
+    // Calculate event id (hash)
+    const id = getEventHash(unsignedEvent);
+    
+    // Sign the event using the finalizeEvent function
+    // This works with the hex string format
+    const event = finalizeEvent(unsignedEvent, privateKeyHex);
+    
+    // Verify the event is valid for logging purposes
+    const isValid = await verifyEvent(event);
+    console.log(`Event creation ${isValid ? 'successful' : 'FAILED validation'}:`, {
+      id: event.id?.substring(0, 10) + '...',
+      sig: event.sig?.substring(0, 10) + '...',
+      valid: isValid
+    });
+    
+    if (!isValid) {
+      console.error("Created event failed validation check:", event);
+      throw new Error("Event validation failed after creation");
+    }
     
     return event as NostrEvent;
   } catch (error) {
@@ -361,6 +369,42 @@ export const createEvent = async (
     throw error;
   }
 };
+
+// Helper function to verify an event is valid
+async function verifyEvent(event: Event): Promise<boolean> {
+  try {
+    // Check required fields exist
+    if (!event.id || !event.pubkey || !event.sig) {
+      console.error("Event missing required fields");
+      return false;
+    }
+    
+    // Verify event ID matches content hash
+    const eventContent = {
+      pubkey: event.pubkey,
+      created_at: event.created_at,
+      kind: event.kind,
+      tags: event.tags,
+      content: event.content
+    };
+    
+    const calculatedId = getEventHash(eventContent);
+    if (calculatedId !== event.id) {
+      console.error("Event ID verification failed", {
+        calculatedId,
+        eventId: event.id
+      });
+      return false;
+    }
+    
+    // For simplicity, we're not verifying the signature here since it would require
+    // additional cryptography functions. The signature will be verified by the relays.
+    return true;
+  } catch (error) {
+    console.error("Error verifying event:", error);
+    return false;
+  }
+}
 
 // Create a board definition event
 export const createBoardEvent = async (
