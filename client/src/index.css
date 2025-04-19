@@ -2,6 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Markdown and Mermaid styling */
+.markdown-content {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.markdown-content pre {
+  background-color: rgb(40, 44, 52);
+  border-radius: 0.375rem;
+  padding: 1rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.markdown-content code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.875rem;
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+}
+
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+.mermaid-diagram {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+  background-color: white;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  overflow-x: auto;
+}
+
 @font-face {
   font-family: 'Libertarian';
   src: url('@assets/Libertarian.ttf') format('truetype');

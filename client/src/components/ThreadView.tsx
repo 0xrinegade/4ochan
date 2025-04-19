@@ -9,6 +9,7 @@ import { MediaContent } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThreadSubscribeButton } from "@/components/ThreadSubscribeButton";
 import { useNostr } from "@/context/NostrContext";
+import { MarkdownContent } from "@/components/MarkdownContent";
 
 interface ThreadViewProps {
   threadId: string;
@@ -175,8 +176,8 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                   {thread.title && (
                     <div className="text-sm mb-2 font-bold">{thread.title}</div>
                   )}
-                  <div className="text-sm mb-2 whitespace-pre-line">
-                    {thread.content}
+                  <div className="text-sm mb-2">
+                    <MarkdownContent content={thread.content} />
                   </div>
                   
                   <div className="flex mt-2">
