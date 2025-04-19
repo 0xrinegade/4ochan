@@ -3,6 +3,7 @@ import { useParams, Link } from "wouter";
 import { Header } from "@/components/Header";
 import { BoardSidebar } from "@/components/BoardSidebar";
 import { ThreadList } from "@/components/ThreadList";
+import { AllThreadsList } from "@/components/AllThreadsList";
 import { useNostr } from "@/hooks/useNostr";
 import { useBoards } from "@/hooks/useBoards";
 import { CreateThreadModal } from "@/components/CreateThreadModal";
@@ -70,7 +71,7 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
             </div>
 
             <div className="w-full md:w-3/4">
-              {/* Always render something to reduce layout shift */}
+              {/* When a specific board is selected */}
               {boardId ? (
                 <ThreadList 
                   boardId={boardId}
@@ -79,23 +80,74 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
                   boardDescription={currentBoard?.description || ""}
                 />
               ) : (
-                <div className="mb-2">
-                  <div className="bg-primary text-white py-0.5 px-2 font-bold text-xs">
-                    Welcome to the Board
-                  </div>
-                  <div className="bg-white border border-black border-t-0 p-2">
-                    <p>Select a board from the quick links to get started.</p>
-                    <div className="mt-4">
-                      <button 
-                        onClick={() => setShowCreateModal(true)}
-                        className="bg-gray-200 text-black font-bold py-1 px-3 border-2 border-black text-sm"
-                        style={{ boxShadow: "2px 2px 0 #000" }}
-                      >
-                        Create New Thread
-                      </button>
+                <>
+                  {/* Welcome Banner */}
+                  <div className="mb-4">
+                    <div className="bg-primary text-white py-0.5 px-2 font-bold text-xs">
+                      <span className="mr-1">■</span> WELCOME TO 4OCHAN.ORG
+                    </div>
+                    <div className="bg-white border border-black border-t-0 p-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm">A decentralized imageboard built on Nostr.</p>
+                          <div className="mt-2 flex gap-2">
+                            <button 
+                              onClick={() => setShowCreateModal(true)}
+                              className="bg-gray-200 text-black font-bold py-0.5 px-2 border-2 border-black text-xs"
+                              style={{ boxShadow: "2px 2px 0 #000" }}
+                            >
+                              Create New Thread
+                            </button>
+                          </div>
+                        </div>
+                        <div className="hidden sm:block">
+                          <img 
+                            src="/under-construction.gif" 
+                            alt="Under Construction" 
+                            width={120}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.onerror = null;
+                              target.style.display = "none";
+                            }}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                  
+                  {/* Site Statistics */}
+                  <div className="mb-4">
+                    <div className="bg-primary text-white py-0.5 px-2 font-bold text-xs">
+                      <span className="mr-1">■</span> SITE STATISTICS
+                    </div>
+                    <div className="bg-white border border-black border-t-0 p-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm">
+                        <div>
+                          <span className="font-bold">Relays:</span> {relays.length}
+                        </div>
+                        <div>
+                          <span className="font-bold">Connected:</span> {connectedRelays}
+                        </div>
+                        <div>
+                          <span className="font-bold">Boards:</span> {nostrBoards.length}
+                        </div>
+                        <div>
+                          <span className="font-bold">Created:</span> {new Date().toLocaleDateString()}
+                        </div>
+                        <div>
+                          <span className="font-bold">Version:</span> 0.1.0
+                        </div>
+                        <div>
+                          <span className="font-bold">Powered by:</span> Nostr
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* All Recent Threads */}
+                  <AllThreadsList />
+                </>
               )}
             </div>
           </div>

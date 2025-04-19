@@ -1,9 +1,59 @@
-// Nostr-related types
+export interface Thread {
+  id: string;
+  boardId: string;
+  title: string;
+  content: string;
+  createdBy: string;
+  createdAt: number; // Unix timestamp
+  lastReplyTime?: number;
+  replyCount: number;
+  images?: string[];
+  nsfw?: boolean;
+  tags?: string[];
+  locked?: boolean;
+  pinned?: boolean;
+}
+
+export interface Board {
+  id: string;
+  shortName: string;
+  name: string;
+  description: string;
+  icon?: string;
+  createdAt: number;
+  threadCount: number;
+  lastActive?: number;
+  color?: string;
+}
+
+export interface Reply {
+  id: string;
+  threadId: string;
+  content: string;
+  createdBy: string;
+  createdAt: number;
+  images?: string[];
+}
+
+export interface MediaContent {
+  id: string;
+  url: string;
+  type: 'image' | 'video' | 'file';
+  name: string;
+  size?: number;
+}
+
+export interface MediaUpload extends MediaContent {
+  progress: number;
+  error?: string;
+  status: 'uploading' | 'error' | 'success' | 'pending';
+}
+
 export interface Relay {
   url: string;
-  status: 'connected' | 'connecting' | 'disconnected' | 'error';
-  write?: boolean;
-  read?: boolean;
+  status: 'disconnected' | 'connecting' | 'connected' | 'error';
+  read: boolean;
+  write: boolean;
 }
 
 export interface NostrEvent {
@@ -14,99 +64,4 @@ export interface NostrEvent {
   tags: string[][];
   content: string;
   sig: string;
-}
-
-export interface NostrProfile {
-  name?: string;
-  about?: string;
-  picture?: string;
-  nip05?: string;
-}
-
-export interface NostrIdentity {
-  pubkey: string;
-  privkey?: Uint8Array | string;
-  profile?: NostrProfile;
-}
-
-// Application-specific types
-export interface Board {
-  id: string;
-  shortName: string;
-  name: string;
-  description: string;
-  threadCount: number;
-  postCount?: number;
-  createdAt?: number;
-  pubkey?: string;
-}
-
-export interface MediaContent {
-  url: string;
-  type: 'image' | 'video' | 'audio' | 'document';
-  mimeType: string;
-  name: string;
-  size?: number;
-}
-
-export interface Thread {
-  id: string;
-  boardId: string;
-  title?: string;
-  content: string;
-  media?: MediaContent[];
-  images?: string[]; // Legacy support
-  authorPubkey: string;
-  createdAt: number;
-  replyCount: number;
-  lastReplyTime?: number;
-}
-
-export interface Post {
-  id: string;
-  threadId: string;
-  content: string;
-  media?: MediaContent[];
-  images?: string[]; // Legacy support
-  authorPubkey: string;
-  createdAt: number;
-  references?: string[]; // Array of post IDs this post is replying to
-}
-
-export interface MediaUpload {
-  file: File;
-  data: string;
-  url?: string;
-  mediaContent?: MediaContent;
-  loading: boolean;
-  error?: string;
-}
-
-export interface ImageUpload {
-  data: string;
-  url?: string;
-  loading: boolean;
-  error?: string;
-}
-
-export interface ThreadSubscription {
-  id: string;
-  threadId: string;
-  title?: string; // Thread title, if available
-  notifyOnReplies: boolean;
-  notifyOnMentions: boolean;
-  createdAt: number;
-  lastNotified?: number;
-}
-
-export interface Notification {
-  id: string;
-  recipientPubkey: string;
-  title: string;
-  message: string;
-  threadId: string;
-  postId?: string;
-  read: boolean;
-  createdAt: number;
-  readAt?: number;
 }
