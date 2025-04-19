@@ -330,41 +330,118 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     
     console.log(`Publishing to ${writeRelays.length} relays:`, writeRelays);
-    const pubs = pool.publish(writeRelays, event);
     
-    // Wait for at least one successful publish with more detailed error handling
     try {
-      const results = await Promise.allSettled(pubs);
-      const successful = results.filter(r => r.status === 'fulfilled');
+      // Add additional retry logic for more reliable publishing
+      let retries = 0;
+      const maxRetries = 2;
+      let publishSuccess = false;
+      let lastError: Error | null = null;
       
-      if (successful.length > 0) {
-        console.log(`Successfully published to ${successful.length}/${writeRelays.length} relays`);
-        return;
-      } else {
-        // If all failed, throw a detailed error
-        const errors = results
-          .filter(r => r.status === 'rejected')
-          .map(r => (r as PromiseRejectedResult).reason)
-          .join(', ');
-          
-        console.error("All publish attempts failed:", errors);
+      while (retries <= maxRetries && !publishSuccess) {
+        if (retries > 0) {
+          console.log(`Retry attempt ${retries}/${maxRetries} for event ${event.id}`);
+        }
         
-        // Store event locally for later retry
-        const offlineEvents = JSON.parse(localStorage.getItem("offline-events") || "[]");
+        const pubs = pool.publish(writeRelays, event);
+        
+        try {
+          const results = await Promise.allSettled(pubs);
+          const successful = results.filter(r => r.status === 'fulfilled');
+          
+          if (successful.length > 0) {
+            console.log(`Successfully published to ${successful.length}/${writeRelays.length} relays`);
+            publishSuccess = true;
+            return;
+          } else {
+            // If all failed, collect errors
+            const errorMessages = results
+              .filter(r => r.status === 'rejected')
+              .map(r => {
+                const reason = (r as PromiseRejectedResult).reason;
+                // Handle different types of error objects
+                if (typeof reason === 'string') return reason;
+                if (reason instanceof Error) return reason.message;
+                return JSON.stringify(reason);
+              });
+              
+            const errorStr = errorMessages.join(', ');
+            console.error(`Attempt ${retries + 1}/${maxRetries + 1} failed:`, errorStr);
+            
+            // Create an error object to throw if all retries fail
+            lastError = new Error(errorStr);
+            
+            // Categorize errors for better handling
+            const isPaidMemberError = errorMessages.some(msg => 
+              msg.includes("restricted") || msg.includes("paid member"));
+            const isTimeoutError = errorMessages.some(msg => 
+              msg.includes("timed out"));
+              
+            // If it's a paid member error, no need to retry
+            if (isPaidMemberError) {
+              console.log("Relay requires paid membership, skipping retries");
+              break;
+            }
+          }
+        } catch (error) {
+          console.error(`Error in publish process (attempt ${retries + 1}/${maxRetries + 1}):`, error);
+          lastError = error instanceof Error ? error : new Error(String(error));
+        }
+        
+        retries++;
+        
+        // Add a small delay between retries
+        if (!publishSuccess && retries <= maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      // If we reach here without returning, it means all retries failed
+      // Store event locally for later retry
+      const offlineEvents = JSON.parse(localStorage.getItem("offline-events") || "[]");
+      
+      // Check if this event is already in offline storage
+      const eventExists = offlineEvents.some((e: NostrEvent) => e.id === event.id);
+      
+      if (!eventExists) {
         offlineEvents.push(event);
         localStorage.setItem("offline-events", JSON.stringify(offlineEvents));
-        
-        throw new Error("Failed to publish to any relay - event saved for later publishing");
       }
+      
+      console.log("All publish attempts failed - event saved for later publishing");
+      
+      // Create a user-friendly error message
+      let errorMessage = "Failed to publish to any relay - saved for later";
+      
+      if (lastError) {
+        const errorStr = lastError.message || String(lastError);
+        
+        if (errorStr.includes("restricted") || errorStr.includes("paid member")) {
+          errorMessage = "Relay requires paid membership - saved for later";
+        } else if (errorStr.includes("timed out")) {
+          errorMessage = "Connection timed out - saved for later";
+        }
+      }
+      
+      throw new Error(errorMessage);
     } catch (error) {
       console.error("Failed to publish event", error);
       
-      // Store event locally for later retry
+      // If we haven't already stored the event (in the retry logic)
+      // Store it now as a last resort
       const offlineEvents = JSON.parse(localStorage.getItem("offline-events") || "[]");
-      offlineEvents.push(event);
-      localStorage.setItem("offline-events", JSON.stringify(offlineEvents));
       
-      throw new Error("Failed to publish to any relay - event saved for later publishing");
+      // Check if this event is already in offline storage
+      const eventExists = offlineEvents.some((e: NostrEvent) => e.id === event.id);
+      
+      if (!eventExists) {
+        offlineEvents.push(event);
+        localStorage.setItem("offline-events", JSON.stringify(offlineEvents));
+        console.log("Event saved to localStorage as final fallback");
+      }
+      
+      // Propagate original error
+      throw error;
     }
   }, [pool, relays, connect]);
 
@@ -500,15 +577,60 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       for (const event of boardEvents) {
         try {
-          const threadData = JSON.parse(event.content);
+          let threadData: any;
           
+          // First try to properly parse JSON
+          try {
+            threadData = JSON.parse(event.content);
+          } catch (jsonError) {
+            // JSON parsing failed, let's try to extract content some other way
+            console.warn(`Could not parse thread content for event ${event.id}`, jsonError);
+            
+            // Attempt to extract meaningful data even from malformed content
+            // This helps with partially valid or non-standard format content
+            const content = event.content;
+            
+            // If it's plain text with no JSON structure
+            if (content && typeof content === 'string' && !content.includes('{') && !content.includes('}')) {
+              // Create a simple structure from plain text
+              threadData = {
+                title: content.split('\n')[0]?.substring(0, 100) || 'Untitled Thread',
+                content: content,
+                images: [],
+                media: []
+              };
+            } else {
+              // Try to extract JSON-like structures even from malformed JSON
+              // This is for cases where the JSON has minor syntax errors
+              try {
+                // Replace common JSON syntax errors and try to parse again
+                const fixedContent = content
+                  .replace(/'/g, '"')                 // Replace single quotes with double quotes
+                  .replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3')  // Add quotes to unquoted keys
+                  .replace(/,\s*}/g, '}')            // Remove trailing commas
+                  .replace(/,\s*]/g, ']');           // Remove trailing commas in arrays
+                  
+                threadData = JSON.parse(fixedContent);
+              } catch (fixError) {
+                // If all attempts fail, create minimal valid thread data
+                threadData = {
+                  title: 'Malformed Thread',
+                  content: 'This thread contains data in an unsupported format.',
+                  images: [],
+                  media: []
+                };
+              }
+            }
+          }
+          
+          // Ensure all required fields exist with fallbacks
           const thread: Thread = {
             id: event.id,
             boardId,
-            title: threadData.title,
-            content: threadData.content,
-            images: threadData.images || [],
-            media: threadData.media || [],
+            title: threadData.title || 'Untitled Thread',
+            content: threadData.content || '',
+            images: Array.isArray(threadData.images) ? threadData.images : [],
+            media: Array.isArray(threadData.media) ? threadData.media : [],
             authorPubkey: event.pubkey,
             createdAt: event.created_at,
             replyCount: 0,
@@ -518,7 +640,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           threads.push(thread);
           localCache.addThread(thread);
         } catch (error) {
-          console.error("Failed to parse thread event", event, error);
+          console.error("Failed to process thread event", event.id, error);
         }
       }
       
@@ -548,15 +670,58 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         for (const event of userBoardEvents) {
           try {
-            const threadData = JSON.parse(event.content);
+            let threadData: any;
             
+            // First try to properly parse JSON
+            try {
+              threadData = JSON.parse(event.content);
+            } catch (jsonError) {
+              // JSON parsing failed, let's try to extract content some other way
+              console.warn(`Could not parse user thread content for event ${event.id}`, jsonError);
+              
+              // Attempt to extract meaningful data even from malformed content
+              const content = event.content;
+              
+              // If it's plain text with no JSON structure
+              if (content && typeof content === 'string' && !content.includes('{') && !content.includes('}')) {
+                // Create a simple structure from plain text
+                threadData = {
+                  title: content.split('\n')[0]?.substring(0, 100) || 'Untitled Thread',
+                  content: content,
+                  images: [],
+                  media: []
+                };
+              } else {
+                // Try to extract JSON-like structures even from malformed JSON
+                try {
+                  // Replace common JSON syntax errors and try to parse again
+                  const fixedContent = content
+                    .replace(/'/g, '"')                 // Replace single quotes with double quotes
+                    .replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3')  // Add quotes to unquoted keys
+                    .replace(/,\s*}/g, '}')            // Remove trailing commas
+                    .replace(/,\s*]/g, ']');           // Remove trailing commas in arrays
+                    
+                  threadData = JSON.parse(fixedContent);
+                } catch (fixError) {
+                  // If all attempts fail, create minimal valid thread data
+                  threadData = {
+                    title: 'Malformed Thread',
+                    content: 'This thread contains data in an unsupported format.',
+                    images: [],
+                    media: []
+                  };
+                }
+              }
+            }
+            
+            // Ensure all required fields exist with fallbacks
             const thread: Thread = {
               id: event.id,
               boardId,
-              title: threadData.title,
-              content: threadData.content,
-              images: threadData.images || [],
-              media: threadData.media || [],
+              title: threadData.title || 'Untitled Thread',
+              content: threadData.content || '',
+              images: Array.isArray(threadData.images) ? threadData.images : [],
+              media: Array.isArray(threadData.media) ? threadData.media : [],
               authorPubkey: event.pubkey,
               createdAt: event.created_at,
               replyCount: 0,
@@ -569,7 +734,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               localCache.addThread(thread);
             }
           } catch (error) {
-            console.error("Failed to parse user thread event", event, error);
+            console.error("Failed to process user thread event", event.id, error);
           }
         }
       }
@@ -659,19 +824,62 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     try {
       const event = events[0];
-      const threadData = JSON.parse(event.content);
+      let threadData: any;
+      
+      // First try to properly parse JSON
+      try {
+        threadData = JSON.parse(event.content);
+      } catch (jsonError) {
+        // JSON parsing failed, let's try to extract content some other way
+        console.warn(`Could not parse thread content for event ${event.id}`, jsonError);
+        
+        // Attempt to extract meaningful data even from malformed content
+        const content = event.content;
+        
+        // If it's plain text with no JSON structure
+        if (content && typeof content === 'string' && !content.includes('{') && !content.includes('}')) {
+          // Create a simple structure from plain text
+          threadData = {
+            title: content.split('\n')[0]?.substring(0, 100) || 'Untitled Thread',
+            content: content,
+            images: [],
+            media: []
+          };
+        } else {
+          // Try to extract JSON-like structures even from malformed JSON
+          try {
+            // Replace common JSON syntax errors and try to parse again
+            const fixedContent = content
+              .replace(/'/g, '"')                 // Replace single quotes with double quotes
+              .replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3')  // Add quotes to unquoted keys
+              .replace(/,\s*}/g, '}')            // Remove trailing commas
+              .replace(/,\s*]/g, ']');           // Remove trailing commas in arrays
+              
+            threadData = JSON.parse(fixedContent);
+          } catch (fixError) {
+            // If all attempts fail, create minimal valid thread data
+            threadData = {
+              title: 'Malformed Thread',
+              content: 'This thread contains data in an unsupported format.',
+              images: [],
+              media: []
+            };
+          }
+        }
+      }
       
       // Find the board ID from the tags
       const boardTag = event.tags.find((tag: string[]) => tag[0] === 'board');
       const boardId = boardTag ? boardTag[1] : "";
       
+      // Ensure all required fields exist with fallbacks
       const thread: Thread = {
         id: event.id,
         boardId,
-        title: threadData.title,
-        content: threadData.content,
-        images: threadData.images || [],
-        media: threadData.media || [],
+        title: threadData.title || 'Untitled Thread',
+        content: threadData.content || '',
+        images: Array.isArray(threadData.images) ? threadData.images : [],
+        media: Array.isArray(threadData.media) ? threadData.media : [],
         authorPubkey: event.pubkey,
         createdAt: event.created_at,
         replyCount: 0,
@@ -688,7 +896,7 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       localCache.addThread(thread);
       return thread;
     } catch (error) {
-      console.error("Failed to parse thread event", events[0], error);
+      console.error("Failed to process thread event", events[0]?.id, error);
       return undefined;
     }
   }, [pool, relays]);
