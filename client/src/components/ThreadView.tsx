@@ -21,6 +21,9 @@ import {
   ThumbsUp,
   ThumbsDown,
   GitMerge,
+  Share2,
+  Copy,
+  Check,
 } from "lucide-react";
 import {
   Dialog,
@@ -36,9 +39,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ThreadViewProps {
   threadId: string;
+  replyId?: string;
+  setOpenGraphTags?: (title: string, description: string, imageUrl?: string) => void;
 }
 
-export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
+export const ThreadView: React.FC<ThreadViewProps> = ({ threadId, replyId, setOpenGraphTags }) => {
   const { thread, posts, loading, error, refreshThread, createPost } =
     useThread(threadId);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
@@ -63,6 +68,7 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
     { index: number; text: string; id: string }[]
   >([]);
   const [currentSearchResult, setCurrentSearchResult] = useState(-1);
+  const [copiedPostId, setCopiedPostId] = useState<string | null>(null);
 
   // Load post likes data
   useEffect(() => {
@@ -103,6 +109,41 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
       loadLikesData();
     }
   }, [posts, identity, getPostLikes, isPostLikedByUser]);
+
+  // Scroll to specific reply if replyId is provided
+  useEffect(() => {
+    if (replyId && posts.length > 0 && !loading) {
+      // Find the post with the specified replyId
+      const specificPost = posts.find(post => post.id === replyId);
+      
+      if (specificPost) {
+        // Scroll to the specific reply
+        setTimeout(() => {
+          scrollToResult(replyId);
+          
+          // If Open Graph tags setter is provided, generate tags for this reply
+          if (setOpenGraphTags && thread) {
+            // Get first few characters of the post content for the description
+            const contentPreview = specificPost.content.substring(0, 150) + (specificPost.content.length > 150 ? '...' : '');
+            
+            // Set Open Graph tags for the specific reply
+            setOpenGraphTags(
+              `Reply in ${thread.title || 'Thread ' + thread.id.substring(0, 8)}`,
+              contentPreview,
+              specificPost.images && specificPost.images.length > 0 ? specificPost.images[0] : undefined
+            );
+          }
+        }, 500); // Small delay to ensure the DOM is ready
+      }
+    } else if (thread && setOpenGraphTags && !replyId) {
+      // Set Open Graph tags for the thread itself if no specific reply is requested
+      setOpenGraphTags(
+        thread.title || `Thread ${thread.id.substring(0, 8)}`,
+        thread.content.substring(0, 150) + (thread.content.length > 150 ? '...' : ''),
+        thread.images && thread.images.length > 0 ? thread.images[0] : undefined
+      );
+    }
+  }, [replyId, posts, thread, loading, setOpenGraphTags]);
 
   // Track thread view and update thread statistics
   useEffect(() => {
@@ -265,6 +306,27 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
   };
 
   // Handle liking a post
+  // Handle sharing a post by copying its link
+  const handleSharePost = (postId: string) => {
+    try {
+      // Create a direct link to this specific reply
+      const shareUrl = `${window.location.origin}/thread/${threadId}/reply/${postId}`;
+      
+      // Copy to clipboard
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        // Update state to show confirmation
+        setCopiedPostId(postId);
+        
+        // Reset the copied state after a short delay
+        setTimeout(() => {
+          setCopiedPostId(null);
+        }, 2000);
+      });
+    } catch (error) {
+      console.error('Failed to copy share link:', error);
+    }
+  };
+
   const handleLikePost = async (postId: string) => {
     if (!identity) return;
 
@@ -499,6 +561,22 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                               <span>{postLikes[thread.id]}</span>
                             )}
                           </Button>
+                          
+                          {/* Share button for thread */}
+                          <Button
+                            onClick={() => handleSharePost(thread.id)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs text-gray-500"
+                            title="Share this thread"
+                          >
+                            {copiedPostId === thread.id ? (
+                              <Check size={14} className="mr-1" />
+                            ) : (
+                              <Share2 size={14} className="mr-1" />
+                            )}
+                            {copiedPostId === thread.id ? "Copied!" : "Share"}
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -633,6 +711,22 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
                               {postLikes[post.id] > 0 && (
                                 <span>{postLikes[post.id]}</span>
                               )}
+                            </Button>
+                            
+                            {/* Share button for reply */}
+                            <Button
+                              onClick={() => handleSharePost(post.id)}
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs text-gray-500"
+                              title="Share this reply"
+                            >
+                              {copiedPostId === post.id ? (
+                                <Check size={14} className="mr-1" />
+                              ) : (
+                                <Share2 size={14} className="mr-1" />
+                              )}
+                              {copiedPostId === post.id ? "Copied!" : "Share"}
                             </Button>
                           </div>
                         </div>
