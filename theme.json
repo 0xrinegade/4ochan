@@ -21,6 +21,36 @@
     "threadBackground": "#FFFFFF",
     "threadHover": "#F0F0F0"
   },
+  "themes": {
+    "crimson": {
+      "primary": "#8B0000",
+      "background": "#F5F5DC"
+    },
+    "hotdogstand": {
+      "primary": "#FF0000",
+      "background": "#FFFF00",
+      "buttonBackground": "#FF0000",
+      "buttonText": "#FFFF00"
+    },
+    "windows95": {
+      "primary": "#000080",
+      "background": "#C0C0C0",
+      "buttonBackground": "#C0C0C0"
+    },
+    "vaporwave": {
+      "primary": "#FF00FF",
+      "background": "#00FFFF",
+      "buttonBackground": "#FF00FF",
+      "buttonText": "#FFFFFF"
+    },
+    "matrix": {
+      "primary": "#00FF00",
+      "background": "#000000",
+      "text": "#00FF00",
+      "buttonBackground": "#003300",
+      "buttonText": "#00FF00"
+    }
+  },
   "typography": {
     "fontFamily": "Libertarian, monospace",
     "headingFont": "Libertarian, monospace",

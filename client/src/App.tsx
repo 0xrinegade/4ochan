@@ -9,6 +9,7 @@ import UserProfilePage from "@/pages/UserProfilePage";
 import DesignSystem from "@/pages/DesignSystem";
 import { TestPage } from "./pages/TestPage";
 import { NostrProvider } from "./context/NostrContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 function Router() {
   return (
@@ -28,10 +29,12 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <NostrProvider>
-        <Router />
-        <Toaster />
-      </NostrProvider>
+      <ThemeProvider>
+        <NostrProvider>
+          <Router />
+          <Toaster />
+        </NostrProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

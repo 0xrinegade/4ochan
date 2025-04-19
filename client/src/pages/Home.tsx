@@ -6,6 +6,7 @@ import { ThreadList } from "@/components/ThreadList";
 import { useNostr } from "@/hooks/useNostr";
 import { useBoards } from "@/hooks/useBoards";
 import { CreateThreadModal } from "@/components/CreateThreadModal";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { formatPubkey } from "@/lib/nostr";
 
 const Home: React.FC = () => {
