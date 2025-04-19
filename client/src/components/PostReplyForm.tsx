@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -6,6 +6,7 @@ import { uploadImage } from "@/lib/nostr";
 import { apiRequest } from "@/lib/queryClient";
 import { MediaUploader } from "@/components/MediaUploader";
 import { MediaContent } from "@/types";
+import { ImageIcon } from "lucide-react";
 
 interface PostReplyFormProps {
   onSubmitReply: (content: string, imageUrls: string[], media?: MediaContent[]) => Promise<void>;
@@ -31,6 +32,7 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
   const [isProcessing, setIsProcessing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showMediaUploader, setShowMediaUploader] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
   // Legacy file upload handler (for backward compatibility)
@@ -43,6 +45,75 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
   const handleMediaUploaded = (media: MediaContent[]) => {
     setUploadedMedia(media);
   };
+  
+  // Handle pasting images from clipboard
+  const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
+    if (isSubmitting || isProcessing || isUploading) return;
+    
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    
+    let hasProcessedImage = false;
+    
+    setIsUploading(true);
+    toast({
+      title: "Processing clipboard content",
+      description: "If you pasted an image, it will be uploaded automatically.",
+    });
+    
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      
+      // Handle image paste
+      if (item.type.indexOf('image') !== -1) {
+        e.preventDefault(); // Prevent the default paste behavior for images
+        
+        try {
+          const blob = item.getAsFile();
+          if (!blob) continue;
+          
+          // Read the file as data URL
+          const reader = new FileReader();
+          const dataUrl = await new Promise<string>((resolve, reject) => {
+            reader.onload = (e) => resolve(e.target?.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          
+          // Upload the image to Nostr
+          const imageUrl = await uploadImage(dataUrl);
+          
+          // Create a media object for the pasted image
+          const media: MediaContent = {
+            id: `pasted-${Date.now()}`,
+            url: imageUrl,
+            type: 'image',
+            name: `Pasted Image ${new Date().toLocaleTimeString()}`,
+            size: blob.size,
+          };
+          
+          // Add to uploaded media
+          setUploadedMedia(prev => [...prev, media]);
+          
+          toast({
+            title: "Image Pasted",
+            description: "Your pasted image has been uploaded and will be included with your post.",
+          });
+          
+          hasProcessedImage = true;
+        } catch (error) {
+          console.error("Error processing pasted image:", error);
+          toast({
+            title: "Image Paste Failed",
+            description: "Failed to process the pasted image.",
+            variant: "destructive",
+          });
+        }
+      }
+    }
+    
+    setIsUploading(false);
+  }, [isSubmitting, isProcessing, isUploading, toast]);
 
   const processWithGPT = async (userInput: string) => {
     if (!userInput.trim()) {
@@ -210,11 +281,13 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
       <div className="mb-2">
         <div className="text-sm font-bold mb-1 bg-primary text-white p-1">YOUR MESSAGE</div>
         <Textarea
+          ref={textareaRef}
           value={replyText}
           onChange={(e) => {
             setReplyText(e.target.value);
           }}
-          placeholder="What's your response? Markdown and Mermaid diagrams supported."
+          onPaste={handlePaste}
+          placeholder="What's your response? Markdown and Mermaid diagrams supported. You can also paste images directly."
           rows={3}
           className="w-full p-2 border border-black rounded-none bg-background text-foreground text-sm font-mono"
           disabled={isSubmitting || isProcessing}
