@@ -598,14 +598,14 @@ const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element =>
         <div className="typst-title text-primary-foreground">Typst Document</div>
         <div className="typst-action-buttons">
           <button 
-            className="typst-action-button text-secondary-foreground" 
+            className="typst-action-button text-primary-foreground" 
             title="Copy Typst code" 
             onClick={() => navigator.clipboard.writeText(content)}
           >
             Copy
           </button>
           <button
-            className="typst-action-button text-secondary-foreground"
+            className="typst-action-button text-primary-foreground"
             title={showSource ? "Show Preview" : "Show Source"}
             onClick={() => setShowSource(!showSource)}
           >
@@ -615,7 +615,7 @@ const processTypstBlock = (content: string, isDarkMode: boolean): JSX.Element =>
             href={`https://typst.app/project?snippet=${encodeURIComponent(content)}`} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="typst-action-button text-secondary-foreground"
+            className="typst-action-button text-primary-foreground"
             title="Open in Typst App"
           >
             Open in Typst
@@ -695,7 +695,7 @@ const MermaidDiagram: React.FC<{ chart: string, isDarkMode: boolean }> = ({ char
         <div className="mermaid-title text-primary-foreground">Mermaid Diagram</div>
         <div className="mermaid-action-buttons">
           <button 
-            className="mermaid-action-button text-secondary-foreground" 
+            className="mermaid-action-button text-primary-foreground" 
             title="Copy Mermaid code" 
             onClick={() => navigator.clipboard.writeText(chart)}
           >
@@ -705,7 +705,7 @@ const MermaidDiagram: React.FC<{ chart: string, isDarkMode: boolean }> = ({ char
             href={`https://mermaid.live/edit#${encodeURIComponent(chart)}`} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="mermaid-action-button text-secondary-foreground"
+            className="mermaid-action-button text-primary-foreground"
           >
             Edit Live
           </a>
