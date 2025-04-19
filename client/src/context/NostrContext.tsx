@@ -705,51 +705,127 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       throw new Error("Not connected to any relays");
     }
     
-    // Fetch post events - updated for nostr-tools v2.x
-    const filter: Filter = {
+    // Fetch post events - use a more flexible approach to find all replies
+    // Try fetching with both specific and general filters
+    const specificFilter: Filter = {
       kinds: [KIND.POST],
       '#e': [threadId]
     };
     
     const relayUrls = relays.filter(r => r.status === 'connected' && r.read).map(r => r.url);
-    const events = await pool.querySync(relayUrls, filter);
+    console.log(`Fetching replies for thread ${threadId} from ${relayUrls.length} relays`);
     
-    // Parse post events
-    const posts: Post[] = [];
-    
-    for (const event of events) {
-      try {
-        const postData = JSON.parse(event.content);
-        
-        // Extract references to other posts
-        const references = event.tags
-          .filter((tag: string[]) => tag[0] === 'e' && tag[3] === 'reply')
-          .map((tag: string[]) => tag[1]);
-        
-        // Extract image URLs
-        const images = event.tags
-          .filter((tag: string[]) => tag[0] === 'image')
-          .map((tag: string[]) => tag[1]);
-        
-        const post: Post = {
-          id: event.id,
-          threadId,
-          content: postData.content,
-          images: images.length > 0 ? images : postData.images || [],
-          media: postData.media || [],
-          authorPubkey: event.pubkey,
-          createdAt: event.created_at,
-          references
+    try {
+      // First try with specific filter
+      const specificEvents = await pool.querySync(relayUrls, specificFilter);
+      console.log(`Found ${specificEvents.length} replies with specific filter`);
+      
+      // Also try a more general approach if we found few or no replies
+      let allEvents = specificEvents;
+      
+      if (specificEvents.length < 2) {
+        // Try a more general filter - get recent posts and filter manually
+        const generalFilter: Filter = {
+          kinds: [KIND.POST],
+          limit: 100,
+          since: Math.floor(Date.now() / 1000) - 60 * 60 * 24 * 7 // Last week
         };
         
-        posts.push(post);
-        localCache.addPost(post);
-      } catch (error) {
-        console.error("Failed to parse post event", event, error);
+        const generalEvents = await pool.querySync(relayUrls, generalFilter);
+        console.log(`Found ${generalEvents.length} recent posts with general filter`);
+        
+        // Filter manually to find posts that reference this thread
+        const manuallyFilteredEvents = generalEvents.filter(event => {
+          const hasReference = event.tags.some((tag: string[]) => 
+            tag[0] === 'e' && tag[1] === threadId
+          );
+          return hasReference;
+        });
+        
+        console.log(`Found ${manuallyFilteredEvents.length} additional replies after manual filtering`);
+        
+        // Combine results, ensuring no duplicates
+        const eventIds = new Set(specificEvents.map(e => e.id));
+        for (const event of manuallyFilteredEvents) {
+          if (!eventIds.has(event.id)) {
+            allEvents.push(event);
+            eventIds.add(event.id);
+          }
+        }
       }
+      
+      // Parse post events
+      const posts: Post[] = [];
+      
+      for (const event of allEvents) {
+        try {
+          // First check if it's actually a reply to this thread
+          const isReplyToThread = event.tags.some((tag: string[]) => 
+            tag[0] === 'e' && tag[1] === threadId
+          );
+          
+          if (!isReplyToThread) {
+            console.log(`Skipping post ${event.id} - not a reply to thread ${threadId}`);
+            continue;
+          }
+          
+          let postContent = '';
+          
+          try {
+            const postData = JSON.parse(event.content);
+            postContent = postData.content || '';
+          } catch (parseError) {
+            // If parsing fails, use the raw content
+            postContent = event.content;
+          }
+          
+          // Extract references to other posts
+          const references = event.tags
+            .filter((tag: string[]) => tag[0] === 'e')
+            .map((tag: string[]) => tag[1]);
+          
+          // Extract image URLs
+          const images = event.tags
+            .filter((tag: string[]) => tag[0] === 'image')
+            .map((tag: string[]) => tag[1]);
+          
+          const post: Post = {
+            id: event.id,
+            threadId,
+            content: postContent,
+            images: images,
+            media: [],  // Will be populated if available
+            authorPubkey: event.pubkey,
+            createdAt: event.created_at,
+            references
+          };
+          
+          // Try to extract additional media if available in JSON content
+          try {
+            const postData = JSON.parse(event.content);
+            if (postData.images && Array.isArray(postData.images)) {
+              post.images = [...new Set([...post.images, ...postData.images])]; 
+            }
+            if (postData.media && Array.isArray(postData.media)) {
+              post.media = postData.media;
+            }
+          } catch (error) {
+            // Ignore JSON parsing errors, we've already handled the content
+          }
+          
+          posts.push(post);
+          localCache.addPost(post);
+        } catch (error) {
+          console.error("Failed to parse post event", event, error);
+        }
+      }
+      
+      console.log(`Returning ${posts.length} total posts for thread ${threadId}`);
+      return posts.sort((a, b) => a.createdAt - b.createdAt);
+    } catch (error) {
+      console.error(`Error fetching posts for thread ${threadId}:`, error);
+      return [];
     }
-    
-    return posts.sort((a, b) => a.createdAt - b.createdAt);
   }, [pool, relays]);
 
   // Create a new thread

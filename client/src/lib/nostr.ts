@@ -487,10 +487,11 @@ export const createPostEvent = async (
   // For event tags, we must ensure the thread ID is a proper event ID (32 bytes hex)
   const tags = [];
   
-  // Add the root reference first
-  // Properly validate that the thread ID is a valid 64-character hex string
+  // Always add the thread ID as both a root reference and a thread tag
+  // This ensures maximum compatibility with different relay indexing strategies
   if (/^[0-9a-fA-F]{64}$/.test(threadId)) {
     tags.push(["e", threadId, "", "root"]);
+    tags.push(["thread", threadId]); // Also add as a thread tag for additional indexing
   } else {
     // For non-standard IDs, use a custom tag
     tags.push(["thread", threadId]);
@@ -500,8 +501,17 @@ export const createPostEvent = async (
   for (const id of replyToIds) {
     // Validate it's a valid event ID
     if (/^[0-9a-fA-F]{64}$/.test(id)) {
-      tags.push(["e", id, "", "reply"]);
+      // Skip if this is the thread ID (already added as root)
+      if (id !== threadId) {
+        tags.push(["e", id, "", "reply"]);
+      }
     }
+  }
+  
+  // Add board tag if we can extract it from the thread ID or replyToIds
+  const boardTag = localStorage.getItem(`board-for-thread-${threadId}`);
+  if (boardTag) {
+    tags.push(["board", boardTag]);
   }
   
   // Add image tags for backward compatibility
@@ -516,6 +526,9 @@ export const createPostEvent = async (
       tags.push(["media", item.url]);
     });
   }
+  
+  // Log the tags for debugging
+  console.log("Creating post with tags:", JSON.stringify(tags));
   
   return await createEvent(KIND.POST, postContent, tags, identity);
 };
