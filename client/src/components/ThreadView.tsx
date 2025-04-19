@@ -429,7 +429,7 @@ export const ThreadView: React.FC<ThreadViewProps> = ({ threadId }) => {
       </div>
       
       {/* Navigation and Search Buttons - Always Fixed on Screen */}
-      <div className="fixed right-6 bottom-24 flex flex-col space-y-4 z-[100]">
+      <div className="fixed-nav-buttons">
         {/* Search Dialog - Only enabled when a thread is loaded */}
         <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
           <DialogTrigger asChild>

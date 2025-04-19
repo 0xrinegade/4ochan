@@ -1235,3 +1235,15 @@
     box-sizing: border-box;
     pointer-events: none;
   }
+
+/* Fixed navigation buttons - always visible */
+.fixed-nav-buttons {
+  position: fixed !important;
+  bottom: 80px !important;
+  right: 20px !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  pointer-events: auto !important;
+}
