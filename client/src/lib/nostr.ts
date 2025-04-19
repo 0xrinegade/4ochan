@@ -42,9 +42,30 @@ export const getOrCreateIdentity = (): NostrIdentity => {
 
   if (savedIdentity) {
     try {
-      // The saved identity might have the private key as a hex string
+      // Parse the saved identity
       const parsed = JSON.parse(savedIdentity);
-      return parsed;
+      
+      // Check if we have a private key in the parsed identity
+      if (parsed.privkey && typeof parsed.privkey === 'string') {
+        // Convert the hex string back to Uint8Array
+        const privkeyBytes = new Uint8Array(
+          parsed.privkey.match(/.{1,2}/g)?.map((byte: string) => parseInt(byte, 16)) || []
+        );
+        
+        return {
+          ...parsed,
+          privkey: privkeyBytes
+        };
+      }
+      
+      // If privkey is missing, we'll generate a new identity
+      if (!parsed.privkey && parsed.pubkey) {
+        console.warn("Identity has pubkey but no privkey, generating new identity");
+        // Fall through to generate a new identity
+      } else {
+        // If the privkey is already a Uint8Array or doesn't exist (legacy), return as is
+        return parsed;
+      }
     } catch (error) {
       console.error("Failed to parse saved identity", error);
     }
@@ -60,11 +81,22 @@ export const getOrCreateIdentity = (): NostrIdentity => {
     profile: { name: "Anonymous" }
   };
   
-  // Store a serializable version
-  const serializableIdentity = {
-    ...identity,
-    privkey: undefined // Don't store private key in localStorage for security
-  };
+  // Store a serializable version that includes the private key (needed for signing)
+  let serializableIdentity = {};
+  
+  // Convert privkey to hex string for storage if it's a Uint8Array
+  if (privkey instanceof Uint8Array) {
+    const privkeyHex = Array.from(privkey)
+      .map((b: number) => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    serializableIdentity = {
+      ...identity,
+      privkey: privkeyHex
+    };
+  } else {
+    serializableIdentity = identity;
+  }
   
   localStorage.setItem("nostr-identity", JSON.stringify(serializableIdentity));
   return identity;
@@ -72,12 +104,28 @@ export const getOrCreateIdentity = (): NostrIdentity => {
 
 // Save identity to localStorage
 export const saveIdentity = (identity: NostrIdentity) => {
-  // Create a serializable version of the identity
-  const serializableIdentity = {
-    ...identity,
-    // Don't store private key for security
-    privkey: undefined
-  };
+  // Create a serializable version of the identity with private key
+  let serializableIdentity = {};
+  
+  // Convert privkey to hex string for storage if it's a Uint8Array
+  if (identity.privkey) {
+    if (identity.privkey instanceof Uint8Array) {
+      const privkeyHex = Array.from(identity.privkey)
+        .map((b: number) => b.toString(16).padStart(2, '0'))
+        .join('');
+      
+      serializableIdentity = {
+        ...identity,
+        privkey: privkeyHex
+      };
+    } else {
+      // Already in a serializable format
+      serializableIdentity = identity;
+    }
+  } else {
+    // No private key, just store what we have
+    serializableIdentity = identity;
+  }
   
   localStorage.setItem("nostr-identity", JSON.stringify(serializableIdentity));
 };
