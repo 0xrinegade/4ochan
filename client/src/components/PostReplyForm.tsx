@@ -450,14 +450,15 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
           return null;
         });
         
-        const uploadedMedia = (await Promise.all(uploadPromises)).filter(Boolean);
+        const uploadedMediaItems = (await Promise.all(uploadPromises))
+          .filter((item): item is MediaContent => item !== null);
         
-        if (uploadedMedia.length > 0) {
-          setUploadedMedia(prev => [...prev, ...uploadedMedia]);
+        if (uploadedMediaItems.length > 0) {
+          setUploadedMedia(prev => [...prev, ...uploadedMediaItems]);
           
           toast({
             title: "Files Uploaded",
-            description: `${uploadedMedia.length} files have been uploaded and will be included with your post.`,
+            description: `${uploadedMediaItems.length} files have been uploaded and will be included with your post.`,
           });
         } else {
           toast({
@@ -649,22 +650,87 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
   };
 
   return (
-    <form onSubmit={handleSubmit} className="border border-black p-3 bg-card">
-      <div className="mb-2">
-        <div className="text-sm font-bold mb-1 bg-primary text-white p-1">YOUR MESSAGE</div>
-        <Textarea
-          ref={textareaRef}
-          value={replyText}
-          onChange={(e) => {
-            setReplyText(e.target.value);
-          }}
-          onPaste={handlePaste}
-          placeholder="What's your response? Markdown and Mermaid diagrams supported. You can also paste images directly."
-          rows={3}
-          className="w-full p-2 border border-black rounded-none bg-background text-foreground text-sm font-mono"
-          disabled={isSubmitting || isProcessing}
-        />
-      </div>
+    <form 
+      onSubmit={handleSubmit} 
+      className="border border-black p-3 bg-card"
+    >
+      {/* Tabs for Edit/Preview */}
+      <Tabs defaultValue="edit" value={activeTab} onValueChange={setActiveTab} className="mb-2">
+        <TabsList className="w-full grid grid-cols-2 mb-2">
+          <TabsTrigger value="edit" className="text-xs">Edit Message</TabsTrigger>
+          <TabsTrigger value="preview" className="text-xs">Preview</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="edit" className="space-y-2 m-0 p-0">
+          {/* Drop zone for files */}
+          <div 
+            ref={dropZoneRef}
+            className={`relative border-2 ${dragActive ? 'border-primary border-dashed bg-accent/20' : 'border-background'}`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
+            <div className="text-sm font-bold mb-1 bg-primary text-white p-1">YOUR MESSAGE</div>
+            <Textarea
+              ref={textareaRef}
+              value={replyText}
+              onChange={(e) => {
+                setReplyText(e.target.value);
+              }}
+              onPaste={handlePaste}
+              placeholder="What's your response? Markdown and Mermaid diagrams supported. You can also paste images directly."
+              rows={3}
+              className="w-full p-2 border border-black rounded-none bg-background text-foreground text-sm font-mono"
+              disabled={isSubmitting || isProcessing}
+            />
+            
+            {dragActive && (
+              <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                <div className="text-center p-4 rounded-lg">
+                  <UploadIcon className="h-8 w-8 mx-auto mb-2 text-primary" />
+                  <p className="text-sm font-medium">Drop files to upload</p>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Keyboard shortcuts indicator */}
+          <div className="flex justify-between items-center">
+            <div className="text-xs text-muted-foreground">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 px-1.5 text-xs"
+                onClick={() => setHasKeyboardShortcuts(!hasKeyboardShortcuts)}
+              >
+                <KeyboardIcon className="h-3 w-3 mr-1" />
+                Shortcuts: {hasKeyboardShortcuts ? 'On' : 'Off'}
+              </Button>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {hasKeyboardShortcuts && (
+                <span>Ctrl+B (bold), Ctrl+I (italic), Ctrl+K (link), Ctrl+E (emoji)</span>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="preview" className="space-y-2 m-0 p-0">
+          <div className="border border-black p-3 bg-background min-h-[120px] prose prose-sm max-w-none">
+            {replyText ? (
+              <div className="markdown-preview">
+                {previewContent}
+              </div>
+            ) : (
+              <div className="text-muted-foreground text-center py-4">
+                <p>Your formatted message preview will appear here</p>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
       
       {/* Formatting Options Toggle */}
       <div className="flex mb-2 space-x-2">
@@ -930,6 +996,229 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
                 </TooltipTrigger>
                 <TooltipContent>
                   <p className="text-xs">Music Notes</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            {/* Emoji Picker Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                      >
+                        <SmileIcon className="h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent side="top" className="w-full p-0">
+                      <EmojiPicker
+                        onEmojiClick={handleEmojiSelect}
+                        lazyLoadEmojis={true}
+                        searchPlaceHolder="Search emoji..."
+                        width="100%"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Add Emoji</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            {/* Color Text Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Popover open={showColorPicker} onOpenChange={setShowColorPicker}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        style={{ color: selectedColor }}
+                      >
+                        <PaletteIcon className="h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent side="top" className="w-64">
+                      <div className="space-y-2">
+                        <Label>Select Color</Label>
+                        <HexColorPicker 
+                          color={selectedColor} 
+                          onChange={setSelectedColor} 
+                          style={{ width: '100%' }}
+                        />
+                        <div className="flex items-center mt-2">
+                          <Input 
+                            value={selectedColor} 
+                            onChange={(e) => setSelectedColor(e.target.value)}
+                            className="flex-1 mr-2" 
+                          />
+                          <Button 
+                            type="button" 
+                            onClick={() => {
+                              formatText('color');
+                              setShowColorPicker(false);
+                            }}
+                          >
+                            Apply
+                          </Button>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Color Text</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            {/* Spoiler Tag Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => formatText('spoiler')}
+                  >
+                    <EyeOffIcon className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Spoiler Tag</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            {/* LaTeX Equation Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => formatText('latex')}
+                  >
+                    <Sigma className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">LaTeX Equation</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            {/* Timestamp Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => formatText('timestamp')}
+                  >
+                    <ClockIcon className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Insert Timestamp</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            {/* Quote Reply Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => formatText('quote-reply')}
+                  >
+                    <MessageSquareQuote className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Quote Reply</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            {/* Templates Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Popover open={showTemplates} onOpenChange={setShowTemplates}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                      >
+                        <FileText className="h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent side="top" className="w-56">
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-sm">Message Templates</h4>
+                        <div className="grid gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="justify-start text-xs"
+                            onClick={() => applyTemplate('introduction')}
+                          >
+                            Introduction
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="justify-start text-xs"
+                            onClick={() => applyTemplate('question')}
+                          >
+                            Ask a Question
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="justify-start text-xs"
+                            onClick={() => applyTemplate('analysis')}
+                          >
+                            Analysis Report
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="justify-start text-xs"
+                            onClick={() => applyTemplate('event')}
+                          >
+                            Event Announcement
+                          </Button>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Use Template</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
