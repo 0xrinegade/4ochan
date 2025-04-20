@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -20,10 +20,26 @@ import {
   SparklesIcon,
   ImageIcon as ImageEmbedIcon,
   Table2Icon,
-  MusicIcon
+  MusicIcon,
+  SmileIcon,
+  ClockIcon,
+  MessageSquareQuote,
+  FileText,
+  EyeIcon,
+  KeyboardIcon,
+  UploadIcon,
+  Sigma,
+  PaletteIcon,
+  EyeOffIcon
 } from "lucide-react";
 import { DrawingBoard } from "@/components/DrawingBoard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import EmojiPicker from 'emoji-picker-react';
+import { PopoverContent, Popover, PopoverTrigger } from "@/components/ui/popover";
+import { HexColorPicker } from "react-colorful";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface PostReplyFormProps {
   onSubmitReply: (content: string, imageUrls: string[], media?: MediaContent[]) => Promise<void>;
@@ -51,7 +67,16 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
   const [showMediaUploader, setShowMediaUploader] = useState(false);
   const [showDrawingBoard, setShowDrawingBoard] = useState(false);
   const [showFormatOptions, setShowFormatOptions] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [activeTab, setActiveTab] = useState("edit");
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [selectedColor, setSelectedColor] = useState("#000000");
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [hasKeyboardShortcuts, setHasKeyboardShortcuts] = useState(true);
+  
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   // Legacy file upload handler (for backward compatibility)
@@ -316,6 +341,28 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
         formattedText = `🎵 ${selectedText || 'Musical notation or lyrics'} 🎵`;
         cursorOffset = selectedText ? 0 : 25;
         break;
+      case 'color':
+        formattedText = `<span style="color:${selectedColor}">${selectedText || `colored text`}</span>`;
+        cursorOffset = selectedText ? 0 : 12;
+        break;
+      case 'spoiler':
+        formattedText = `<details><summary>Spoiler</summary>${selectedText || 'Hidden content'}</details>`;
+        cursorOffset = selectedText ? 0 : 15;
+        break;
+      case 'latex':
+        formattedText = `$${selectedText || 'E = mc^2'}$`;
+        cursorOffset = selectedText ? 0 : 10;
+        break;
+      case 'timestamp':
+        const now = new Date();
+        formattedText = `[${now.toLocaleString()}]`;
+        cursorOffset = 0;
+        break;
+      case 'quote-reply':
+        // This would require knowledge of what's being replied to
+        formattedText = `> [Reply to previous message]\n> ${selectedText || 'Reply context goes here'}\n\n`;
+        cursorOffset = selectedText ? 0 : 22;
+        break;
       default:
         return;
     }
@@ -332,6 +379,169 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
     }, 0);
   };
 
+  // Add emoji to the text
+  const handleEmojiSelect = (emoji: { unified: string, emoji: string }) => {
+    if (!textareaRef.current) return;
+    
+    const textarea = textareaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    
+    // Insert emoji at cursor position
+    const newValue = replyText.substring(0, start) + emoji.emoji + replyText.substring(end);
+    setReplyText(newValue);
+    
+    // Update cursor position after emoji
+    setTimeout(() => {
+      textarea.focus();
+      const newPosition = start + emoji.emoji.length;
+      textarea.setSelectionRange(newPosition, newPosition);
+    }, 0);
+    
+    // Hide emoji picker after selection
+    setShowEmojiPicker(false);
+  };
+  
+  // Handle file dropping
+  const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+  
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setIsUploading(true);
+      const files = Array.from(e.dataTransfer.files);
+      
+      try {
+        const uploadPromises = files.map(async (file) => {
+          if (file.type.startsWith('image/')) {
+            // Read the file as data URL
+            const dataUrl = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = (e) => resolve(e.target?.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+            
+            // Upload image
+            const imageUrl = await uploadImage(dataUrl);
+            
+            // Create a media object for the dropped file
+            const media: MediaContent = {
+              id: `dropped-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              url: imageUrl,
+              type: 'image',
+              name: file.name,
+              size: file.size,
+            };
+            
+            return media;
+          }
+          return null;
+        });
+        
+        const uploadedMedia = (await Promise.all(uploadPromises)).filter(Boolean);
+        
+        if (uploadedMedia.length > 0) {
+          setUploadedMedia(prev => [...prev, ...uploadedMedia]);
+          
+          toast({
+            title: "Files Uploaded",
+            description: `${uploadedMedia.length} files have been uploaded and will be included with your post.`,
+          });
+        } else {
+          toast({
+            title: "No Valid Files",
+            description: "No valid image files were found in the drop.",
+          });
+        }
+      } catch (error) {
+        console.error("Error processing dropped files:", error);
+        toast({
+          title: "Upload Failed",
+          description: "Failed to process your dropped files.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+  
+  // Add templated content
+  const applyTemplate = (templateName: string) => {
+    let templateContent = '';
+    
+    switch (templateName) {
+      case 'introduction':
+        templateContent = `## Hello everyone!\nI'm new here and wanted to introduce myself. I'm interested in [topic] and looking forward to engaging with this community!`;
+        break;
+      case 'question':
+        templateContent = `## Question about [topic]\n\nI've been wondering about [question details]. Has anyone had experience with this?\n\nAny insights would be greatly appreciated!`;
+        break;
+      case 'analysis':
+        templateContent = `# Analysis of [topic]\n\n## Background\n[Background information]\n\n## Key Points\n- Point 1\n- Point 2\n- Point 3\n\n## Conclusion\n[Your conclusion]`;
+        break;
+      case 'event':
+        templateContent = `# Event Announcement\n\n**Event:** [Event Name]\n**Date:** [Date]\n**Time:** [Time]\n**Location:** [Location]\n\n## Details\n[Event description]\n\n## How to Join\n[Instructions]`;
+        break;
+      default:
+        return;
+    }
+    
+    setReplyText(templateContent);
+    setShowTemplates(false);
+  };
+  
+  // Set up keyboard shortcuts
+  useEffect(() => {
+    if (!hasKeyboardShortcuts) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only process if ctrl/cmd key is pressed
+      if (!e.ctrlKey && !e.metaKey) return;
+      
+      switch (e.key) {
+        case 'b': // Bold
+          e.preventDefault();
+          formatText('bold');
+          break;
+        case 'i': // Italic
+          e.preventDefault();
+          formatText('italic');
+          break;
+        case 'k': // Link (common in many markdown editors)
+          e.preventDefault();
+          formatText('link');
+          break;
+        case 'e': // Emoji picker
+          e.preventDefault();
+          setShowEmojiPicker(prev => !prev);
+          break;
+        default:
+          break;
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [hasKeyboardShortcuts, replyText]);
+  
+  // Add a rendered preview of the markdown content
+  const previewContent = useMemo(() => {
+    return replyText;
+  }, [replyText]);
+  
   const handleProcessClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     await processWithGPT(replyText);
