@@ -5,6 +5,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vs, vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import mermaid from 'mermaid';
 import { PostReference } from './PostReference';
+import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 
 // TypeScript declaration for Vivliostyle
 declare module '@vivliostyle/viewer';
