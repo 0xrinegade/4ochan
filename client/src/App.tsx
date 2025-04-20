@@ -145,6 +145,9 @@ function AppRouter() {
         <Route path="/faq">
           <FAQ />
         </Route>
+        <Route path="/music-test">
+          <MusicTest />
+        </Route>
         <Route>
           <NotFound />
         </Route>
