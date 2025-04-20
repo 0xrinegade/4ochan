@@ -18,7 +18,9 @@ import {
   LinkIcon,
   Heading1Icon,
   SparklesIcon,
-  ImageIcon as ImageEmbedIcon
+  ImageIcon as ImageEmbedIcon,
+  Table2Icon,
+  MusicIcon
 } from "lucide-react";
 import { DrawingBoard } from "@/components/DrawingBoard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -305,6 +307,14 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
       case 'mermaid':
         formattedText = `\`\`\`mermaid\ngraph TD\n    A[${selectedText || 'Start'}] --> B[End]\n\`\`\``;
         cursorOffset = selectedText ? 0 : 35;
+        break;
+      case 'table':
+        formattedText = `| Header 1 | Header 2 | Header 3 |\n| --- | --- | --- |\n| Row 1, Col 1 | Row 1, Col 2 | Row 1, Col 3 |\n| Row 2, Col 1 | Row 2, Col 2 | Row 2, Col 3 |`;
+        cursorOffset = 0;
+        break;
+      case 'music':
+        formattedText = `🎵 ${selectedText || 'Musical notation or lyrics'} 🎵`;
+        cursorOffset = selectedText ? 0 : 25;
         break;
       default:
         return;
@@ -672,6 +682,44 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
                 </TooltipTrigger>
                 <TooltipContent>
                   <p className="text-xs">Mermaid Diagram</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => formatText('table')}
+                  >
+                    <Table2Icon className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Markdown Table</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => formatText('music')}
+                  >
+                    <MusicIcon className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Music Notes</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
