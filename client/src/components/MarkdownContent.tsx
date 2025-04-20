@@ -5,7 +5,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vs, vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import mermaid from 'mermaid';
 import { PostReference } from './PostReference';
-import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
+import MusicNotation from './MusicNotation';
 
 // TypeScript declaration for Vivliostyle
 declare module '@vivliostyle/viewer';
@@ -805,6 +805,10 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, class
                 
                 case 'mermaid':
                   return <MermaidDiagram chart={codeContent} isDarkMode={isDarkMode} />;
+                
+                case 'musicxml':
+                case 'music':
+                  return <MusicNotation musicXml={codeContent} isDarkMode={isDarkMode} />;
                 
                 default:
                   // Default syntax highlighting for other languages

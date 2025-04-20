@@ -1517,3 +1517,50 @@ html[data-accessibility-mode="simplified"] input {
 .tree-node-content.selected {
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
 }
+
+/* Music Notation styles */
+.music-notation-container {
+  @apply my-4 border border-border rounded-md overflow-hidden;
+  background-color: hsl(var(--card));
+}
+
+.music-notation-header {
+  @apply flex justify-between items-center p-2 border-b border-border bg-muted;
+}
+
+.music-notation-title {
+  @apply font-semibold text-sm;
+}
+
+.music-notation-action-buttons {
+  @apply flex gap-2;
+}
+
+.music-notation-action-button {
+  @apply px-2 py-1 text-xs rounded-md bg-primary hover:bg-primary/90 transition-colors;
+}
+
+.music-notation-loading {
+  @apply flex flex-col items-center justify-center p-8 text-muted-foreground;
+}
+
+.music-notation-loading-spinner {
+  @apply w-8 h-8 border-2 border-t-primary rounded-full animate-spin mb-2;
+}
+
+.music-notation-error {
+  @apply p-4 bg-destructive/10 text-destructive border border-destructive/20 rounded m-2;
+}
+
+.music-notation-display {
+  @apply p-4 min-h-[200px];
+}
+
+.music-notation-display.loading {
+  @apply opacity-20;
+}
+
+/* OpenSheetMusicDisplay specific styles */
+.osmd-container {
+  @apply w-full h-full;
+}
