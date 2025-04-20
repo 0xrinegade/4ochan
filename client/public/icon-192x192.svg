@@ -1,6 +1,7 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="192" height="192" fill="#800000"/>
-  <text x="96" y="96" font-family="Arial Black, sans-serif" font-size="64" font-weight="800" text-anchor="middle" fill="white">4O</text>
-  <text x="96" y="136" font-family="Arial Black, sans-serif" font-size="32" font-weight="800" text-anchor="middle" fill="white">CHAN</text>
+  <rect width="192" height="192" rx="32" fill="#112036"/>
+  <rect x="48" y="64" width="96" height="64" rx="4" fill="#88ACEB"/>
+  <path d="M70 48L80 78L90 48H100L110 78L120 48" stroke="#85A9E9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M60 108L75 138L90 108L105 138L120 108" stroke="#85A9E9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
