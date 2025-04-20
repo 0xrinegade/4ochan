@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vs, vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import DOMPurify from 'dompurify';
 
 interface MusicNotationProps {
   musicXml: string;
@@ -49,10 +50,19 @@ const MusicNotation: React.FC<MusicNotationProps> = ({ musicXml, isDarkMode }) =
         return input.trim().startsWith('<?xml') || input.trim().startsWith('<score-partwise');
       };
       
-      // Load the music XML
+      // Load the music XML with sanitization
       if (isXml(musicXml)) {
-        // It's direct XML content
-        osmd.load(musicXml)
+        // It's direct XML content - sanitize it first
+        // Use sanitization to remove potentially malicious elements
+        const sanitizedXml = DOMPurify.sanitize(musicXml, {
+          WHOLE_DOCUMENT: true,
+          ADD_TAGS: ['score-partwise', 'part-list', 'score-part', 'part', 'measure', 'attributes', 'note'],
+          ADD_ATTR: ['id', 'number', 'type', 'value', 'default-x', 'default-y'],
+          RETURN_DOM: false,
+          RETURN_DOM_FRAGMENT: false
+        });
+        
+        osmd.load(sanitizedXml)
           .then(() => {
             osmd.render();
             setIsLoading(false);
@@ -86,7 +96,17 @@ const MusicNotation: React.FC<MusicNotationProps> = ({ musicXml, isDarkMode }) =
           try {
             // Assuming base64 encoded XML
             const decoded = atob(musicXml.replace(/^data:.*;base64,/, ''));
-            osmd.load(decoded)
+            
+            // Sanitize the decoded XML
+            const sanitizedXml = DOMPurify.sanitize(decoded, {
+              WHOLE_DOCUMENT: true,
+              ADD_TAGS: ['score-partwise', 'part-list', 'score-part', 'part', 'measure', 'attributes', 'note'],
+              ADD_ATTR: ['id', 'number', 'type', 'value', 'default-x', 'default-y'],
+              RETURN_DOM: false,
+              RETURN_DOM_FRAGMENT: false
+            });
+            
+            osmd.load(sanitizedXml)
               .then(() => {
                 osmd.render();
                 setIsLoading(false);

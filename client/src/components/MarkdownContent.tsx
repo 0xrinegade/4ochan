@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vs, vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import mermaid from 'mermaid';
+import DOMPurify from 'dompurify';
 import { PostReference } from './PostReference';
 import MusicNotation from './MusicNotation';
 
@@ -392,11 +393,11 @@ interface MarkdownContentProps {
   threadId?: string;
 }
 
-// Initialize mermaid
+// Initialize mermaid with secure settings
 mermaid.initialize({
   startOnLoad: true,
   theme: 'default',
-  securityLevel: 'loose',
+  securityLevel: 'strict', // Upgraded from 'loose' to 'strict' for better security
   fontFamily: 'Libertarian, monospace',
 });
 
@@ -658,11 +659,11 @@ const MermaidDiagram: React.FC<{ chart: string, isDarkMode: boolean }> = ({ char
   const [rendered, setRendered] = useState(false);
   
   useEffect(() => {
-    // Initialize Mermaid with the correct theme
+    // Initialize Mermaid with the correct theme and secure settings
     mermaid.initialize({
       startOnLoad: true,
       theme: isDarkMode ? 'dark' : 'default',
-      securityLevel: 'loose',
+      securityLevel: 'strict', // Upgraded from 'loose' to 'strict' for better security
       fontFamily: 'Libertarian, monospace',
     });
     
@@ -758,12 +759,19 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, class
     return () => observer.disconnect();
   }, []);
   
-  // Process post references in the content (>>postID format)
+  // Process and sanitize content, including handling post references (>>postID format)
   const processedContent = React.useMemo(() => {
     if (!content) return '';
     
+    // First sanitize the content with DOMPurify to remove any malicious scripts
+    // This ensures that even if other processing steps have issues, the content is pre-sanitized
+    const sanitizedContent = DOMPurify.sanitize(content, {
+      ALLOWED_TAGS: [], // We're working with markdown, so strip all HTML tags for processing
+      ALLOWED_ATTR: []  // Similarly, strip all attributes
+    });
+    
     // Replace >>postID with a special marker that ReactMarkdown won't mess with
-    return content.replace(/>>([\w-]+)/g, (match, postId) => {
+    return sanitizedContent.replace(/>>([\w-]+)/g, (match, postId) => {
       return `[${match}](#__POSTREFERENCE__${postId}__)`;
     });
   }, [content]);
