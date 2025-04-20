@@ -6,8 +6,22 @@ import { uploadImage } from "@/lib/nostr";
 import { apiRequest } from "@/lib/queryClient";
 import { MediaUploader } from "@/components/MediaUploader";
 import { MediaContent } from "@/types";
-import { ImageIcon, PencilIcon } from "lucide-react";
+import { 
+  ImageIcon, 
+  PencilIcon, 
+  BoldIcon, 
+  ItalicIcon, 
+  UnderlineIcon, 
+  CodeIcon,
+  QuoteIcon,
+  ListIcon,
+  LinkIcon,
+  Heading1Icon,
+  SparklesIcon,
+  ImageIcon as ImageEmbedIcon
+} from "lucide-react";
 import { DrawingBoard } from "@/components/DrawingBoard";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PostReplyFormProps {
   onSubmitReply: (content: string, imageUrls: string[], media?: MediaContent[]) => Promise<void>;
@@ -34,6 +48,7 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
   const [isUploading, setIsUploading] = useState(false);
   const [showMediaUploader, setShowMediaUploader] = useState(false);
   const [showDrawingBoard, setShowDrawingBoard] = useState(false);
+  const [showFormatOptions, setShowFormatOptions] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
@@ -184,13 +199,30 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
       });
 
       if (response.success) {
+        // Store the original message in case user wants to revert
+        const originalMessage = replyText;
+        
+        // Update the text area with the enhanced message
+        setReplyText(response.processedText);
         setProcessedText(response.processedText);
         setIsProcessed(true);
         
-        // Show success message
+        // Show success message with option to revert
         toast({
-          title: "Message Ready",
-          description: "Your message is ready to post.",
+          title: "Message Enhanced",
+          description: 
+            <div className="flex flex-col space-y-2">
+              <span>Your message has been enhanced by GPT-4o!</span>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setReplyText(originalMessage)}
+                className="text-xs"
+              >
+                Revert to original
+              </Button>
+            </div>,
+          duration: 5000,
         });
         
         return true;
@@ -213,6 +245,81 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  // Format text with markdown
+  const formatText = (format: string) => {
+    if (!textareaRef.current) return;
+    
+    const textarea = textareaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = replyText.substring(start, end);
+    
+    let formattedText = '';
+    let cursorOffset = 0;
+    
+    switch (format) {
+      case 'bold':
+        formattedText = `**${selectedText || 'bold text'}**`;
+        cursorOffset = selectedText ? 0 : 10;
+        break;
+      case 'italic':
+        formattedText = `*${selectedText || 'italic text'}*`;
+        cursorOffset = selectedText ? 0 : 12;
+        break;
+      case 'underline':
+        formattedText = `<u>${selectedText || 'underlined text'}</u>`;
+        cursorOffset = selectedText ? 0 : 16;
+        break;
+      case 'code':
+        formattedText = `\`${selectedText || 'code'}\``;
+        cursorOffset = selectedText ? 0 : 5;
+        break;
+      case 'codeblock':
+        formattedText = `\`\`\`\n${selectedText || 'code block'}\n\`\`\``;
+        cursorOffset = selectedText ? 0 : 10;
+        break;
+      case 'quote':
+        formattedText = `> ${selectedText || 'quoted text'}`;
+        cursorOffset = selectedText ? 0 : 12;
+        break;
+      case 'list':
+        formattedText = selectedText ? 
+          selectedText.split('\n').map(line => `- ${line}`).join('\n') : 
+          '- list item\n- another item';
+        cursorOffset = selectedText ? 0 : 22;
+        break;
+      case 'link':
+        formattedText = `[${selectedText || 'link text'}](url)`;
+        cursorOffset = selectedText ? 0 : 16;
+        break;
+      case 'heading':
+        formattedText = `# ${selectedText || 'Heading'}`;
+        cursorOffset = selectedText ? 0 : 8;
+        break;
+      case 'image':
+        formattedText = `![${selectedText || 'alt text'}](image-url)`;
+        cursorOffset = selectedText ? 0 : 19;
+        break;
+      case 'mermaid':
+        formattedText = `\`\`\`mermaid\ngraph TD\n    A[${selectedText || 'Start'}] --> B[End]\n\`\`\``;
+        cursorOffset = selectedText ? 0 : 35;
+        break;
+      default:
+        return;
+    }
+    
+    // Update the text area value
+    const newValue = replyText.substring(0, start) + formattedText + replyText.substring(end);
+    setReplyText(newValue);
+    
+    // Update cursor position (after React has updated the DOM)
+    setTimeout(() => {
+      textarea.focus();
+      const newPosition = start + formattedText.length - cursorOffset;
+      textarea.setSelectionRange(newPosition, newPosition);
+    }, 0);
   };
 
   const handleProcessClick = async (e: React.MouseEvent) => {
@@ -338,6 +445,242 @@ export const PostReplyForm: React.FC<PostReplyFormProps> = ({ onSubmitReply, thr
           disabled={isSubmitting || isProcessing}
         />
       </div>
+      
+      {/* Formatting Options Toggle */}
+      <div className="flex mb-2 space-x-2">
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1 border-black text-foreground hover:bg-accent rounded-none text-xs"
+          onClick={() => setShowFormatOptions(!showFormatOptions)}
+          disabled={isSubmitting}
+        >
+          {showFormatOptions ? "Hide Formatting Options" : "Show Formatting Options"}
+        </Button>
+        
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 border-black bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-none text-xs"
+                onClick={handleProcessClick}
+                disabled={isSubmitting || isProcessing || !replyText.trim()}
+              >
+                <SparklesIcon className="h-3 w-3 mr-1" />
+                Enhance with GPT-4o
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Process your message with OpenAI's GPT-4o to improve it</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+      
+      {/* Formatting Buttons */}
+      {showFormatOptions && (
+        <div className="mb-3 p-2 border border-black bg-background">
+          <div className="text-xs font-bold mb-2">Formatting Options</div>
+          <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-10 gap-1">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => formatText('bold')}
+                  >
+                    <BoldIcon className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Bold</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => formatText('italic')}
+                  >
+                    <ItalicIcon className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Italic</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => formatText('underline')}
+                  >
+                    <UnderlineIcon className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Underline</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => formatText('code')}
+                  >
+                    <CodeIcon className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Inline Code</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => formatText('codeblock')}
+                  >
+                    <CodeIcon className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Code Block</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => formatText('quote')}
+                  >
+                    <QuoteIcon className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Quote</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => formatText('list')}
+                  >
+                    <ListIcon className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">List</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => formatText('link')}
+                  >
+                    <LinkIcon className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Link</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => formatText('heading')}
+                  >
+                    <Heading1Icon className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Heading</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => formatText('mermaid')}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 6h16M4 12h16M4 18h12" />
+                    </svg>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Mermaid Diagram</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <p className="text-xs mt-2 text-muted-foreground">
+            Select text and click a format button, or click button to insert template.
+          </p>
+        </div>
+      )}
       
       {/* Media Uploader and Drawing Tool Toggles */}
       <div className="flex mb-2 space-x-2">
