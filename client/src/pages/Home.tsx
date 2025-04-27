@@ -14,6 +14,9 @@ import { Thread } from "@/types";
 import { ThreadPopularityHeatmap } from "@/components/ThreadPopularityHeatmap";
 import { AllThreadsHeatmap } from "@/components/AllThreadsHeatmap";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
+import { useMobileDetection } from "@/hooks/useMobileDetection";
+import MobileHome from "@/components/mobile/MobileHome";
+import MobileBoardView from "@/components/mobile/MobileBoardView";
 
 // Interface for user replies
 interface UserReply {
@@ -232,6 +235,46 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
     };
   }, [identity?.pubkey, connectedRelays]);
 
+  // Use mobile detection hook
+  const { isMobile } = useMobileDetection();
+  
+  // Handle board thread loading/refresh
+  const handleBoardRefresh = () => {
+    // Implementation will depend on how thread loading is currently done
+    // For now, this is a placeholder that will be filled in based on the existing code
+    toast({
+      title: "Refreshing threads",
+      description: "Getting the latest threads from connected relays",
+    });
+    
+    // If there's an existing function to refresh threads, call it here
+  };
+  
+  // Mobile UI rendering
+  if (isMobile) {
+    if (boardId && currentBoard) {
+      // Render mobile board view with threads
+      return (
+        <MobileBoardView
+          board={{
+            id: currentBoard.id,
+            name: currentBoard.name || "Board",
+            shortName: currentBoard.shortName || boardId,
+            description: currentBoard.description || "",
+            threadCount: currentBoard.threadCount || 0
+          }}
+          threads={[]} // This should be populated with actual threads
+          isLoading={loadingBoards} 
+          onRefresh={handleBoardRefresh}
+        />
+      );
+    }
+    
+    // Render mobile home screen
+    return <MobileHome />;
+  }
+  
+  // Desktop UI rendering
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto">

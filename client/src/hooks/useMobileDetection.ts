@@ -42,7 +42,8 @@ export const useMobileDetection = (): MobileDetectionResult => {
       // Check if app is in standalone mode (installed PWA)
       // or displayed with minimum-ui (iOS home screen)
       const displayMode = 
-        window.navigator.standalone || 
+        // @ts-ignore: Safari on iOS exposes this non-standard property
+        (window.navigator as any).standalone || 
         window.matchMedia('(display-mode: standalone)').matches ||
         window.matchMedia('(display-mode: minimal-ui)').matches;
         

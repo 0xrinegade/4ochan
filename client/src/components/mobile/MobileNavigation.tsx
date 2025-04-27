@@ -93,12 +93,12 @@ const MobileNavigation: React.FC = () => {
               onClick={toggleTheme} 
               className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-muted/50"
             >
-              {theme === 'dark' ? (
+              {currentTheme === 'dark' ? (
                 <Sun size={24} className="mb-2" />
               ) : (
                 <Moon size={24} className="mb-2" />
               )}
-              <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+              <span>{currentTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
             </button>
 
             <button 
