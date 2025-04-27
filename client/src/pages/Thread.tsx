@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "wouter";
 import { Header } from "@/components/Header";
 import { BoardSidebar } from "@/components/BoardSidebar";
@@ -6,6 +6,10 @@ import { ThreadView } from "@/components/ThreadView";
 import { useNostr } from "@/hooks/useNostr";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useMobileDetection } from "@/hooks/useMobileDetection";
+import MobileThreadView from "@/components/mobile/MobileThreadView";
+import { useThread } from "@/hooks/useThreads";
+import { Thread as ThreadType, Post } from "@/types";
 
 // Helper function to set Open Graph and Twitter Card meta tags
 const setOpenGraphTags = (title: string, description: string, imageUrl?: string) => {
@@ -79,7 +83,28 @@ const Thread: React.FC<ThreadProps> = ({ id, replyId }) => {
   
   const { connectedRelays, connect } = useNostr();
   const isMobile = useIsMobile();
+  const { isMobile: isMobilePwa } = useMobileDetection();
+
+  // For mobile version, fetch thread data
+  const { thread, posts, loading, refreshThread } = useThread(threadId);
+  const { likePost, unlikePost } = useNostr();
+  const [loadedThread, setLoadedThread] = useState<ThreadType | null>(null);
+  const [loadedPosts, setLoadedPosts] = useState<Post[]>([]);
   
+  // Set thread data for mobile view when it's available
+  useEffect(() => {
+    if (thread) {
+      setLoadedThread(thread);
+    }
+  }, [thread]);
+
+  // Set posts data for mobile view when it's available
+  useEffect(() => {
+    if (posts && posts.length > 0) {
+      setLoadedPosts(posts);
+    }
+  }, [posts]);
+
   // Set default OpenGraph tags on component mount
   useEffect(() => {
     // Set initial/default OpenGraph tags
@@ -96,6 +121,62 @@ const Thread: React.FC<ThreadProps> = ({ id, replyId }) => {
     // This will be updated later when the actual thread data loads
   }, [threadId, specificReplyId]);
 
+  // Handle like/unlike post actions for mobile view
+  const handleLikePost = async (postId: string) => {
+    try {
+      await likePost(postId);
+      // Update the local posts state to reflect the like
+      setLoadedPosts(posts.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            likes: (post.likes || 0) + 1,
+            likedByUser: true
+          };
+        }
+        return post;
+      }));
+    } catch (error) {
+      console.error("Failed to like post:", error);
+    }
+  };
+
+  const handleUnlikePost = async (postId: string) => {
+    try {
+      await unlikePost(postId);
+      // Update the local posts state to reflect the unlike
+      setLoadedPosts(posts.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            likes: Math.max((post.likes || 0) - 1, 0),
+            likedByUser: false
+          };
+        }
+        return post;
+      }));
+    } catch (error) {
+      console.error("Failed to unlike post:", error);
+    }
+  };
+
+  // Mobile PWA view
+  if (isMobilePwa && loadedThread) {
+    return (
+      <>
+        <MobileThreadView
+          thread={loadedThread}
+          posts={loadedPosts}
+          isLoading={loading}
+          onRefresh={refreshThread}
+          onLikePost={handleLikePost}
+          onUnlikePost={handleUnlikePost}
+        />
+      </>
+    );
+  }
+
+  // Desktop view
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
