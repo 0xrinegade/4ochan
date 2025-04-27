@@ -156,15 +156,26 @@ function AppRouter() {
   );
 }
 
+// Import mobile components
+import MobileWrapper from './components/mobile/MobileWrapper';
+import { useMobileDetection } from './hooks/useMobileDetection';
+
 function App() {
+  const { isMobile } = useMobileDetection();
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <NostrProvider>
           <NavigationProvider>
             <AccessibilityProvider>
-              <AppRouter />
-              <FloatingNavigation />
+              <MobileWrapper>
+                <AppRouter />
+              </MobileWrapper>
+              
+              {/* Only show floating navigation on desktop */}
+              {!isMobile && <FloatingNavigation />}
+              
               <PwaInstallBanner />
               <PwaOnboardingTour />
               <AccessibilityButton />

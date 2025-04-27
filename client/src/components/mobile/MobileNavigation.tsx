@@ -31,7 +31,7 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, active, onClick }) => {
 
 const MobileNavigation: React.FC = () => {
   const [location] = useLocation();
-  const { theme, setTheme } = useTheme();
+  const { currentTheme, setTheme } = useTheme();
   const { identity } = useNostr();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -41,7 +41,7 @@ const MobileNavigation: React.FC = () => {
   const isProfile = location.startsWith('/profile/');
 
   const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
+    setTheme(currentTheme === 'light' ? 'dark' : 'light');
   };
 
   const navigateTo = (path: string) => {

@@ -1,55 +1,81 @@
 import { useState, useEffect } from 'react';
 
-interface MobileDetectionResult {
-  isMobile: boolean;
-  isPwa: boolean;
-  isMobilePwa: boolean;
+export interface MobileDetectionResult {
+  isMobile: boolean;      // Is the device a mobile device (based on screen size or user agent)
+  isPwa: boolean;         // Is the app running in PWA mode (installed)
+  isMobilePwa: boolean;   // Is the app a mobile PWA (combination of isMobile && isPwa)
+  width: number;          // Current window width
+  height: number;         // Current window height
 }
 
-export function useMobileDetection(): MobileDetectionResult {
-  const [isMobile, setIsMobile] = useState<boolean>(false);
-  const [isPwa, setIsPwa] = useState<boolean>(false);
-  const [isMobilePwa, setIsMobilePwa] = useState<boolean>(false);
+/**
+ * Hook to detect if the application is running on a mobile device and/or as an installed PWA
+ */
+export const useMobileDetection = (): MobileDetectionResult => {
+  // Set initial state
+  const [state, setState] = useState<MobileDetectionResult>({
+    isMobile: false,
+    isPwa: false,
+    isMobilePwa: false,
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    height: typeof window !== 'undefined' ? window.innerHeight : 0,
+  });
 
   useEffect(() => {
-    // Check if device is mobile based on screen width
+    // Function to check mobile device
     const checkMobile = () => {
-      const mobile = window.innerWidth <= 768;
-      setIsMobile(mobile);
+      const userAgent = navigator.userAgent.toLowerCase();
+      const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
       
-      // Update mobile PWA status
-      setIsMobilePwa(mobile && isPwa);
+      // Check screen width (most reliable way for layout purposes)
+      const screenWidth = window.innerWidth;
+      const isMobileScreenSize = screenWidth < 768;
+      
+      // Check user agent for mobile devices
+      const isMobileDevice = mobileRegex.test(userAgent);
+      
+      return isMobileScreenSize || isMobileDevice;
     };
 
-    // Check if app is running as PWA (in standalone mode)
+    // Function to check if running as PWA
     const checkPwa = () => {
-      const standalone = 
-        window.matchMedia('(display-mode: standalone)').matches || 
-        (window.navigator as any).standalone === true;
-      
-      setIsPwa(standalone);
-      
-      // Update mobile PWA status
-      setIsMobilePwa(isMobile && standalone);
+      // Check if app is in standalone mode (installed PWA)
+      // or displayed with minimum-ui (iOS home screen)
+      const displayMode = 
+        window.navigator.standalone || 
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.matchMedia('(display-mode: minimal-ui)').matches;
+        
+      return displayMode;
     };
 
-    // Initial checks
-    checkMobile();
-    checkPwa();
+    // Function to update state
+    const updateState = () => {
+      const isMobile = checkMobile();
+      const isPwa = checkPwa();
+      
+      setState({
+        isMobile,
+        isPwa,
+        isMobilePwa: isMobile && isPwa,
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
 
-    // Add listeners for changes
-    window.addEventListener('resize', checkMobile);
-    
-    // Media query for standalone display mode changes
-    const mediaQuery = window.matchMedia('(display-mode: standalone)');
-    mediaQuery.addEventListener('change', checkPwa);
+    // Update on mount
+    updateState();
+
+    // Add resize listener
+    window.addEventListener('resize', updateState);
 
     // Cleanup
     return () => {
-      window.removeEventListener('resize', checkMobile);
-      mediaQuery.removeEventListener('change', checkPwa);
+      window.removeEventListener('resize', updateState);
     };
-  }, [isMobile, isPwa]);
+  }, []);
 
-  return { isMobile, isPwa, isMobilePwa };
-}
+  return state;
+};
+
+export default useMobileDetection;
