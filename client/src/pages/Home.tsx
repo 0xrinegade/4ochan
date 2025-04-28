@@ -17,6 +17,7 @@ import { ConnectionStatus } from "@/components/ConnectionStatus";
 import { useMobileDetection } from "@/hooks/useMobileDetection";
 import MobileHome from "@/components/mobile/MobileHome";
 import MobileBoardView from "@/components/mobile/MobileBoardView";
+import MobileWrapper from "@/components/mobile/MobileWrapper";
 
 // Interface for user replies
 interface UserReply {
@@ -236,7 +237,7 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
   }, [identity?.pubkey, connectedRelays]);
 
   // Use mobile detection hook
-  const { isMobile } = useMobileDetection();
+  const { isMobile, isMobilePwa } = useMobileDetection();
   
   // Handle board thread loading/refresh
   const handleBoardRefresh = () => {
@@ -250,8 +251,50 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
     // If there's an existing function to refresh threads, call it here
   };
   
-  // Mobile UI rendering
-  if (isMobile) {
+  // Mobile PWA UI rendering - optimized PWA app experience
+  if (isMobilePwa) {
+    if (boardId && currentBoard) {
+      // Render mobile board view with threads
+      return (
+        <MobileWrapper
+          title={currentBoard.name || boardId}
+          showBackButton={true}
+          showSearch={true}
+          isLoading={loadingBoards}
+          onRefresh={handleBoardRefresh}
+        >
+          <MobileBoardView
+            board={{
+              id: currentBoard.id,
+              name: currentBoard.name || "Board",
+              shortName: currentBoard.shortName || boardId,
+              description: currentBoard.description || "",
+              threadCount: currentBoard.threadCount || 0,
+              createdAt: currentBoard.createdAt || Date.now() / 1000
+            }}
+            threads={[]} // This should be populated with actual threads
+            isLoading={loadingBoards} 
+            onRefresh={handleBoardRefresh}
+          />
+        </MobileWrapper>
+      );
+    }
+    
+    // Render mobile home screen with wrapper
+    return (
+      <MobileWrapper
+        title="4ochan.org"
+        showBackButton={false}
+        showSearch={true}
+        rightAction="info"
+      >
+        <MobileHome />
+      </MobileWrapper>
+    );
+  }
+  
+  // Mobile browser UI rendering - simpler mobile view for regular browsers
+  if (isMobile && !isMobilePwa) {
     if (boardId && currentBoard) {
       // Render mobile board view with threads
       return (
@@ -261,7 +304,8 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
             name: currentBoard.name || "Board",
             shortName: currentBoard.shortName || boardId,
             description: currentBoard.description || "",
-            threadCount: currentBoard.threadCount || 0
+            threadCount: currentBoard.threadCount || 0,
+            createdAt: currentBoard.createdAt || Date.now() / 1000
           }}
           threads={[]} // This should be populated with actual threads
           isLoading={loadingBoards} 
