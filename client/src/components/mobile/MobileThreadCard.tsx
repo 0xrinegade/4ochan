@@ -24,7 +24,7 @@ const MobileThreadCard: React.FC<MobileThreadCardProps> = ({
   const formattedDate = formatDistanceToNow(new Date(thread.createdAt * 1000), { addSuffix: true });
   
   // Format the author's pubkey for display
-  const formattedAuthor = formatPubkey(thread.authorPubkey);
+  const formattedAuthor = formatPubkey(thread.authorPubkey || '');
   
   // Handle click event
   const handleClick = () => {
@@ -88,12 +88,12 @@ const MobileThreadCard: React.FC<MobileThreadCardProps> = ({
         
         <div className="flex items-center mr-3">
           <Eye size={12} className="mr-1" />
-          <span>{thread.viewCount || 0}</span>
+          <span>{0}</span> {/* Thread view count could be implemented in the future */}
         </div>
         
         <div className="flex items-center">
           <Heart size={12} className="mr-1" />
-          <span>{thread.likeCount || 0}</span>
+          <span>{0}</span> {/* Thread like count could be implemented in the future */}
         </div>
       </div>
     </div>
