@@ -148,7 +148,7 @@ const MobileThreadView: React.FC<MobileThreadViewProps> = ({
                 <div>{formatTime(thread.createdAt)}</div>
               </div>
               <div className="flex justify-between mt-1">
-                <div>Author: {thread.authorName || thread.authorPubkey.substring(0, 8)}</div>
+                <div>Author: {thread.authorPubkey ? thread.authorPubkey.substring(0, 8) : 'Anonymous'}</div>
                 <div>{posts.length} replies</div>
               </div>
               <div className="flex justify-end mt-1">
@@ -169,13 +169,13 @@ const MobileThreadView: React.FC<MobileThreadViewProps> = ({
         {/* Original Post */}
         <div className="p-4 bg-white dark:bg-gray-800 shadow-sm mb-2">
           <div className="flex mb-3">
-            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getUserAvatarGradient(thread.authorPubkey)} flex items-center justify-center text-white font-bold mr-3`}>
-              {getUserInitial(thread.authorName, thread.authorPubkey)}
+            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getUserAvatarGradient(thread.authorPubkey || '')} flex items-center justify-center text-white font-bold mr-3`}>
+              {getUserInitial(undefined, thread.authorPubkey || '')}
             </div>
             
             <div className="flex-1 min-w-0">
               <div className="font-medium">
-                {thread.authorName || `Anon-${thread.authorPubkey.substring(0, 6)}`}
+                {thread.authorPubkey ? `Anon-${thread.authorPubkey.substring(0, 6)}` : 'Anonymous'}
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                 <Clock size={12} className="mr-1" />
@@ -217,7 +217,7 @@ const MobileThreadView: React.FC<MobileThreadViewProps> = ({
             <div className="flex items-center text-sm space-x-4">
               <button className="flex items-center text-gray-500 dark:text-gray-400 hover:text-primary">
                 <ThumbsUp size={18} className="mr-1" />
-                <span>{thread.likes || 0}</span>
+                <span>0</span>
               </button>
               
               <button className="flex items-center text-gray-500 dark:text-gray-400">

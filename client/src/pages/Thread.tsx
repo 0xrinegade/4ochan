@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMobileDetection } from "@/hooks/useMobileDetection";
 import MobileThreadView from "@/components/mobile/MobileThreadView";
+import MobileWrapper from "@/components/mobile/MobileWrapper";
 import { useThread } from "@/hooks/useThreads";
 import { Thread as ThreadType, Post } from "@/types";
 
@@ -163,7 +164,16 @@ const Thread: React.FC<ThreadProps> = ({ id, replyId }) => {
   // Mobile PWA view
   if (isMobilePwa && loadedThread) {
     return (
-      <>
+      <MobileWrapper
+        title={loadedThread.title.length > 30 ? 
+          `${loadedThread.title.substring(0, 30)}...` : 
+          loadedThread.title
+        }
+        showBackButton={true}
+        isLoading={loading}
+        rightAction="more"
+        hideNavigation={false}
+      >
         <MobileThreadView
           thread={loadedThread}
           posts={loadedPosts}
@@ -172,7 +182,7 @@ const Thread: React.FC<ThreadProps> = ({ id, replyId }) => {
           onLikePost={handleLikePost}
           onUnlikePost={handleUnlikePost}
         />
-      </>
+      </MobileWrapper>
     );
   }
 
