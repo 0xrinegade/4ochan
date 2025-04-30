@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useNostr } from "@/hooks/useNostr";
 import { Relay } from "@/types";
+import { NetworkSelector } from "./NetworkSelector";
 
 interface RelayConnectionModalProps {
   isOpen: boolean;
@@ -179,6 +180,11 @@ export const RelayConnectionModal: React.FC<RelayConnectionModalProps> = ({
                 ))
               )}
             </div>
+          </div>
+          
+          <div className="mb-4">
+            <h4 className="text-sm font-bold mb-2">Network Settings</h4>
+            <NetworkSelector />
           </div>
           
           <div className="mb-4">
