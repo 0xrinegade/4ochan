@@ -43,7 +43,7 @@ const NavBoardTab: React.FC<{ shortName: string; label: string }> = ({
 };
 
 export const Header: React.FC = () => {
-  const { connectedRelays, relays, identity, updateIdentity } = useNostr();
+  const { connectedRelays, relays, identity, updateIdentity, currentNetwork } = useNostr();
   const [showConnectionModal, setShowConnectionModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const { currentTheme, setTheme, themes } = useTheme();
@@ -161,7 +161,7 @@ export const Header: React.FC = () => {
             </p>
             <p className="text-xs">
               <span className="bg-gray-200 text-black px-1 py-0.5 rounded font-mono">
-                {identity.currentNetwork?.toUpperCase() || 'MAINNET'}
+                {currentNetwork?.toUpperCase() || 'MAINNET'}
               </span>
             </p>
             <div className="flex items-center gap-2 justify-end">
@@ -294,9 +294,14 @@ export const Header: React.FC = () => {
               </div>
 
               <div className="text-xs mt-2">
-                <p>
-                  Relays: {connectedRelays}/{relays.length} connected
-                </p>
+                <div className="flex items-center justify-between">
+                  <p>
+                    Relays: {connectedRelays}/{relays.length} connected
+                  </p>
+                  <span className="bg-gray-200 text-black px-1 py-0.5 rounded font-mono text-xs">
+                    {currentNetwork?.toUpperCase() || 'MAINNET'}
+                  </span>
+                </div>
                 <p>{dateString}</p>
               </div>
             </div>
