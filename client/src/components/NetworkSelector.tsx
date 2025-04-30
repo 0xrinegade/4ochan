@@ -1,23 +1,23 @@
 import React from 'react';
 import { useNostr } from '../context/NostrContext';
-import { NostrNetwork } from '../lib/nostr';
+import { ProtocolVersion } from '../lib/nostr';
 import { Button } from './ui/button';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 
 /**
- * NetworkSelector component allows users to switch between mainnet and devnet
- * for Nostr protocol connectivity.
+ * NetworkSelector component allows users to switch between production and development
+ * protocol versions on top of Nostr.
  */
 export const NetworkSelector: React.FC = () => {
-  const { currentNetwork, switchNetwork, relays, connectedRelays } = useNostr();
+  const { currentProtocolVersion, switchProtocolVersion, relays, connectedRelays } = useNostr();
   
-  const isDevnet = currentNetwork === NostrNetwork.DEVNET;
+  const isDevelopment = currentProtocolVersion === ProtocolVersion.DEVELOPMENT;
   
-  const handleNetworkChange = async (checked: boolean) => {
-    const targetNetwork = checked ? NostrNetwork.DEVNET : NostrNetwork.MAINNET;
-    await switchNetwork(targetNetwork);
+  const handleProtocolChange = async (checked: boolean) => {
+    const targetProtocol = checked ? ProtocolVersion.DEVELOPMENT : ProtocolVersion.PRODUCTION;
+    await switchProtocolVersion(targetProtocol);
   };
 
   const { resetToDefaultRelays } = useNostr();
@@ -36,10 +36,10 @@ export const NetworkSelector: React.FC = () => {
     <div className="flex flex-col space-y-3 p-3 border rounded-lg">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium">Network Environment</h3>
+          <h3 className="text-sm font-medium">Protocol Version</h3>
           <div className="flex items-center gap-2">
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {isDevnet ? 'Using development test network' : 'Using main production network'}
+              {isDevelopment ? 'Using development protocol version' : 'Using production protocol version'}
             </p>
             <Badge variant="outline" className="text-xs">
               {connectedRelays}/{relays.length} relays
@@ -47,21 +47,21 @@ export const NetworkSelector: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Label htmlFor="network-switch" className="text-xs">
-            {isDevnet ? 'DEVNET' : 'MAINNET'}
+          <Label htmlFor="protocol-switch" className="text-xs">
+            {isDevelopment ? 'DEV' : 'PROD'}
           </Label>
           <Switch 
-            id="network-switch"
-            checked={isDevnet}
-            onCheckedChange={handleNetworkChange}
+            id="protocol-switch"
+            checked={isDevelopment}
+            onCheckedChange={handleProtocolChange}
           />
         </div>
       </div>
       
-      {isDevnet && (
+      {isDevelopment && (
         <div className="bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded text-xs">
           <p className="text-yellow-800 dark:text-yellow-200">
-            You are currently on the development network. Content created here won't appear on the main network.
+            You are using the development protocol version. Content created here won't be visible to users on the production version.
           </p>
         </div>
       )}
@@ -80,18 +80,18 @@ export const NetworkSelector: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => switchNetwork(NostrNetwork.MAINNET)}
-            disabled={currentNetwork === NostrNetwork.MAINNET}
+            onClick={() => switchProtocolVersion(ProtocolVersion.PRODUCTION)}
+            disabled={currentProtocolVersion === ProtocolVersion.PRODUCTION}
           >
-            Mainnet
+            Production
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => switchNetwork(NostrNetwork.DEVNET)}
-            disabled={currentNetwork === NostrNetwork.DEVNET}
+            onClick={() => switchProtocolVersion(ProtocolVersion.DEVELOPMENT)}
+            disabled={currentProtocolVersion === ProtocolVersion.DEVELOPMENT}
           >
-            Devnet
+            Development
           </Button>
         </div>
       </div>

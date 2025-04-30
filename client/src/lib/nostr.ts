@@ -9,17 +9,17 @@ import {
 } from "nostr-tools";
 import { NostrEvent, NostrIdentity, Relay, NostrProfile } from "../types";
 
-// Network environment enum
-export enum NostrNetwork {
-  MAINNET = 'mainnet',
-  DEVNET = 'devnet'
+// Protocol version enum - defines which version of our application protocol runs on top of Nostr
+export enum ProtocolVersion {
+  PRODUCTION = 'production', // Stable production version
+  DEVELOPMENT = 'development' // Development/testing version
 }
 
-// Default network setting - change to MAINNET for production
-export const DEFAULT_NETWORK = NostrNetwork.MAINNET;
+// Default protocol version setting
+export const DEFAULT_PROTOCOL_VERSION = ProtocolVersion.PRODUCTION;
 
-// Default mainnet relays to connect to
-export const MAINNET_RELAYS = [
+// Production protocol relays
+export const PRODUCTION_RELAYS = [
   "wss://nos.lol",         // Very reliable relay
   "wss://nostr.wine",      // Good fallback relay
   "wss://relay.snort.social", // Popular with good uptime
@@ -29,8 +29,8 @@ export const MAINNET_RELAYS = [
   "wss://nostr.mutinywallet.com", // Additional stable relay
 ];
 
-// Development network relays - use specific testing relays or local relays
-export const DEVNET_RELAYS = [
+// Development protocol relays - use for testing new protocol features
+export const DEVELOPMENT_RELAYS = [
   "wss://relay.damus.io",  // Good for testing
   "wss://eden.nostr.land", // Another good test relay
   "wss://nostr-dev.wellorder.net", // Development relay
@@ -40,7 +40,7 @@ export const DEVNET_RELAYS = [
 ];
 
 // For backward compatibility
-export const DEFAULT_RELAYS = MAINNET_RELAYS;
+export const DEFAULT_RELAYS = PRODUCTION_RELAYS;
 
 // Kind numbers for our custom event types
 export const KIND = {
@@ -234,38 +234,38 @@ export const saveIdentity = (identity: NostrIdentity) => {
   return storedIdentity;
 };
 
-// Get current Nostr network from localStorage or use default
-export const getCurrentNetwork = (): NostrNetwork => {
-  const savedNetwork = localStorage.getItem("nostr-network");
-  if (savedNetwork && (savedNetwork === NostrNetwork.MAINNET || savedNetwork === NostrNetwork.DEVNET)) {
-    return savedNetwork as NostrNetwork;
+// Get current protocol version from localStorage or use default
+export const getCurrentProtocolVersion = (): ProtocolVersion => {
+  const savedVersion = localStorage.getItem("nostr-protocol-version");
+  if (savedVersion && (savedVersion === ProtocolVersion.PRODUCTION || savedVersion === ProtocolVersion.DEVELOPMENT)) {
+    return savedVersion as ProtocolVersion;
   }
-  return DEFAULT_NETWORK;
+  return DEFAULT_PROTOCOL_VERSION;
 };
 
-// Save the current network setting
-export const saveNetworkSetting = (network: NostrNetwork) => {
-  localStorage.setItem("nostr-network", network);
+// Save the current protocol version setting
+export const saveProtocolVersion = (version: ProtocolVersion) => {
+  localStorage.setItem("nostr-protocol-version", version);
 };
 
-// Get default relays for current network
-export const getDefaultRelaysForNetwork = (network: NostrNetwork = getCurrentNetwork()): string[] => {
-  return network === NostrNetwork.MAINNET ? MAINNET_RELAYS : DEVNET_RELAYS;
+// Get default relays for current protocol version
+export const getDefaultRelaysForProtocol = (version: ProtocolVersion = getCurrentProtocolVersion()): string[] => {
+  return version === ProtocolVersion.PRODUCTION ? PRODUCTION_RELAYS : DEVELOPMENT_RELAYS;
 };
 
 // Load saved relays or use defaults with reliability check
 export const getSavedRelays = (): Relay[] => {
-  // Get the current network
-  const currentNetwork = getCurrentNetwork();
+  // Get the current protocol version
+  const currentVersion = getCurrentProtocolVersion();
   
-  // Check if we have relays saved for this specific network
-  const networkRelayKey = `nostr-relays-${currentNetwork}`;
-  const savedNetworkRelays = localStorage.getItem(networkRelayKey);
+  // Check if we have relays saved for this specific protocol version
+  const protocolRelayKey = `nostr-relays-${currentVersion}`;
+  const savedProtocolRelays = localStorage.getItem(protocolRelayKey);
   
-  // First try to load network-specific relays
-  if (savedNetworkRelays) {
+  // First try to load protocol-specific relays
+  if (savedProtocolRelays) {
     try {
-      const parsed = JSON.parse(savedNetworkRelays);
+      const parsed = JSON.parse(savedProtocolRelays);
       
       // Check if there are any problematic relays and replace them
       const updatedRelays = parsed.map((relay: Relay) => {
@@ -274,7 +274,7 @@ export const getSavedRelays = (): Relay[] => {
           console.log("Replacing problematic relay with better alternative");
           return {
             ...relay,
-            url: currentNetwork === NostrNetwork.MAINNET ? "wss://relay.damus.io" : "wss://testnet.nostr.watch",
+            url: currentVersion === ProtocolVersion.PRODUCTION ? "wss://relay.damus.io" : "wss://testnet.nostr.watch",
             status: 'disconnected'
           };
         }
@@ -282,23 +282,23 @@ export const getSavedRelays = (): Relay[] => {
       });
       
       // Save any changes made
-      if (JSON.stringify(updatedRelays) !== savedNetworkRelays) {
+      if (JSON.stringify(updatedRelays) !== savedProtocolRelays) {
         saveRelays(updatedRelays);
       }
       
       return updatedRelays;
     } catch (error) {
-      console.error(`Failed to parse saved ${currentNetwork} relays`, error);
+      console.error(`Failed to parse saved ${currentVersion} relays`, error);
     }
   }
   
-  // If no network-specific relays, check for legacy relays
+  // If no protocol-specific relays, check for legacy relays
   const legacyRelays = localStorage.getItem("nostr-relays");
-  if (legacyRelays && currentNetwork === NostrNetwork.MAINNET) {
+  if (legacyRelays && currentVersion === ProtocolVersion.PRODUCTION) {
     try {
       const parsed = JSON.parse(legacyRelays);
       
-      // Migrate these to network-specific storage
+      // Migrate these to protocol-specific storage
       saveRelays(parsed);
       
       return parsed;
@@ -307,9 +307,9 @@ export const getSavedRelays = (): Relay[] => {
     }
   }
   
-  // Return default relays for the current network
-  const defaultRelays = getDefaultRelaysForNetwork(currentNetwork);
-  console.log(`Using default relays for ${currentNetwork}:`, defaultRelays);
+  // Return default relays for the current protocol version
+  const defaultRelays = getDefaultRelaysForProtocol(currentVersion);
+  console.log(`Using default relays for ${currentVersion}:`, defaultRelays);
   
   return defaultRelays.map(url => ({ 
     url, 
@@ -319,14 +319,14 @@ export const getSavedRelays = (): Relay[] => {
   }));
 };
 
-// Save relays to localStorage, specific to the current network
-export const saveRelays = (relays: Relay[], network: NostrNetwork = getCurrentNetwork()) => {
-  // Save to the network-specific storage key
-  const networkRelayKey = `nostr-relays-${network}`;
-  localStorage.setItem(networkRelayKey, JSON.stringify(relays));
+// Save relays to localStorage, specific to the current protocol version
+export const saveRelays = (relays: Relay[], version: ProtocolVersion = getCurrentProtocolVersion()) => {
+  // Save to the protocol-specific storage key
+  const protocolRelayKey = `nostr-relays-${version}`;
+  localStorage.setItem(protocolRelayKey, JSON.stringify(relays));
   
-  // If we're saving mainnet relays, also save to the legacy key for backward compatibility
-  if (network === NostrNetwork.MAINNET) {
+  // If we're saving production relays, also save to the legacy key for backward compatibility
+  if (version === ProtocolVersion.PRODUCTION) {
     localStorage.setItem("nostr-relays", JSON.stringify(relays));
   }
 };
@@ -338,6 +338,8 @@ export const createEvent = async (
   tags: string[][] = [],
   identity: NostrIdentity
 ): Promise<NostrEvent> => {
+  // Get current protocol version to add as tag
+  const protocolVersion = getCurrentProtocolVersion();
   try {
     // Ensure we have valid identity data
     if (!identity.privkey || !identity.pubkey) {
@@ -388,6 +390,9 @@ export const createEvent = async (
     // Validate and clean tags to simple name-value pairs
     const cleanTags: string[][] = [];
     
+    // Add protocol version tag to all events for client compatibility
+    cleanTags.push(["protocol", protocolVersion]);
+    
     for (const tag of tags) {
       if (Array.isArray(tag) && tag.length > 0) {
         // Ensure all tag elements are strings
@@ -424,8 +429,12 @@ export const createEvent = async (
     const id = getEventHash(unsignedEvent);
     
     // Sign the event using the finalizeEvent function
-    // This works with the hex string format
-    const event = finalizeEvent(unsignedEvent, privateKeyHex);
+    // Convert hex string to Uint8Array for compatibility with finalizeEvent
+    const privateKeyBytesForSigning = new Uint8Array(32);
+    for (let i = 0; i < 32; i++) {
+      privateKeyBytesForSigning[i] = parseInt(privateKeyHex.slice(i * 2, i * 2 + 2), 16);
+    }
+    const event = finalizeEvent(unsignedEvent, privateKeyBytesForSigning);
     
     // Verify the event is valid for logging purposes
     const isValid = await verifyEvent(event);

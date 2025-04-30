@@ -19,10 +19,10 @@ import {
   getSavedRelays, 
   saveRelays, 
   KIND,
-  NostrNetwork,
-  getCurrentNetwork,
-  saveNetworkSetting,
-  getDefaultRelaysForNetwork
+  ProtocolVersion,
+  getCurrentProtocolVersion,
+  saveProtocolVersion,
+  getDefaultRelaysForProtocol
 } from "../lib/nostr";
 
 interface NostrContextType {
@@ -32,9 +32,9 @@ interface NostrContextType {
   boards: Board[];
   connectedRelays: number;
   isConnecting: boolean;
-  // Network selection
-  currentNetwork: NostrNetwork;
-  switchNetwork: (network: NostrNetwork) => Promise<void>;
+  // Protocol version selection
+  currentProtocolVersion: ProtocolVersion;
+  switchProtocolVersion: (version: ProtocolVersion) => Promise<void>;
   // Connection management
   connect: () => Promise<void>;
   disconnect: () => void;
@@ -78,7 +78,7 @@ export const NostrContext = createContext<NostrContextType | undefined>(undefine
 export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [pool, setPool] = useState<SimplePool | null>(null);
   const [identity, setIdentity] = useState<NostrIdentity>(getOrCreateIdentity);
-  const [currentNetwork, setCurrentNetwork] = useState<NostrNetwork>(getCurrentNetwork);
+  const [currentProtocolVersion, setCurrentProtocolVersion] = useState<ProtocolVersion>(getCurrentProtocolVersion);
   const [relays, setRelays] = useState<Relay[]>(getSavedRelays);
   const [boards, setBoards] = useState<Board[]>([]);
   const [connectedRelays, setConnectedRelays] = useState(0);
@@ -169,8 +169,8 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setRelays([...updatedRelays]);
     }
     
-    // Save the updated relays with current network
-    saveRelays(updatedRelays, currentNetwork);
+    // Save the updated relays with current protocol version
+    saveRelays(updatedRelays, currentProtocolVersion);
     
     setConnectedRelays(connected);
     setPool(newPool);
@@ -263,19 +263,19 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const addRelay = useCallback((relay: Relay) => {
     setRelays(prev => {
       const updated = [...prev, relay];
-      saveRelays(updated, currentNetwork);
+      saveRelays(updated, currentProtocolVersion);
       return updated;
     });
-  }, [currentNetwork]);
+  }, [currentProtocolVersion]);
 
   // Remove a relay
   const removeRelay = useCallback((url: string) => {
     setRelays(prev => {
       const updated = prev.filter(r => r.url !== url);
-      saveRelays(updated, currentNetwork);
+      saveRelays(updated, currentProtocolVersion);
       return updated;
     });
-  }, [currentNetwork]);
+  }, [currentProtocolVersion]);
 
   // Update a relay
   const updateRelay = useCallback((updatedRelay: Relay) => {
@@ -283,10 +283,10 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const updated = prev.map(r => 
         r.url === updatedRelay.url ? updatedRelay : r
       );
-      saveRelays(updated, currentNetwork);
+      saveRelays(updated, currentProtocolVersion);
       return updated;
     });
-  }, [currentNetwork]);
+  }, [currentProtocolVersion]);
 
   // Save relay settings
   const saveRelaySettings = useCallback((newAutoConnect: boolean, newAutoReconnect: boolean) => {
@@ -296,15 +296,15 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem("nostr-auto-reconnect", String(newAutoReconnect));
   }, []);
   
-  // Reset relays to default for the current network
+  // Reset relays to default for the current protocol version
   const resetToDefaultRelays = useCallback(async () => {
     // Disconnect first if connected
     if (pool) {
       disconnect();
     }
     
-    // Get default relays for current network
-    const defaultRelays = getDefaultRelaysForNetwork(currentNetwork);
+    // Get default relays for current protocol version
+    const defaultRelays = getDefaultRelaysForProtocol(currentProtocolVersion);
     const formattedRelays = defaultRelays.map(url => ({ 
       url, 
       status: 'disconnected' as const, 
@@ -314,9 +314,9 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     // Update state and save to storage
     setRelays(formattedRelays);
-    saveRelays(formattedRelays, currentNetwork);
+    saveRelays(formattedRelays, currentProtocolVersion);
     
-    console.log(`Reset to default relays for ${currentNetwork} network`);
+    console.log(`Reset to default relays for ${currentProtocolVersion} protocol version`);
     
     // Reconnect if autoConnect is enabled
     if (autoConnect) {
@@ -324,29 +324,29 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     
     return formattedRelays;
-  }, [currentNetwork, pool, disconnect, autoConnect, connect]);
+  }, [currentProtocolVersion, pool, disconnect, autoConnect, connect]);
   
-  // Switch between networks (mainnet/devnet)
-  const switchNetwork = useCallback(async (network: NostrNetwork) => {
-    if (network === currentNetwork) {
-      console.log(`Already on ${network} network`);
+  // Switch between protocol versions (production/development)
+  const switchProtocolVersion = useCallback(async (version: ProtocolVersion) => {
+    if (version === currentProtocolVersion) {
+      console.log(`Already on ${version} protocol version`);
       return;
     }
     
-    console.log(`Switching from ${currentNetwork} to ${network} network`);
+    console.log(`Switching from ${currentProtocolVersion} to ${version} protocol version`);
     
     // Disconnect from current relays if connected
     if (pool) {
       disconnect();
     }
     
-    // Save current network setting
-    saveNetworkSetting(network);
-    setCurrentNetwork(network);
+    // Save current protocol version setting
+    saveProtocolVersion(version);
+    setCurrentProtocolVersion(version);
     
-    // Load relays for the selected network
-    const networkRelays = getSavedRelays();
-    setRelays(networkRelays);
+    // Load relays for the selected protocol version
+    const protocolRelays = getSavedRelays();
+    setRelays(protocolRelays);
     
     // Reset state
     setBoards([]);
@@ -357,8 +357,8 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       await connect();
     }
     
-    console.log(`Switched to ${network} network with ${networkRelays.length} relays`);
-  }, [currentNetwork, pool, disconnect, autoConnect, connect]);
+    console.log(`Switched to ${version} protocol version with ${protocolRelays.length} relays`);
+  }, [currentProtocolVersion, pool, disconnect, autoConnect, connect]);
 
   // Publish an event to connected relays
   const publishEvent = useCallback(async (event: NostrEvent) => {
@@ -2073,9 +2073,9 @@ export const NostrProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     boards,
     connectedRelays,
     isConnecting,
-    // Network selection
-    currentNetwork,
-    switchNetwork,
+    // Protocol version selection
+    currentProtocolVersion,
+    switchProtocolVersion,
     // Connection management
     connect,
     disconnect,
