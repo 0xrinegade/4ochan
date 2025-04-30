@@ -9,8 +9,17 @@ import {
 } from "nostr-tools";
 import { NostrEvent, NostrIdentity, Relay, NostrProfile } from "../types";
 
-// Default relays to connect to
-export const DEFAULT_RELAYS = [
+// Network environment enum
+export enum NostrNetwork {
+  MAINNET = 'mainnet',
+  DEVNET = 'devnet'
+}
+
+// Default network setting - change to MAINNET for production
+export const DEFAULT_NETWORK = NostrNetwork.MAINNET;
+
+// Default mainnet relays to connect to
+export const MAINNET_RELAYS = [
   "wss://nos.lol",         // Very reliable relay
   "wss://nostr.wine",      // Good fallback relay
   "wss://relay.snort.social", // Popular with good uptime
@@ -19,6 +28,19 @@ export const DEFAULT_RELAYS = [
   "wss://relay.nostr.band", // Backup option
   "wss://nostr.mutinywallet.com", // Additional stable relay
 ];
+
+// Development network relays - use specific testing relays or local relays
+export const DEVNET_RELAYS = [
+  "wss://relay.damus.io",  // Good for testing
+  "wss://eden.nostr.land", // Another good test relay
+  "wss://nostr-dev.wellorder.net", // Development relay
+  "wss://testnet.nostr.watch",  // Testnet relay if available
+  // You could also add a local relay for development
+  // "ws://localhost:4848" // Local relay for development
+];
+
+// For backward compatibility
+export const DEFAULT_RELAYS = MAINNET_RELAYS;
 
 // Kind numbers for our custom event types
 export const KIND = {
@@ -161,9 +183,10 @@ export const saveIdentity = (identity: NostrIdentity) => {
         }
       }
       // If it's already a valid hex string, we can store it directly
-    } else if (identity.privkey instanceof Uint8Array) {
-      // Convert Uint8Array to hex string
-      const privkeyHex = Array.from(identity.privkey)
+    } else if (typeof identity.privkey === 'object' && 'buffer' in (identity.privkey as any)) {
+      // Convert Uint8Array-like object to hex string
+      const privkeyArray = Array.from(identity.privkey as unknown as ArrayLike<number>);
+      const privkeyHex = privkeyArray
         .map((b: number) => b.toString(16).padStart(2, '0'))
         .join('');
       
@@ -211,13 +234,38 @@ export const saveIdentity = (identity: NostrIdentity) => {
   return storedIdentity;
 };
 
+// Get current Nostr network from localStorage or use default
+export const getCurrentNetwork = (): NostrNetwork => {
+  const savedNetwork = localStorage.getItem("nostr-network");
+  if (savedNetwork && (savedNetwork === NostrNetwork.MAINNET || savedNetwork === NostrNetwork.DEVNET)) {
+    return savedNetwork as NostrNetwork;
+  }
+  return DEFAULT_NETWORK;
+};
+
+// Save the current network setting
+export const saveNetworkSetting = (network: NostrNetwork) => {
+  localStorage.setItem("nostr-network", network);
+};
+
+// Get default relays for current network
+export const getDefaultRelaysForNetwork = (network: NostrNetwork = getCurrentNetwork()): string[] => {
+  return network === NostrNetwork.MAINNET ? MAINNET_RELAYS : DEVNET_RELAYS;
+};
+
 // Load saved relays or use defaults with reliability check
 export const getSavedRelays = (): Relay[] => {
-  const savedRelays = localStorage.getItem("nostr-relays");
+  // Get the current network
+  const currentNetwork = getCurrentNetwork();
   
-  if (savedRelays) {
+  // Check if we have relays saved for this specific network
+  const networkRelayKey = `nostr-relays-${currentNetwork}`;
+  const savedNetworkRelays = localStorage.getItem(networkRelayKey);
+  
+  // First try to load network-specific relays
+  if (savedNetworkRelays) {
     try {
-      const parsed = JSON.parse(savedRelays);
+      const parsed = JSON.parse(savedNetworkRelays);
       
       // Check if there are any problematic relays and replace them
       const updatedRelays = parsed.map((relay: Relay) => {
@@ -226,7 +274,7 @@ export const getSavedRelays = (): Relay[] => {
           console.log("Replacing problematic relay with better alternative");
           return {
             ...relay,
-            url: "wss://relay.damus.io",
+            url: currentNetwork === NostrNetwork.MAINNET ? "wss://relay.damus.io" : "wss://testnet.nostr.watch",
             status: 'disconnected'
           };
         }
@@ -234,18 +282,36 @@ export const getSavedRelays = (): Relay[] => {
       });
       
       // Save any changes made
-      if (JSON.stringify(updatedRelays) !== savedRelays) {
+      if (JSON.stringify(updatedRelays) !== savedNetworkRelays) {
         saveRelays(updatedRelays);
       }
       
       return updatedRelays;
     } catch (error) {
-      console.error("Failed to parse saved relays", error);
+      console.error(`Failed to parse saved ${currentNetwork} relays`, error);
     }
   }
   
-  // Return default relays
-  return DEFAULT_RELAYS.map(url => ({ 
+  // If no network-specific relays, check for legacy relays
+  const legacyRelays = localStorage.getItem("nostr-relays");
+  if (legacyRelays && currentNetwork === NostrNetwork.MAINNET) {
+    try {
+      const parsed = JSON.parse(legacyRelays);
+      
+      // Migrate these to network-specific storage
+      saveRelays(parsed);
+      
+      return parsed;
+    } catch (error) {
+      console.error("Failed to parse legacy saved relays", error);
+    }
+  }
+  
+  // Return default relays for the current network
+  const defaultRelays = getDefaultRelaysForNetwork(currentNetwork);
+  console.log(`Using default relays for ${currentNetwork}:`, defaultRelays);
+  
+  return defaultRelays.map(url => ({ 
     url, 
     status: 'disconnected', 
     read: true, 
@@ -253,9 +319,16 @@ export const getSavedRelays = (): Relay[] => {
   }));
 };
 
-// Save relays to localStorage
-export const saveRelays = (relays: Relay[]) => {
-  localStorage.setItem("nostr-relays", JSON.stringify(relays));
+// Save relays to localStorage, specific to the current network
+export const saveRelays = (relays: Relay[], network: NostrNetwork = getCurrentNetwork()) => {
+  // Save to the network-specific storage key
+  const networkRelayKey = `nostr-relays-${network}`;
+  localStorage.setItem(networkRelayKey, JSON.stringify(relays));
+  
+  // If we're saving mainnet relays, also save to the legacy key for backward compatibility
+  if (network === NostrNetwork.MAINNET) {
+    localStorage.setItem("nostr-relays", JSON.stringify(relays));
+  }
 };
 
 // Create and sign a new event using the recommended approach from Nostr docs
