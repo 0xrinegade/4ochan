@@ -159,6 +159,11 @@ export const Header: React.FC = () => {
                 ? `Connected to ${connectedRelays} relay${connectedRelays !== 1 ? "s" : ""}`
                 : "Offline - Click to Connect"}
             </p>
+            <p className="text-xs">
+              <span className="bg-gray-200 text-black px-1 py-0.5 rounded font-mono">
+                {identity.currentNetwork?.toUpperCase() || 'MAINNET'}
+              </span>
+            </p>
             <div className="flex items-center gap-2 justify-end">
               <div className="flex gap-2 items-center">
                 {identity.pubkey ? (

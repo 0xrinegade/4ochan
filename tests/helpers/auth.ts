@@ -1,17 +1,22 @@
 import { Page, expect } from '@playwright/test';
-import * as nostrTools from 'nostr-tools';
+import { generateSecretKey, getPublicKey } from 'nostr-tools';
 
 // Generate test user data
 export function generateTestUser() {
-  const privateKey = nostrTools.generatePrivateKey();
-  const publicKey = nostrTools.getPublicKey(privateKey);
+  const privateKey = generateSecretKey();
+  const publicKey = getPublicKey(privateKey);
   const username = `test_user_${Math.floor(Math.random() * 100000)}`;
+  
+  // Convert Uint8Array to hex string for use in localStorage
+  const privateKeyHex = Array.from(privateKey)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
   
   return {
     username,
     password: 'Test@12345',
     nostrPubkey: publicKey,
-    nostrPrivkey: privateKey,
+    nostrPrivkey: privateKeyHex, // Use hex string instead of Uint8Array
     displayName: `Test User ${Math.floor(Math.random() * 1000)}`,
   };
 }
