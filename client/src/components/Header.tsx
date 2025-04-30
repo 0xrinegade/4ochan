@@ -63,6 +63,18 @@ export const Header: React.FC = () => {
         localStorage.removeItem("aiUser");
       }
     }
+    
+    // Add event listener for opening relay modal from ConnectionStatus
+    const handleOpenRelayModal = () => {
+      setShowConnectionModal(true);
+    };
+    
+    window.addEventListener('open-relay-modal', handleOpenRelayModal);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('open-relay-modal', handleOpenRelayModal);
+    };
   }, []);
 
   const toggleConnectionModal = () => {
