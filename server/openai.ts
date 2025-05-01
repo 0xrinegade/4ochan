@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { encode } from "gpt-tokenizer"; // For token counting
 
-// The newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+// Using gpt-4.1-nano instead of gpt-4o as requested
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Token threshold for switching models - use GPT-3.5 for short prompts to save cost and improve performance
@@ -10,7 +10,7 @@ const TOKEN_THRESHOLD = 30;
 // Utility function to select most appropriate model based on input length
 const getModelForPrompt = (prompt: string): string => {
   const tokens = encode(prompt);
-  return tokens.length < TOKEN_THRESHOLD ? "gpt-3.5-turbo" : "gpt-4o";
+  return tokens.length < TOKEN_THRESHOLD ? "gpt-3.5-turbo" : "gpt-4.1-nano";
 };
 
 interface AIAuthResponse {
