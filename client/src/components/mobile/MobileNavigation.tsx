@@ -29,23 +29,23 @@ const MobileNavigation: React.FC = () => {
   };
   
   return (
-    <nav className="fixed bottom-0 inset-x-0 h-14 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center justify-around px-2 z-50">
+    <nav className="fixed bottom-0 inset-x-0 h-16 bg-white/95 dark:bg-gray-950/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/70 supports-[backdrop-filter]:dark:bg-gray-950/80 border-t border-gray-100 dark:border-gray-800/50 flex items-center justify-around px-2 z-50">
       <NavButton 
-        icon={<Home size={22} />} 
+        icon={<Home size={20} strokeWidth={1.75} />} 
         label="Home" 
         active={isActive('/')}
         onClick={() => navigateWithoutReload('/')}
       />
       
       <NavButton 
-        icon={<MessageSquare size={22} />} 
+        icon={<MessageSquare size={20} strokeWidth={1.75} />} 
         label="Threads" 
         active={isActive('/board')}
         onClick={() => navigateWithoutReload('/board/all')}
       />
       
       <NavButton 
-        icon={<PlusCircle size={28} />} 
+        icon={<PlusCircle size={24} strokeWidth={1.5} />} 
         label="Create" 
         active={false}
         onClick={handleCreate}
@@ -53,14 +53,14 @@ const MobileNavigation: React.FC = () => {
       />
       
       <NavButton 
-        icon={<Bell size={22} />} 
+        icon={<Bell size={20} strokeWidth={1.75} />} 
         label="Subs" 
         active={isActive('/subscriptions')}
         onClick={() => navigateWithoutReload('/subscriptions')}
       />
       
       <NavButton 
-        icon={<User size={22} />} 
+        icon={<User size={20} strokeWidth={1.75} />} 
         label="Me" 
         active={isActive('/user')}
         onClick={() => identity?.pubkey 
@@ -89,19 +89,26 @@ const NavButton: React.FC<NavButtonProps> = ({
 }) => {
   return (
     <button
-      className={`flex flex-col items-center justify-center w-16 py-1 relative transition-colors ${
-        primary ? 'text-primary' : active ? 'text-primary' : 'text-gray-500 dark:text-gray-400'
+      className={`flex flex-col items-center justify-center w-16 py-1 relative transition-all ${
+        primary 
+          ? 'text-primary dark:text-primary' 
+          : active 
+            ? 'text-gray-900 dark:text-white' 
+            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
       }`}
       onClick={onClick}
     >
-      <div className={`${primary ? 'text-primary -mt-3' : ''}`}>
+      {primary && (
+        <div className="absolute inset-x-3 top-0 bottom-4 bg-primary/10 dark:bg-primary/20 rounded-full -z-10"></div>
+      )}
+      <div className={`${primary ? 'text-primary dark:text-primary transform -translate-y-1.5' : ''} transition-transform`}>
         {icon}
       </div>
-      <span className={`text-[10px] mt-0.5 font-medium ${primary ? 'mt-0' : ''}`}>
+      <span className={`text-[10px] mt-1 font-medium transition-opacity ${primary ? 'opacity-90' : active ? 'opacity-100' : 'opacity-70'}`}>
         {label}
       </span>
       {active && !primary && (
-        <div className="absolute bottom-0 w-5 h-0.5 bg-primary rounded-full" />
+        <div className="absolute bottom-0.5 h-1 w-1 bg-primary rounded-full" />
       )}
     </button>
   );
