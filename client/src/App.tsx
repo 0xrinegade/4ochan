@@ -20,7 +20,6 @@ import PageTransition from "./components/PageTransition";
 import FloatingNavigation from "./components/FloatingNavigation";
 import PwaInstallBanner from "./components/PwaInstallBanner";
 import PwaOnboardingTour from "./components/PwaOnboardingTour";
-import { AccessibilityButton } from "./components/AccessibilityButton";
 import { useEffect, useState, useCallback } from "react";
 
 // Create a module-level variable to hold the navigate function
@@ -178,7 +177,6 @@ function App() {
               
               <PwaInstallBanner />
               <PwaOnboardingTour />
-              <AccessibilityButton />
               <Toaster />
             </AccessibilityProvider>
           </NavigationProvider>
