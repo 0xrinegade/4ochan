@@ -16,36 +16,57 @@ const MobileNavigation: React.FC = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [showScrollButtons, setShowScrollButtons] = useState(false);
   
-  // Handle navigation visibility based on scroll
+  // Обработка видимости навигации на основе скролла
   useEffect(() => {
-    // Always show nav when at the top of the page
+    // Показываем навигацию когда скролл вверху страницы
     if (isAtTop) {
       setIsVisible(true);
       setShowScrollButtons(false);
       return;
     }
 
-    // Show scroll buttons when scrolling
+    // Показываем кнопки скролла при скроллинге
     if (isScrolling) {
       setShowScrollButtons(true);
       
-      // After a delay, hide the scroll buttons if not scrolling
+      // Запланировать скрытие кнопок после остановки скроллинга
       const timeout = setTimeout(() => {
-        if (!isScrolling) {
-          setShowScrollButtons(false);
-        }
-      }, 2000);
+        setShowScrollButtons(false);
+      }, 3000); // Увеличили время видимости до 3 секунд
       
       return () => clearTimeout(timeout);
     }
     
-    // Hide navigation when scrolling down, show when scrolling up
-    if (direction === 'down' && y > 100) {
+    // Скрываем навигацию при скролле вниз, показываем при скролле вверх
+    if (direction === 'down' && y > 50) { // Уменьшили порог до 50px для более быстрой реакции
       setIsVisible(false);
     } else if (direction === 'up') {
       setIsVisible(true);
     }
   }, [direction, isScrolling, isAtTop, y]);
+  
+  // Делаем кнопки скролла всегда видимыми если страница длинная
+  useEffect(() => {
+    const checkPageHeight = () => {
+      const pageHeight = document.body.scrollHeight;
+      const viewportHeight = window.innerHeight;
+      
+      // Если страница имеет длинный контент, показываем кнопки всегда
+      if (pageHeight > viewportHeight * 2) {
+        setShowScrollButtons(true);
+      }
+    };
+    
+    // Проверяем при монтировании компонента
+    checkPageHeight();
+    
+    // И при изменении размера окна
+    window.addEventListener('resize', checkPageHeight);
+    
+    return () => {
+      window.removeEventListener('resize', checkPageHeight);
+    };
+  }, []);
   
   const isActive = (path: string) => {
     if (path === '/' && location === '/') return true;
@@ -65,17 +86,71 @@ const MobileNavigation: React.FC = () => {
   };
   
   const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
+    // Используем более плавную анимацию с промежуточными остановками для длинных страниц
+    const currentPosition = window.scrollY;
+    
+    // Если страница очень длинная, делаем промежуточную остановку
+    if (currentPosition > 10000) {
+      // Анимированный скролл с промежуточной остановкой
+      const halfwayPoint = currentPosition / 2;
+      
+      window.scrollTo({
+        top: halfwayPoint,
+        behavior: 'smooth',
+      });
+      
+      // После первой анимации - продолжаем до верха
+      setTimeout(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth',
+        });
+      }, 700);
+    } else {
+      // Стандартный скролл для коротких страниц
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+    }
+    
+    // Показываем навигационную панель после скролла
+    setIsVisible(true);
   };
   
   const scrollToBottom = () => {
-    window.scrollTo({
-      top: document.body.scrollHeight,
-      behavior: 'smooth',
-    });
+    const currentPosition = window.scrollY;
+    const maxScroll = document.body.scrollHeight - window.innerHeight;
+    
+    // Если страница очень длинная, делаем промежуточную остановку
+    if (maxScroll - currentPosition > 10000) {
+      // Анимированный скролл с промежуточной остановкой
+      const halfwayPoint = currentPosition + (maxScroll - currentPosition) / 2;
+      
+      window.scrollTo({
+        top: halfwayPoint,
+        behavior: 'smooth',
+      });
+      
+      // После первой анимации - продолжаем до конца
+      setTimeout(() => {
+        window.scrollTo({
+          top: maxScroll,
+          behavior: 'smooth',
+        });
+      }, 700);
+    } else {
+      // Стандартный скролл для коротких страниц
+      window.scrollTo({
+        top: maxScroll, 
+        behavior: 'smooth',
+      });
+    }
+    
+    // Скрываем навигационную панель после скролла вниз
+    setTimeout(() => {
+      setIsVisible(false);
+    }, 1000);
   };
   
   return (
@@ -122,22 +197,37 @@ const MobileNavigation: React.FC = () => {
         />
       </nav>
       
-      {/* Floating scroll buttons (appear when scrolling) */}
-      <div className={`fixed inset-x-0 bottom-1/2 flex justify-center items-center gap-4 z-40 transition-opacity duration-300 pointer-events-none ${showScrollButtons ? 'opacity-100' : 'opacity-0'}`}>
+      {/* Плавающие кнопки прокрутки (появляются при скроллинге) */}
+      <div className={`fixed inset-x-0 bottom-1/2 flex justify-center items-center gap-6 z-40 transition-all duration-300 pointer-events-none ${showScrollButtons ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
         <button 
           onClick={scrollToTop}
-          className="w-10 h-10 rounded-full bg-primary/90 text-white shadow-lg flex items-center justify-center pointer-events-auto"
-          aria-label="Scroll to top"
+          className="w-14 h-14 rounded-full bg-primary dark:bg-primary/90 text-white shadow-xl flex items-center justify-center pointer-events-auto active:scale-95 transition-transform animation-bounce"
+          aria-label="Прокрутить вверх"
         >
-          <ChevronUp size={20} />
+          <ChevronUp size={28} strokeWidth={2} />
         </button>
         
         <button 
           onClick={scrollToBottom}
-          className="w-10 h-10 rounded-full bg-primary/90 text-white shadow-lg flex items-center justify-center pointer-events-auto"
-          aria-label="Scroll to bottom"
+          className="w-14 h-14 rounded-full bg-primary dark:bg-primary/90 text-white shadow-xl flex items-center justify-center pointer-events-auto active:scale-95 transition-transform animation-bounce"
+          aria-label="Прокрутить вниз"
         >
-          <ChevronDown size={20} />
+          <ChevronDown size={28} strokeWidth={2} />
+        </button>
+      </div>
+      
+      {/* Кнопка быстрой навигации, всегда видимая, перекрывающая нижнюю панель навигации */}
+      <div className={`fixed right-4 bottom-20 z-[51] transition-all duration-300 ${!isVisible ? 'translate-y-12' : ''}`}>
+        <button 
+          onClick={() => isAtTop ? scrollToBottom() : scrollToTop()}
+          className="w-12 h-12 rounded-full bg-primary shadow-lg flex items-center justify-center transform transition-transform active:scale-95"
+          aria-label={isAtTop ? "Прокрутить вниз" : "Прокрутить вверх"}
+        >
+          {isAtTop ? (
+            <ChevronDown size={24} className="text-white" />
+          ) : (
+            <ChevronUp size={24} className="text-white" />
+          )}
         </button>
       </div>
     </>
