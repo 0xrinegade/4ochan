@@ -56,8 +56,8 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Try to use port 5000 as replit expects it, but fallback if needed
-  const port = 5000;
+  // Try to use port 5001 to avoid conflicts
+  const port = 5001;
   
   log(`Attempting to start server on port ${port}...`);
   

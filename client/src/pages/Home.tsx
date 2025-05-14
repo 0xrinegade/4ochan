@@ -321,9 +321,9 @@ const Home: React.FC<{ id?: string }> = ({ id }) => {
   // Desktop UI rendering
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto">
+      <div className="w-full">
         <Header />
-        <main className="container mx-auto px-2 sm:px-4">
+        <main className="container mx-auto px-0">
           <ConnectionStatus />
           <div className="flex flex-col md:flex-row gap-2">
             <div className="w-full md:w-1/4">

@@ -6,9 +6,9 @@ const FAQ: React.FC = () => {
   const [, setLocation] = useLocation();
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto">
+      <div className="w-full">
         <Header />
-        <main className="container mx-auto px-4 py-4">
+        <main className="container mx-auto px-0 py-4">
           {/* FAQ Header */}
           <div className="mb-6">
             <div className="bg-primary text-white py-0.5 px-2 font-bold text-xs">
